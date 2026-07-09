@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ModPi Tech — Engineering Innovation. Solving Real Problems.</title>
+<meta name="description" content="ModPi Tech — AI, automation, robotics and custom software solutions. Military technology innovation and intelligent systems.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f16;
+  --bg-soft:#0e1520;
+  --panel:#111a28;
+  --panel-2:#15202f;
+  --accent:#22e58f;
+  --accent-soft:rgba(34,229,143,.12);
+  --cyan:#38bdf8;
+  --text:#e8eef6;
+  --body:#b8c4d4;
+  --muted:#7e8ca0;
+  --border:#233042;
+  --border-hi:#2f4258;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Inter',system-ui,sans-serif;
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--body);font-family:var(--sans);font-size:17px;line-height:1.7;overflow-x:hidden}
+::selection{background:var(--accent);color:#04120b}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#26344a;border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:#33455f}
+
+/* subtle tech backdrop: grid + glows, no motion behind text */
+.backdrop{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(700px 420px at 85% -5%, rgba(56,189,248,.09), transparent 60%),
+    radial-gradient(800px 500px at 0% 30%, rgba(34,229,143,.07), transparent 60%),
+    linear-gradient(rgba(35,48,66,.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35,48,66,.28) 1px, transparent 1px);
+  background-size:auto,auto,44px 44px,44px 44px}
+.backdrop::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 40%, transparent 40%, var(--bg) 95%)}
+
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
+  padding:16px 6vw;background:rgba(10,15,22,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.logo{font-family:var(--mono);font-weight:600;font-size:1.15rem;color:var(--text);text-decoration:none;letter-spacing:.5px}
+.logo em{font-style:normal;color:var(--accent)}
+.nav-links{display:flex;gap:34px;list-style:none}
+.nav-links a{font-size:.95rem;font-weight:500;color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--accent)}
+#menuBtn{display:none;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:.9rem;padding:7px 14px;cursor:pointer}
+
+section{position:relative;z-index:2;padding:120px 6vw 70px;max-width:1180px;margin:0 auto}
+
+/* small mono kicker above headings */
+.kicker{font-family:var(--mono);font-size:.8rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.kicker::before{content:'// '}
+h2{font-size:clamp(1.7rem,3.6vw,2.4rem);font-weight:700;color:var(--text);letter-spacing:-.02em;margin-bottom:14px}
+.sec-intro{max-width:640px;color:var(--muted);margin-bottom:48px;font-size:1.05rem}
+
+/* hero */
+.hero{min-height:92vh;display:flex;flex-direction:column;justify-content:center;gap:26px;padding-top:140px}
+.badge{display:inline-flex;align-items:center;gap:9px;align-self:flex-start;font-family:var(--mono);font-size:.8rem;color:var(--accent);
+  background:var(--accent-soft);border:1px solid rgba(34,229,143,.3);border-radius:999px;padding:7px 16px}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+h1{font-size:clamp(2.6rem,6.5vw,4.6rem);font-weight:800;color:var(--text);line-height:1.08;letter-spacing:-.03em;max-width:820px}
+h1 .grad{background:linear-gradient(90deg,var(--accent),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tagline{font-family:var(--mono);font-size:clamp(1rem,2.2vw,1.3rem);color:var(--cyan);min-height:1.6em}
+.tagline .cursor{display:inline-block;width:.55em;background:var(--cyan);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.hero p.sub{max-width:620px;font-size:1.15rem;color:var(--body)}
+.cta-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
+.btn{font-family:var(--sans);font-weight:600;font-size:1rem;padding:14px 30px;border-radius:10px;text-decoration:none;
+  transition:.25s;cursor:pointer;border:1px solid transparent}
+.btn.primary{background:var(--accent);color:#04120b}
+.btn.primary:hover{background:#3aefa1;box-shadow:0 6px 24px rgba(34,229,143,.3);transform:translateY(-2px)}
+.btn.ghost{border-color:var(--border-hi);color:var(--text);background:transparent}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
+
+/* about */
+.about-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:40px;align-items:start}
+.bio{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:36px 38px}
+.bio h3{font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:16px}
+.bio p{margin-bottom:16px}
+.bio p:last-child{margin-bottom:0}
+.bio strong{color:var(--text);font-weight:600}
+.bio .quote{border-left:3px solid var(--accent);padding-left:18px;color:var(--text);font-weight:500;font-style:italic}
+.about-side{display:flex;flex-direction:column;gap:16px}
+.creds{background:linear-gradient(135deg,var(--panel),var(--panel-2));border:1px solid rgba(34,229,143,.3);border-radius:var(--radius);padding:28px 26px}
+.creds h4{font-family:var(--mono);font-size:.8rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.creds ul{list-style:none}
+.creds li{position:relative;padding:10px 0 10px 32px;font-size:.97rem;color:var(--text);font-weight:500;border-top:1px solid var(--border)}
+.creds li:first-child{border-top:none}
+.creds li::before{content:'✓';position:absolute;left:0;top:9px;width:21px;height:21px;border-radius:50%;
+  background:var(--accent-soft);border:1px solid rgba(34,229,143,.4);color:var(--accent);
+  font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:28px 20px;text-align:center;transition:.25s}
+.stat:hover{border-color:var(--accent);transform:translateY(-4px)}
+.stat .num{font-family:var(--mono);font-weight:600;font-size:2.4rem;color:var(--accent)}
+.stat .lbl{font-size:.86rem;font-weight:500;color:var(--muted);margin-top:6px}
+
+/* services */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:22px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:32px 28px;transition:.25s}
+.card:hover{border-color:var(--border-hi);background:var(--panel-2);transform:translateY(-5px);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+.card .icon{width:52px;height:52px;border-radius:12px;background:var(--accent-soft);border:1px solid rgba(34,229,143,.25);
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:20px}
+.card h3{font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:10px}
+.card p{font-size:.98rem;color:var(--body)}
+
+/* projects */
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:24px}
+.proj{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:.25s}
+.proj:hover{border-color:var(--border-hi);transform:translateY(-5px);box-shadow:0 14px 36px rgba(0,0,0,.4)}
+.proj .ph{height:110px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;
+  background:linear-gradient(135deg,rgba(34,229,143,.08),rgba(56,189,248,.08));border-bottom:1px solid var(--border)}
+.proj .body{padding:26px;display:flex;flex-direction:column;gap:12px;flex:1}
+.proj .id{font-family:var(--mono);font-size:.72rem;font-weight:500;letter-spacing:1.5px;color:var(--cyan)}
+.proj h3{font-size:1.15rem;font-weight:700;color:var(--text)}
+.proj p{font-size:.97rem;color:var(--body);flex:1}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-family:var(--mono);font-size:.72rem;color:var(--accent);border:1px solid rgba(34,229,143,.28);
+  background:var(--accent-soft);padding:4px 11px;border-radius:999px}
+
+/* energy monitor */
+.energy-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+.live-pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.78rem;font-weight:600;letter-spacing:1.5px;
+  border-radius:999px;padding:7px 16px;border:1px solid rgba(34,229,143,.35);background:var(--accent-soft);color:var(--accent)}
+.live-pill i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.6s infinite}
+.live-pill.off{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.08);color:#fca5a5}
+.live-pill.off i{background:#f87171;animation:none}
+.energy-updated{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.energy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:22px}
+.metric{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px 20px;transition:.25s}
+.metric:hover{border-color:var(--border-hi);transform:translateY(-3px)}
+.metric .m-lbl{display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:500;color:var(--muted);margin-bottom:10px}
+.metric .m-val{font-family:var(--mono);font-weight:600;font-size:1.9rem;color:var(--text);line-height:1.1}
+.metric .m-val small{font-size:.85rem;color:var(--muted);font-weight:400;margin-left:4px}
+.metric.hero-metric{grid-column:span 2;background:linear-gradient(135deg,var(--panel),var(--panel-2));border-color:rgba(34,229,143,.3)}
+.metric.hero-metric .m-val{font-size:2.6rem;color:var(--accent)}
+.energy-chart-wrap{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.energy-chart-wrap h4{font-size:.9rem;font-weight:600;color:var(--muted);margin-bottom:14px}
+#powerChart{width:100%;height:150px;display:block}
+.energy-note{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-top:14px}
+@media(max-width:560px){.metric.hero-metric{grid-column:span 1}}
+
+/* contact */
+.contact-box{background:linear-gradient(135deg,var(--panel),var(--panel-2));border:1px solid var(--border);border-radius:var(--radius);
+  padding:56px 44px;text-align:center;max-width:680px;margin:0 auto}
+.contact-box h2{margin-bottom:10px}
+.contact-box p{color:var(--muted);margin-bottom:30px;max-width:460px;margin-left:auto;margin-right:auto}
+.email-btn{display:inline-block;font-family:var(--mono);font-weight:500;font-size:1.05rem;color:#04120b;background:var(--accent);
+  padding:15px 34px;border-radius:10px;text-decoration:none;transition:.25s}
+.email-btn:hover{background:#3aefa1;box-shadow:0 6px 24px rgba(34,229,143,.3);transform:translateY(-2px)}
+
+footer{position:relative;z-index:2;text-align:center;padding:30px;font-size:.9rem;color:var(--muted);border-top:1px solid var(--border)}
+footer b{color:var(--accent);font-weight:600}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
+.reveal.on{opacity:1;transform:none}
+
+/* ============ CHATBOT ============ */
+#chatFab{position:fixed;bottom:26px;right:26px;z-index:200;width:60px;height:60px;border-radius:50%;
+  background:var(--accent);border:none;color:#04120b;font-size:1.5rem;cursor:pointer;
+  box-shadow:0 8px 28px rgba(34,229,143,.4);transition:.25s;display:flex;align-items:center;justify-content:center}
+#chatFab:hover{transform:scale(1.07)}
+#chatPanel{position:fixed;bottom:100px;right:26px;z-index:200;width:390px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100vh - 140px);
+  background:var(--bg-soft);border:1px solid var(--border-hi);border-radius:16px;display:none;flex-direction:column;overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.55)}
+#chatPanel.open{display:flex;animation:rise .25s ease}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.chat-head{display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid var(--border);background:var(--panel)}
+.chat-head .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+.chat-head b{font-weight:600;color:var(--text);font-size:.95rem;flex:1}
+.chat-head small{display:block;font-family:var(--mono);font-weight:400;font-size:.7rem;color:var(--muted)}
+.chat-head button{background:none;border:none;color:var(--muted);font-size:1.15rem;cursor:pointer;line-height:1}
+.chat-head button:hover{color:var(--text)}
+#chatLog{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;font-size:.95rem;line-height:1.6}
+.msg{max-width:88%;padding:11px 15px;border-radius:12px;white-space:pre-wrap;word-wrap:break-word}
+.msg.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--border);color:var(--body);border-bottom-left-radius:4px}
+.msg.user{align-self:flex-end;background:var(--accent);color:#04120b;border-bottom-right-radius:4px;font-weight:500}
+.msg.err{align-self:flex-start;border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.08);color:#fca5a5}
+.msg .who{display:block;font-family:var(--mono);font-size:.65rem;letter-spacing:1px;margin-bottom:5px;opacity:.65}
+.msg.user .who{color:#04120b}
+.typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:4px;animation:tp 1s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes tp{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+.chat-input{display:flex;gap:10px;padding:14px;border-top:1px solid var(--border);background:var(--panel)}
+.chat-input input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);
+  font-family:var(--sans);font-size:.95rem;padding:11px 14px;outline:none}
+.chat-input input::placeholder{color:var(--muted)}
+.chat-input input:focus{border-color:var(--accent)}
+.chat-input button{background:var(--accent);border:none;color:#04120b;font-family:var(--sans);font-weight:600;font-size:.9rem;
+  padding:0 20px;border-radius:10px;cursor:pointer;transition:.2s}
+.chat-input button:hover:not(:disabled){background:#3aefa1}
+.chat-input button:disabled{opacity:.45;cursor:not-allowed}
+
+/* ============ RESPONSIVE / MOBILE ============ */
+@media(max-width:820px){
+  .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;gap:0;background:rgba(10,15,22,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+  .nav-links.open{display:flex}
+  .nav-links li{border-top:1px solid var(--border)}
+  .nav-links a{display:block;padding:15px 6vw;font-size:1.05rem}
+  #menuBtn{display:block;min-height:42px}
+  .about-grid{grid-template-columns:1fr}
+  section{padding:96px 5vw 52px}
+  .bio{padding:28px 24px}
+  .hero{min-height:auto;padding-top:120px;padding-bottom:60px;gap:20px}
+  .energy-grid{grid-template-columns:repeat(2,1fr)}
+  .metric.hero-metric{grid-column:span 2}
+}
+@media(max-width:560px){
+  body{font-size:16px}
+  section{padding:88px 5vw 44px}
+  .badge{font-size:.68rem;padding:6px 12px;white-space:normal;line-height:1.5}
+  h1{font-size:2.3rem}
+  .hero p.sub{font-size:1.05rem}
+  .cta-row{flex-direction:column}
+  .btn{width:100%;text-align:center;padding:15px 20px}
+  .sec-intro{margin-bottom:34px}
+  .stats{grid-template-columns:repeat(2,1fr);gap:12px}
+  .stat{padding:20px 12px}
+  .stat .num{font-size:1.9rem}
+  .cards,.proj-grid{grid-template-columns:1fr}
+  .card{padding:26px 22px}
+  .proj .body{padding:22px 20px}
+  .energy-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .metric{padding:18px 14px}
+  .metric .m-val{font-size:1.45rem}
+  .metric.hero-metric .m-val{font-size:2rem}
+  .metric .m-lbl{font-size:.74rem}
+  .energy-chart-wrap{padding:18px 14px}
+  #powerChart{height:120px}
+  .contact-box{padding:38px 22px}
+  .email-btn{width:100%;font-size:.92rem;padding:15px 10px}
+  footer{padding:22px 16px;font-size:.8rem}
+  /* full-screen chat on phones */
+  #chatFab{bottom:18px;right:18px;width:54px;height:54px}
+  #chatPanel{bottom:0;right:0;left:0;top:0;width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;border:none}
+  .chat-head{padding:16px 18px}
+  .chat-input{padding-bottom:max(14px, env(safe-area-inset-bottom))}
+  .chat-input input{font-size:16px} /* prevents iOS zoom on focus */
+}
+</style>
+</head>
+<body>
+
+<div class="backdrop"></div>
+
+<nav>
+  <a class="logo" href="#home">ModPi<em>Tech</em></a>
+  <button id="menuBtn">Menu</button>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#projects">Systems</a></li>
+    <li><a href="#energy">Live</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <span class="badge"><i></i>SYSTEMS ONLINE — AI · AUTOMATION · ROBOTICS · IoT</span>
+  <h1>Engineering Innovation.<br><span class="grad">Solving Real Problems.</span></h1>
+  <div class="tagline"><span id="typed"></span><span class="cursor">&nbsp;</span></div>
+  <p class="sub">ModPi Tech is a technology and innovation service designing intelligent systems that solve
+    real-world challenges and improve operational efficiency — from business operations to
+    mission-critical field applications.</p>
+  <div class="cta-row">
+    <a class="btn primary" href="#projects">View Systems</a>
+    <a class="btn ghost" href="#contact">Get in Touch</a>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="kicker reveal">whoami</div>
+  <h2 class="reveal">About the Operator</h2>
+  <div class="about-grid">
+    <div class="bio reveal">
+      <h3>Military Technology Innovator &amp; AI Engineer</h3>
+      <p>Deep proficiency in <strong>artificial intelligence, automation, and IoT/robotics</strong> —
+        building practical technologies that transform complex problems into efficient, reliable solutions.</p>
+      <p><strong>8 years of freelance innovation services and consulting</strong> for 200+ clients across AI,
+        automation, and thesis projects, and <strong>4 years of innovating technologies for the military</strong>,
+        with 20+ successful operational systems designed and deployed for mission-critical field use.</p>
+      <p class="quote">"We create practical technologies that optimize processes, enhance decision-making,
+        and drive meaningful progress."</p>
+    </div>
+    <div class="about-side">
+      <div class="creds reveal">
+        <h4>Credentials &amp; Eligibilities</h4>
+        <ul>
+          <li>IBM Certified AI Engineer</li>
+          <li>BS Computer Science — AI Specialization, University of the People</li>
+          <li>CSC Career Service Professional Eligible</li>
+          <li>Mechatronics Servicing NC II Holder</li>
+        </ul>
+      </div>
+      <div class="stats">
+        <div class="stat reveal"><div class="num" data-count="150" data-plus="1">0</div><div class="lbl">Clients Served Since 2019</div></div>
+        <div class="stat reveal"><div class="num" data-count="20" data-plus="1">0</div><div class="lbl">Innovations Deployed in Military</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="kicker reveal">capabilities</div>
+  <h2 class="reveal">What ModPi Tech Builds</h2>
+  <p class="sec-intro reveal">Four core disciplines, one goal: intelligent systems that work in the real world.</p>
+  <div class="cards">
+    <div class="card reveal"><div class="icon">🧠</div><h3>Artificial Intelligence</h3>
+      <p>Custom AI systems, LLM integrations, computer vision and predictive models that enhance decision-making and situational awareness.</p></div>
+    <div class="card reveal"><div class="icon">⚙️</div><h3>Automation</h3>
+      <p>End-to-end process automation for business and field operations — eliminating repetitive work and human error at scale.</p></div>
+    <div class="card reveal"><div class="icon">🤖</div><h3>Robotics &amp; IoT</h3>
+      <p>Embedded systems, sensor networks, UAV/UGV platforms and connected devices engineered for harsh, real-world conditions.</p></div>
+    <div class="card reveal"><div class="icon">💻</div><h3>Custom Software</h3>
+      <p>Mission-focused software: command dashboards, data pipelines, and tools built to optimize operational efficiency.</p></div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="kicker reveal">deployed_systems</div>
+  <h2 class="reveal">Selected Systems &amp; Innovations</h2>
+  <p class="sec-intro reveal">A sample of deployed projects across military and commercial operations.</p>
+  <div class="proj-grid">
+    <div class="proj reveal"><div class="ph">🛰️</div><div class="body">
+      <div class="id">SYS-001 · MILITARY</div><h3>Tactical Surveillance AI</h3>
+      <p>Real-time object detection and threat classification deployed on field surveillance units, improving situational awareness for ground operations.</p>
+      <div class="tags"><span class="tag">Computer Vision</span><span class="tag">Edge AI</span><span class="tag">Python</span></div></div></div>
+    <div class="proj reveal"><div class="ph">🚁</div><div class="body">
+      <div class="id">SYS-002 · MILITARY</div><h3>Autonomous Recon Drone Suite</h3>
+      <p>UAV platform with autonomous waypoint navigation, live telemetry, and AI-assisted target recognition for reconnaissance missions.</p>
+      <div class="tags"><span class="tag">Robotics</span><span class="tag">UAV</span><span class="tag">Telemetry</span></div></div></div>
+    <div class="proj reveal"><div class="ph">📡</div><div class="body">
+      <div class="id">SYS-003 · MILITARY</div><h3>Field Sensor Mesh Network</h3>
+      <p>Ruggedized IoT sensor grid for perimeter monitoring with encrypted mesh communication and automated alerting to command dashboards.</p>
+      <div class="tags"><span class="tag">IoT</span><span class="tag">LoRa Mesh</span><span class="tag">Encryption</span></div></div></div>
+    <div class="proj reveal"><div class="ph">🤖</div><div class="body">
+      <div class="id">SYS-004 · COMMERCIAL</div><h3>AI Operations Assistant</h3>
+      <p>LLM-powered assistant integrated into client workflows — automating reporting, document processing, and decision support.</p>
+      <div class="tags"><span class="tag">LLM</span><span class="tag">RAG</span><span class="tag">Automation</span></div></div></div>
+    <div class="proj reveal"><div class="ph">🏭</div><div class="body">
+      <div class="id">SYS-005 · COMMERCIAL</div><h3>Smart Process Automation Platform</h3>
+      <p>Custom automation stack for business operations — cutting manual processing time by over 70% across client deployments.</p>
+      <div class="tags"><span class="tag">RPA</span><span class="tag">APIs</span><span class="tag">Dashboards</span></div></div></div>
+    <div class="proj reveal"><div class="ph">🔐</div><div class="body">
+      <div class="id">SYS-006 · R&amp;D</div><h3>Secure Command &amp; Control Dashboard</h3>
+      <p>Unified C2 interface aggregating live feeds, sensor data and unit status into a single operational picture for commanders.</p>
+      <div class="tags"><span class="tag">C2</span><span class="tag">Realtime</span><span class="tag">WebSockets</span></div></div></div>
+  </div>
+</section>
+
+<!-- ENERGY MONITOR (LIVE) -->
+<section id="energy">
+  <div class="kicker reveal">live_system</div>
+  <h2 class="reveal">Energy Monitoring System</h2>
+  <p class="sec-intro reveal">A real, deployed IoT system — live readings streamed from the energy monitor
+    installed at our house.</p>
+
+  <div class="energy-head reveal">
+    <span class="live-pill off" id="energyStatus"><i></i><span id="energyStatusTxt">CONNECTING…</span></span>
+    <span class="energy-updated" id="energyUpdated"></span>
+  </div>
+
+  <div class="energy-grid reveal">
+    <div class="metric hero-metric">
+      <div class="m-lbl">⚡ Active Power</div>
+      <div class="m-val"><span id="mPower">—</span><small>W</small></div>
+    </div>
+    <div class="metric">
+      <div class="m-lbl">🔌 Voltage</div>
+      <div class="m-val"><span id="mVolt">—</span><small>V</small></div>
+    </div>
+    <div class="metric">
+      <div class="m-lbl">〰️ Current</div>
+      <div class="m-val"><span id="mCurr">—</span><small>A</small></div>
+    </div>
+    <div class="metric">
+      <div class="m-lbl">📈 Power Factor</div>
+      <div class="m-val"><span id="mPF">—</span></div>
+    </div>
+    <div class="metric">
+      <div class="m-lbl">🎚️ Frequency</div>
+      <div class="m-val"><span id="mFreq">—</span><small>Hz</small></div>
+    </div>
+    <div class="metric">
+      <div class="m-lbl">🗓️ Consumption Today</div>
+      <div class="m-val"><span id="mKwh">—</span><small>kWh</small></div>
+    </div>
+  </div>
+
+  <div class="energy-chart-wrap reveal">
+    <h4>Active Power — live trend (this session)</h4>
+    <canvas id="powerChart"></canvas>
+    <div class="energy-note">Auto-refreshes every 2 seconds · SYS-007 · IoT / Energy</div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-box reveal">
+    <div class="kicker" style="text-align:center">initiate_contact</div>
+    <h2>Let's Build Something</h2>
+    <p>Have a complex problem that needs an intelligent solution? Open a channel — from business
+      operations to mission-critical field applications.</p>
+    <a class="email-btn" href="mailto:jimespinola25@gmail.com">jimespinola25@gmail.com</a>
+  </div>
+</section>
+
+<footer>© 2026 <b>ModPi Tech</b> — Engineering Innovation. Solving Real Problems.</footer>
+
+<!-- CHATBOT -->
+<button id="chatFab" title="ModPi Assistant">🤖</button>
+<div id="chatPanel">
+  <div class="chat-head">
+    <span class="dot"></span>
+    <b>ModPi Assistant<small>powered by gemma4:cloud</small></b>
+    <button id="chatClose" title="close">✕</button>
+  </div>
+  <div id="chatLog"></div>
+  <div class="chat-input">
+    <input id="chatText" type="text" placeholder="Ask about ModPi Tech..." autocomplete="off" maxlength="500">
+    <button id="chatSend">Send</button>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+/* Chat requests go through a same-origin Cloudflare Pages Function
+   (/api/ollama/chat). The Ollama API key lives in a server-side environment
+   variable on Cloudflare - it is never exposed to visitors. */
+const OLLAMA_MODEL  = "gemma4:cloud";
+const CHAT_ENDPOINT = '/api/ollama/chat';
+const CHAT_HEADERS  = { 'Content-Type':'application/json' };
+
+const SYSTEM_PROMPT = `You are the ModPi Assistant, the AI assistant on the ModPi Tech portfolio website.
+About ModPi Tech: a technology and innovation service founded by a military technology innovator and AI Engineer
+with deep proficiency in AI, automation, and IoT/robotics. Experience: 8 years of freelance innovation services and consulting
+(200+ clients across AI, automation, and thesis projects; 150+ clients served since 2019) and 4 years innovating technologies
+for the military (20+ successful operational systems designed and deployed for mission-critical field use).
+Credentials: IBM Certified AI Engineer; BS Computer Science — AI Specialization, University of the People;
+CSC Career Service Professional Eligible; Mechatronics Servicing NC II Holder. Specialties: artificial intelligence, automation,
+robotics, and custom software that optimize processes, enhance decision-making, and drive meaningful progress —
+from business operations to mission-critical field applications. Motto: "Engineering Innovation. Solving Real Problems."
+Contact: jimespinola25@gmail.com.
+The website features a LIVE Energy Monitoring System (SYS-007) — a real IoT system deployed at the founder's house,
+streaming live voltage, current, power factor, frequency, active power, and daily consumption readings via the Blynk IoT cloud.
+Visitors can see it in the "Live" section of the site.
+Answer visitor questions about ModPi Tech, its services, projects, and how to get in touch.
+Be concise, professional, and friendly. If asked something unrelated, politely steer back to ModPi Tech.`;
+
+/* ================ TYPED TAGLINE ================ */
+const phrases = ["AI · Automation · Robotics · IoT", "Intelligent systems, deployed.", "Mission-critical engineering.", "200+ clients. 20+ field deployments."];
+let pi = 0, ci = 0, del = false;
+const typedEl = document.getElementById('typed');
+(function type(){
+  const w = phrases[pi];
+  typedEl.textContent = w.slice(0, ci);
+  if(!del && ci < w.length){ ci++; setTimeout(type, 60); }
+  else if(!del){ del = true; setTimeout(type, 1900); }
+  else if(ci > 0){ ci--; setTimeout(type, 28); }
+  else { del = false; pi = (pi+1) % phrases.length; setTimeout(type, 350); }
+})();
+
+/* ================ REVEAL + COUNTERS ================ */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if(!e.isIntersecting) return;
+  e.target.classList.add('on');
+  e.target.querySelectorAll('.num[data-count]').forEach(runCount);
+  io.unobserve(e.target);
+}), {threshold:.2});
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+function runCount(el){
+  if(el.dataset.done) return; el.dataset.done = 1;
+  const target = +el.dataset.count, plus = el.dataset.plus ? '+' : '';
+  let cur = 0; const step = Math.max(1, Math.ceil(target/40));
+  const t = setInterval(() => {
+    cur += step;
+    if(cur >= target){ cur = target; clearInterval(t); }
+    el.textContent = cur + plus;
+  }, 34);
+}
+
+/* ================ NAV ================ */
+document.getElementById('menuBtn').onclick = () => document.getElementById('navLinks').classList.toggle('open');
+document.querySelectorAll('#navLinks a').forEach(a => a.onclick = () => document.getElementById('navLinks').classList.remove('open'));
+
+/* ================ ENERGY MONITOR (Blynk) ================ */
+const BLYNK_TOKEN = "TCwQWQDuxRVeLL0kB8Ih0qnPAOrex2Hs";
+const BLYNK_URL = "https://blynk.cloud/external/api/get?token=" + BLYNK_TOKEN + "&v1&v2&v8&v9&v10&v11";
+const POLL_MS = 2000;
+
+const powerHist = [];
+const HIST_MAX = 90; // ~3 min at 2s
+const fmt = (v, d) => {
+  const n = parseFloat(v);
+  return isNaN(n) ? '—' : n.toFixed(d);
+};
+
+function setEnergyStatus(ok, msg){
+  const pill = document.getElementById('energyStatus');
+  pill.classList.toggle('off', !ok);
+  document.getElementById('energyStatusTxt').textContent = msg;
+}
+
+let energyBusy = false;
+async function pollEnergy(){
+  if(document.hidden || energyBusy) return;
+  energyBusy = true;
+  try{
+    const res = await fetch(BLYNK_URL, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json(); // {"v1":"230.1","v2":"0.52",...}
+    document.getElementById('mVolt').textContent = fmt(d.v1, 1);
+    document.getElementById('mCurr').textContent = fmt(d.v2, 2);
+    document.getElementById('mPower').textContent = fmt(d.v8, 1);
+    document.getElementById('mKwh').textContent  = fmt(d.v9, 3);
+    document.getElementById('mPF').textContent   = fmt(d.v10, 2);
+    document.getElementById('mFreq').textContent = fmt(d.v11, 1);
+    const p = parseFloat(d.v8);
+    if(!isNaN(p)){
+      powerHist.push(p);
+      if(powerHist.length > HIST_MAX) powerHist.shift();
+      drawPowerChart();
+    }
+    setEnergyStatus(true, 'LIVE');
+    document.getElementById('energyUpdated').textContent =
+      'last update: ' + new Date().toLocaleTimeString();
+  }catch(err){
+    setEnergyStatus(false, 'OFFLINE');
+    document.getElementById('energyUpdated').textContent =
+      'device unreachable — retrying every ' + (POLL_MS/1000) + 's';
+  }
+  energyBusy = false;
+}
+
+function drawPowerChart(){
+  const c = document.getElementById('powerChart');
+  const dpr = window.devicePixelRatio || 1;
+  const W = c.clientWidth, H = c.clientHeight || 150;
+  c.width = W * dpr; c.height = H * dpr;
+  const g = c.getContext('2d');
+  g.scale(dpr, dpr);
+  g.clearRect(0, 0, W, H);
+  if(powerHist.length < 2) return;
+  const min = Math.min(...powerHist), max = Math.max(...powerHist);
+  const span = (max - min) || 1;
+  const pad = 8;
+  const x = i => pad + i * (W - 2*pad) / (HIST_MAX - 1);
+  const y = v => H - pad - ((v - min) / span) * (H - 2*pad);
+  // area fill
+  g.beginPath();
+  powerHist.forEach((v, i) => i ? g.lineTo(x(i), y(v)) : g.moveTo(x(0), y(v)));
+  g.lineTo(x(powerHist.length - 1), H - pad);
+  g.lineTo(x(0), H - pad);
+  g.closePath();
+  const grad = g.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(34,229,143,.28)');
+  grad.addColorStop(1, 'rgba(34,229,143,0)');
+  g.fillStyle = grad; g.fill();
+  // line
+  g.beginPath();
+  powerHist.forEach((v, i) => i ? g.lineTo(x(i), y(v)) : g.moveTo(x(0), y(v)));
+  g.strokeStyle = '#22e58f'; g.lineWidth = 2; g.stroke();
+  // last point
+  const lx = x(powerHist.length - 1), ly = y(powerHist[powerHist.length - 1]);
+  g.beginPath(); g.arc(lx, ly, 3.5, 0, Math.PI*2); g.fillStyle = '#22e58f'; g.fill();
+  // min/max labels
+  g.font = '11px JetBrains Mono, monospace'; g.fillStyle = '#7e8ca0';
+  g.fillText(max.toFixed(1) + ' W', pad, 14);
+  g.fillText(min.toFixed(1) + ' W', pad, H - pad - 4);
+}
+
+pollEnergy();
+setInterval(pollEnergy, POLL_MS);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) pollEnergy(); });
+addEventListener('resize', drawPowerChart);
+
+/* ================ CHATBOT ================ */
+const panel = document.getElementById('chatPanel'),
+      log   = document.getElementById('chatLog'),
+      input = document.getElementById('chatText'),
+      sendB = document.getElementById('chatSend');
+let history = [{role:'system', content:SYSTEM_PROMPT}], busy = false, greeted = false;
+
+document.getElementById('chatFab').onclick = () => {
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')){
+    input.focus();
+    if(!greeted){ greeted = true;
+      addMsg('bot', "Hi! I'm the ModPi Assistant.\nAsk me anything about ModPi Tech — services, systems, experience, or how to start a project."); }
+  }
+};
+document.getElementById('chatClose').onclick = () => panel.classList.remove('open');
+
+function addMsg(kind, text){
+  const d = document.createElement('div');
+  d.className = 'msg ' + kind;
+  d.innerHTML = '<span class="who">' + (kind==='user' ? 'YOU' : kind==='err' ? 'SYSTEM' : 'MODPI ASSISTANT') + '</span>';
+  d.appendChild(document.createTextNode(text));
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+  return d;
+}
+function typingEl(){
+  const d = document.createElement('div');
+  d.className = 'msg bot typing';
+  d.innerHTML = '<i></i><i></i><i></i>';
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+  return d;
+}
+
+async function send(){
+  const text = input.value.trim();
+  if(!text || busy) return;
+  busy = true; sendB.disabled = true; input.value = '';
+  addMsg('user', text);
+  history.push({role:'user', content:text});
+  const tip = typingEl();
+  try{
+    const res = await fetch(CHAT_ENDPOINT, {
+      method:'POST',
+      headers: CHAT_HEADERS,
+      body: JSON.stringify({ model: OLLAMA_MODEL, messages: history, stream: true })
+    });
+    if(!res.ok) throw new Error('HTTP ' + res.status + ' — check API key / model name');
+    tip.remove();
+    const bubble = addMsg('bot', '');
+    const textNode = bubble.lastChild;
+    let full = '', buf = '';
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value, {stream:true});
+      const lines = buf.split('\n'); buf = lines.pop();
+      for(const line of lines){
+        if(!line.trim()) continue;
+        try{
+          const j = JSON.parse(line);
+          if(j.message && j.message.content){ full += j.message.content; textNode.textContent = full; log.scrollTop = log.scrollHeight; }
+        }catch(_){}
+      }
+    }
+    if(!full){ textNode.textContent = '[no response received]'; }
+    history.push({role:'assistant', content: full || ''});
+    if(history.length > 21) history = [history[0], ...history.slice(-20)];
+  }catch(err){
+    tip.remove();
+    addMsg('err', 'Connection error: ' + err.message + '\nThe assistant is temporarily unreachable. Please try again in a moment.');
+    history.pop();
+  }
+  busy = false; sendB.disabled = false; input.focus();
+}
+sendB.onclick = send;
+input.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
+</script>
+</body>
+</html>
