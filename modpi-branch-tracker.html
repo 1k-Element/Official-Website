@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ModPi Restaurant — PH Franchise Tracking System</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#ffffff; --panel2:#f8fafc; --border:#e2e8f0;
+    --text:#1e293b; --muted:#64748b; --accent:#ff6b35; --accent2:#e8590c;
+    --green:#16a34a; --red:#dc2626;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+  body{background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+  header{display:flex;align-items:center;gap:14px;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff}
+  header h1{font-size:17px;font-weight:700}
+  header h1 span{color:var(--accent)}
+  header p{font-size:11px;color:var(--muted)}
+  .kpis{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+  .kpi{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:6px 14px;text-align:center;min-width:104px}
+  .kpi .v{font-size:15px;font-weight:700;color:var(--accent2)}
+  .kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+  main{flex:1;display:flex;min-height:0}
+  #map{flex:1;min-width:0}
+  aside{width:390px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+  .aside-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .aside-head h2{font-size:14px}
+  .aside-body{flex:1;overflow-y:auto;padding:16px}
+  .aside-body::-webkit-scrollbar{width:8px}
+  .aside-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+  .btn{border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),#ff8c42);color:#fff;width:100%}
+  .btn-primary:hover{filter:brightness(1.1)}
+  .btn-primary:disabled{opacity:.55;cursor:wait}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:hover{color:var(--text)}
+
+  .card{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+  .card h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat .sv{font-size:17px;font-weight:700}
+  .stat .sl{font-size:10.5px;color:var(--muted)}
+  .pos{color:var(--green)} .neg{color:var(--red)}
+
+  .branch-title{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
+  .b-excellent{background:rgba(61,220,132,.15);color:var(--green)}
+  .b-good{background:rgba(255,179,71,.15);color:var(--accent2)}
+  .b-attention{background:rgba(255,92,92,.15);color:var(--red)}
+  .sub{font-size:11.5px;color:var(--muted);margin-bottom:12px}
+
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  td{padding:5px 0;border-bottom:1px solid var(--border)}
+  td:last-child{text-align:right;font-weight:600}
+  tr:last-child td{border-bottom:none}
+
+  .bar-row{display:flex;align-items:center;gap:8px;font-size:11.5px;margin-bottom:7px}
+  .bar-row .name{width:110px;color:var(--muted)}
+  .bar-track{flex:1;height:7px;background:var(--bg);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px}
+  .bar-row .val{width:52px;text-align:right;font-weight:600}
+
+  #aiOutput{white-space:pre-wrap;font-size:12.5px;line-height:1.65;color:#334155;display:none;margin-top:12px}
+  .ai-note{font-size:10.5px;color:var(--muted);margin-top:8px}
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .marker-pin{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);background:linear-gradient(135deg,var(--accent),var(--accent2));border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.5)}
+  .marker-pin span{transform:rotate(45deg);font-weight:800;font-size:12px;color:#fff}
+  .leaflet-popup-content-wrapper{background:var(--panel2);color:var(--text);border-radius:10px;border:1px solid var(--border)}
+  .leaflet-popup-tip{background:var(--panel2)}
+  .leaflet-popup-content{margin:10px 14px;font-size:12px}
+  .popup-name{font-weight:700;font-size:13px;color:var(--accent2)}
+
+  @media(max-width:820px){
+    main{flex-direction:column}
+    aside{width:100%;height:48%}
+    #map{height:52%}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">MP</div>
+  <div>
+    <h1>ModPi <span>Restaurant</span> — Franchise Tracking System</h1>
+    <p>Philippines Operations Dashboard · Demo Data · FY 2026</p>
+  </div>
+  <div class="kpis" id="kpis"></div>
+</header>
+
+<main>
+  <div id="map"></div>
+  <aside>
+    <div class="aside-head">
+      <h2 id="panelTitle">🇵🇭 Nationwide Overview</h2>
+      <button class="btn btn-ghost" id="backBtn" style="display:none">← Overview</button>
+    </div>
+    <div class="aside-body" id="panelBody"></div>
+  </aside>
+</main>
+
+<script>
+/* =========================================================
+   CONFIG — Ollama Cloud API
+   ⚠ Demo only: never ship real API keys in client-side code.
+========================================================= */
+const OLLAMA_API_URL = "https://ollama.com/api/chat";
+const OLLAMA_API_KEY = "73397312852443f6b42263f5f6f6fa69.DF8HJ2jx2QFI926WedkXZGEQ";
+const OLLAMA_MODEL   = "gemma4:cloud";
+
+/* ================= SAMPLE DATA (demo) ================= */
+const PESO = v => "₱" + v.toLocaleString("en-PH");
+const BRANCHES = [
+  {id:1, name:"ModPi Manila – Ermita",     city:"Manila",          lat:14.5826, lng:120.9787, opened:"2019-03-12", manager:"Carla Reyes",    staff:28, monthly:[2.41,2.35,2.62,2.58,2.71,2.83], expenses:1.92, rating:4.6, customers:18400, topItems:[["ModPi Classic Burger",4210],["Sisig Rice Bowl",3650],["Halo-Halo Supreme",2980],["Crispy Pata Wrap",2310]]},
+  {id:2, name:"ModPi Quezon City – Katipunan", city:"Quezon City", lat:14.6396, lng:121.0748, opened:"2019-11-04", manager:"Miguel Santos",  staff:24, monthly:[2.05,2.11,2.24,2.19,2.38,2.47], expenses:1.71, rating:4.5, customers:16250, topItems:[["Sisig Rice Bowl",3890],["ModPi Classic Burger",3540],["Iced Barako Latte",3120],["Chicken Inasal Plate",2670]]},
+  {id:3, name:"ModPi Makati – Ayala",      city:"Makati",          lat:14.5547, lng:121.0244, opened:"2020-01-20", manager:"Andrea Lim",     staff:31, monthly:[3.12,3.05,3.28,3.41,3.36,3.58], expenses:2.44, rating:4.7, customers:21730, topItems:[["Wagyu ModPi Burger",5120],["Truffle Sisig Pasta",4230],["Iced Barako Latte",3870],["Ube Cheesecake",3010]]},
+  {id:4, name:"ModPi Cebu – IT Park",      city:"Cebu City",       lat:10.3305, lng:123.9054, opened:"2020-08-15", manager:"Josef Tan",      staff:26, monthly:[2.31,2.44,2.39,2.55,2.61,2.74], expenses:1.88, rating:4.6, customers:17880, topItems:[["Lechon Belly Rice",4560],["ModPi Classic Burger",3320],["Dried Mango Shake",2940],["Sisig Rice Bowl",2510]]},
+  {id:5, name:"ModPi Davao – Lanang",      city:"Davao City",      lat:7.1005,  lng:125.6329, opened:"2021-02-10", manager:"Rhea Villanueva",staff:22, monthly:[1.87,1.92,2.04,1.98,2.15,2.26], expenses:1.52, rating:4.4, customers:14520, topItems:[["Durian Cheesecake",3670],["Tuna Panga Plate",3210],["ModPi Classic Burger",2850],["Pomelo Cooler",2140]]},
+  {id:6, name:"ModPi Baguio – Session Rd", city:"Baguio",          lat:16.4119, lng:120.5934, opened:"2021-06-28", manager:"Dominic Cruz",   staff:18, monthly:[1.54,1.61,1.49,1.58,1.72,1.81], expenses:1.29, rating:4.5, customers:11930, topItems:[["Strawberry Taho Latte",3480],["Hot Bulalo Bowl",3150],["ModPi Classic Burger",2440],["Ube Champorado",1980]]},
+  {id:7, name:"ModPi Iloilo – Megaworld",  city:"Iloilo City",     lat:10.7136, lng:122.5511, opened:"2022-04-05", manager:"Katrina Uy",     staff:19, monthly:[1.42,1.47,1.55,1.51,1.63,1.69], expenses:1.24, rating:4.3, customers:10870, topItems:[["La Paz Batchoy Deluxe",3320],["ModPi Classic Burger",2610],["Sisig Rice Bowl",2280],["Mango Turon Sundae",1870]]},
+  {id:8, name:"ModPi CDO – Limketkai",     city:"Cagayan de Oro",  lat:8.4850,  lng:124.6520, opened:"2022-09-19", manager:"Paolo Ramos",    staff:17, monthly:[1.28,1.33,1.29,1.41,1.46,1.52], expenses:1.13, rating:4.2, customers:9640,  topItems:[["Sinuglaw Bowl",2870],["ModPi Classic Burger",2390],["Sisig Rice Bowl",2050],["Iced Barako Latte",1760]]},
+  {id:9, name:"ModPi Bacolod – Lacson",    city:"Bacolod",         lat:10.6765, lng:122.9509, opened:"2023-01-30", manager:"Bianca Gomez",   staff:16, monthly:[1.12,1.18,1.15,1.24,1.31,1.38], expenses:1.02, rating:4.4, customers:8720,  topItems:[["Chicken Inasal Plate",3540],["Napoleones Sundae",2410],["ModPi Classic Burger",2080],["Batchoy Fries",1690]]},
+  {id:10,name:"ModPi Zamboanga – Paseo",   city:"Zamboanga City",  lat:6.9214,  lng:122.0790, opened:"2023-07-12", manager:"Amir Hassan",    staff:15, monthly:[0.94,0.91,0.98,1.03,0.99,1.08], expenses:0.87, rating:4.1, customers:7150,  topItems:[["Curacha Rice Plate",2340],["Satti Skewers",2110],["ModPi Classic Burger",1860],["Knickerbocker Cup",1540]]},
+  {id:11,name:"ModPi Pampanga – Clark",    city:"Angeles City",    lat:15.1855, lng:120.5602, opened:"2024-03-08", manager:"Louie Manalang", staff:20, monthly:[1.61,1.72,1.68,1.81,1.89,2.02], expenses:1.44, rating:4.6, customers:12480, topItems:[["Sisig Rice Bowl",4230],["Kare-Kare Burrito",2980],["ModPi Classic Burger",2560],["Tibok-Tibok Shake",1930]]},
+  {id:12,name:"ModPi Tagaytay – Ridge",    city:"Tagaytay",        lat:14.1153, lng:120.9621, opened:"2024-11-22", manager:"Sofia Alcantara",staff:14, monthly:[1.21,1.35,1.42,1.39,1.55,1.67], expenses:1.11, rating:4.7, customers:9310,  topItems:[["Bulalo Ramen",3780],["Taal Coffee Float",2650],["ModPi Classic Burger",2190],["Buko Pie Sundae",1880]]},
+];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun"];
+// monthly figures are in ₱M; expenses = avg monthly expenses in ₱M
+
+const sum = a => a.reduce((x,y)=>x+y,0);
+const branchRevenue = b => sum(b.monthly);                       // ₱M H1 2026
+const branchProfit  = b => branchRevenue(b) - b.expenses*6;
+const growth = b => ((b.monthly[5]-b.monthly[0])/b.monthly[0]*100);
+
+const TOTAL = {
+  revenue:  sum(BRANCHES.map(branchRevenue)),
+  profit:   sum(BRANCHES.map(branchProfit)),
+  staff:    sum(BRANCHES.map(b=>b.staff)),
+  customers:sum(BRANCHES.map(b=>b.customers)),
+  rating:   sum(BRANCHES.map(b=>b.rating))/BRANCHES.length,
+};
+
+/* ================= HEADER KPIs ================= */
+document.getElementById("kpis").innerHTML = `
+  <div class="kpi"><div class="v">${BRANCHES.length}</div><div class="l">Branches</div></div>
+  <div class="kpi"><div class="v">₱${TOTAL.revenue.toFixed(1)}M</div><div class="l">H1 Revenue</div></div>
+  <div class="kpi"><div class="v">₱${TOTAL.profit.toFixed(1)}M</div><div class="l">H1 Profit</div></div>
+  <div class="kpi"><div class="v">${TOTAL.rating.toFixed(2)} ★</div><div class="l">Avg Rating</div></div>`;
+
+/* ================= MAP ================= */
+const map = L.map("map",{zoomControl:true}).setView([12.5, 121.8], 6);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+  maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+
+const pin = L.divIcon({className:"", html:'<div class="marker-pin"><span>MP</span></div>', iconSize:[34,34], iconAnchor:[17,32], popupAnchor:[0,-30]});
+
+BRANCHES.forEach(b=>{
+  const m = L.marker([b.lat,b.lng],{icon:pin}).addTo(map);
+  m.bindPopup(`<div class="popup-name">${b.name}</div>H1 Revenue: <b>₱${branchRevenue(b).toFixed(2)}M</b><br>Rating: ${b.rating} ★ · Click marker for full report`);
+  m.on("click",()=>showBranch(b));
+  m.on("mouseover",()=>m.openPopup());
+});
+
+/* ================= SIDE PANEL ================= */
+const panelBody  = document.getElementById("panelBody");
+const panelTitle = document.getElementById("panelTitle");
+const backBtn    = document.getElementById("backBtn");
+backBtn.onclick  = showOverview;
+let chart = null;
+
+function destroyChart(){ if(chart){chart.destroy(); chart=null;} }
+
+function healthBadge(b){
+  const margin = branchProfit(b)/branchRevenue(b);
+  if(margin>=0.28) return '<span class="badge b-excellent">EXCELLENT</span>';
+  if(margin>=0.18) return '<span class="badge b-good">GOOD</span>';
+  return '<span class="badge b-attention">NEEDS ATTENTION</span>';
+}
+
+function showOverview(){
+  destroyChart();
+  backBtn.style.display="none";
+  panelTitle.textContent="🇵🇭 Nationwide Overview";
+  const ranked=[...BRANCHES].sort((a,b)=>branchRevenue(b)-branchRevenue(a));
+  const maxRev=branchRevenue(ranked[0]);
+  panelBody.innerHTML=`
+    <div class="card">
+      <h3>Company Snapshot — H1 2026</h3>
+      <div class="grid2">
+        <div class="stat"><div class="sv">₱${TOTAL.revenue.toFixed(2)}M</div><div class="sl">Total Revenue</div></div>
+        <div class="stat"><div class="sv pos">₱${TOTAL.profit.toFixed(2)}M</div><div class="sl">Net Profit (${(TOTAL.profit/TOTAL.revenue*100).toFixed(1)}% margin)</div></div>
+        <div class="stat"><div class="sv">${TOTAL.customers.toLocaleString()}</div><div class="sl">Customers Served</div></div>
+        <div class="stat"><div class="sv">${TOTAL.staff}</div><div class="sl">Total Employees</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Revenue by Branch (₱M, H1)</h3>
+      ${ranked.map(b=>`
+        <div class="bar-row">
+          <div class="name" title="${b.name}">${b.city}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(branchRevenue(b)/maxRev*100).toFixed(0)}%"></div></div>
+          <div class="val">₱${branchRevenue(b).toFixed(1)}M</div>
+        </div>`).join("")}
+    </div>
+    <div class="card">
+      <h3>Monthly Revenue Trend — All Branches (₱M)</h3>
+      <canvas id="trendChart" height="170"></canvas>
+    </div>
+    <div class="card">
+      <h3>🤖 AI Business Analysis</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Send the nationwide performance data to <b>${OLLAMA_MODEL}</b> via Ollama Cloud for an executive analysis.</p>
+      <button class="btn btn-primary" id="analyzeBtn">⚡ Analyze Whole Business</button>
+      <div id="aiOutput"></div>
+      <div class="ai-note" id="aiNote"></div>
+    </div>
+    <p style="font-size:10.5px;color:var(--muted);text-align:center">Click any 📍 marker on the map for a branch report. Sample data for demo purposes.</p>`;
+  const totals = MONTHS.map((_,i)=>sum(BRANCHES.map(b=>b.monthly[i])));
+  chart = new Chart(document.getElementById("trendChart"),{
+    type:"line",
+    data:{labels:MONTHS,datasets:[{label:"Revenue ₱M",data:totals,borderColor:"#ff6b35",backgroundColor:"rgba(255,107,53,.15)",fill:true,tension:.35,pointBackgroundColor:"#ffb347"}]},
+    options:{plugins:{legend:{display:false}},scales:{
+      x:{ticks:{color:"#64748b"},grid:{color:"#e2e8f0"}},
+      y:{ticks:{color:"#64748b"},grid:{color:"#e2e8f0"}}}}
+  });
+  document.getElementById("analyzeBtn").onclick=analyzeBusiness;
+}
+
+function showBranch(b){
+  destroyChart();
+  backBtn.style.display="inline-block";
+  panelTitle.textContent="Branch Business Report";
+  const rev=branchRevenue(b), prof=branchProfit(b), g=growth(b);
+  const maxItem=b.topItems[0][1];
+  panelBody.innerHTML=`
+    <div class="branch-title"><strong style="font-size:15px">${b.name}</strong>${healthBadge(b)}</div>
+    <div class="sub">📍 ${b.city} · Manager: ${b.manager} · Opened ${b.opened}</div>
+    <div class="card">
+      <h3>Financials — H1 2026</h3>
+      <div class="grid2">
+        <div class="stat"><div class="sv">₱${rev.toFixed(2)}M</div><div class="sl">Revenue</div></div>
+        <div class="stat"><div class="sv ${prof>=0?'pos':'neg'}">₱${prof.toFixed(2)}M</div><div class="sl">Net Profit</div></div>
+        <div class="stat"><div class="sv">₱${(b.expenses*6).toFixed(2)}M</div><div class="sl">Expenses</div></div>
+        <div class="stat"><div class="sv ${g>=0?'pos':'neg'}">${g>=0?'+':''}${g.toFixed(1)}%</div><div class="sl">Growth Jan→Jun</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Monthly Revenue (₱M)</h3>
+      <canvas id="branchChart" height="160"></canvas>
+    </div>
+    <div class="card">
+      <h3>Operations</h3>
+      <table>
+        <tr><td>Customers served (H1)</td><td>${b.customers.toLocaleString()}</td></tr>
+        <tr><td>Avg ticket size</td><td>${PESO(Math.round(rev*1e6/b.customers))}</td></tr>
+        <tr><td>Staff count</td><td>${b.staff}</td></tr>
+        <tr><td>Customer rating</td><td>${b.rating} ★</td></tr>
+        <tr><td>Profit margin</td><td>${(prof/rev*100).toFixed(1)}%</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Top Selling Items (units, H1)</h3>
+      ${b.topItems.map(([n,v])=>`
+        <div class="bar-row">
+          <div class="name" title="${n}">${n.length>16?n.slice(0,15)+"…":n}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(v/maxItem*100).toFixed(0)}%"></div></div>
+          <div class="val">${v.toLocaleString()}</div>
+        </div>`).join("")}
+    </div>`;
+  map.flyTo([b.lat,b.lng], 12, {duration:.8});
+  chart = new Chart(document.getElementById("branchChart"),{
+    type:"bar",
+    data:{labels:MONTHS,datasets:[{data:b.monthly,backgroundColor:"rgba(255,107,53,.7)",borderColor:"#ffb347",borderWidth:1,borderRadius:5}]},
+    options:{plugins:{legend:{display:false}},scales:{
+      x:{ticks:{color:"#64748b"},grid:{display:false}},
+      y:{ticks:{color:"#64748b"},grid:{color:"#e2e8f0"}}}}
+  });
+}
+
+/* ================= OLLAMA AI ANALYSIS ================= */
+function businessSummaryPrompt(){
+  const lines = BRANCHES.map(b=>
+    `- ${b.name} (${b.city}): H1 revenue ₱${branchRevenue(b).toFixed(2)}M, profit ₱${branchProfit(b).toFixed(2)}M, growth ${growth(b).toFixed(1)}%, rating ${b.rating}★, ${b.customers.toLocaleString()} customers, ${b.staff} staff`
+  ).join("\n");
+  return `You are a business analyst for ModPi Restaurant, a fast-casual franchise chain in the Philippines. Analyze this H1 2026 performance data and give a concise executive analysis (max ~300 words): overall health, best/worst performers, notable trends, and 3 actionable recommendations.
+
+Company totals: revenue ₱${TOTAL.revenue.toFixed(2)}M, net profit ₱${TOTAL.profit.toFixed(2)}M (${(TOTAL.profit/TOTAL.revenue*100).toFixed(1)}% margin), ${TOTAL.customers.toLocaleString()} customers, ${TOTAL.staff} employees, avg rating ${TOTAL.rating.toFixed(2)}★.
+
+Branches:
+${lines}`;
+}
+
+async function analyzeBusiness(){
+  const btn=document.getElementById("analyzeBtn"), out=document.getElementById("aiOutput"), note=document.getElementById("aiNote");
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Analyzing with '+OLLAMA_MODEL+'…';
+  out.style.display="block"; out.textContent=""; note.textContent="";
+  try{
+    const res=await fetch(OLLAMA_API_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+OLLAMA_API_KEY},
+      body:JSON.stringify({model:OLLAMA_MODEL,stream:false,messages:[{role:"user",content:businessSummaryPrompt()}]})
+    });
+    if(!res.ok) throw new Error("API responded "+res.status);
+    const data=await res.json();
+    const text=data?.message?.content;
+    if(!text) throw new Error("Empty response");
+    out.textContent=text.trim();
+    note.textContent="Generated by "+OLLAMA_MODEL+" via Ollama Cloud.";
+  }catch(err){
+    out.textContent=fallbackAnalysis();
+    note.textContent="⚠ Ollama API unreachable ("+err.message+") — showing built-in demo analysis instead.";
+  }finally{
+    btn.disabled=false; btn.innerHTML="⚡ Analyze Whole Business";
+  }
+}
+
+/* Local fallback so the portfolio demo always works */
+function fallbackAnalysis(){
+  const ranked=[...BRANCHES].sort((a,b)=>branchRevenue(b)-branchRevenue(a));
+  const best=ranked[0], worst=ranked[ranked.length-1];
+  const fastest=[...BRANCHES].sort((a,b)=>growth(b)-growth(a))[0];
+  return `EXECUTIVE ANALYSIS — ModPi Restaurant PH (H1 2026)
+
+Overall Health: STRONG. The network of ${BRANCHES.length} branches generated ₱${TOTAL.revenue.toFixed(2)}M in revenue with ₱${TOTAL.profit.toFixed(2)}M net profit (${(TOTAL.profit/TOTAL.revenue*100).toFixed(1)}% margin) while serving ${TOTAL.customers.toLocaleString()} customers at a ${TOTAL.rating.toFixed(2)}★ average rating.
+
+Top Performer: ${best.name} leads with ₱${branchRevenue(best).toFixed(2)}M revenue and a premium menu mix driving higher ticket sizes.
+
+Fastest Growing: ${fastest.name} at +${growth(fastest).toFixed(1)}% Jan→Jun, showing strong momentum in a newer market.
+
+Underperformer: ${worst.name} trails at ₱${branchRevenue(worst).toFixed(2)}M with the thinnest margins — regional pricing and menu localization are working (Curacha, Satti) but volume remains low.
+
+Recommendations:
+1. Replicate the Makati premium-item strategy (Wagyu line, truffle items) in Cebu and Pampanga where ticket sizes support upselling.
+2. Launch targeted delivery-app promotions for Zamboanga and CDO to lift customer volume ~15% before considering cost cuts.
+3. Fast-track a second Tagaytay-style tourist-corridor branch; its 4.7★ rating and +38% growth profile indicates the leisure-market format outperforms.`;
+}
+
+/* ================= INIT ================= */
+showOverview();
+</script>
+</body>
+</html>
