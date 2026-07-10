@@ -9,9 +9,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#f4f6f9; --panel:#ffffff; --panel2:#f8fafc; --border:#e2e8f0;
-    --text:#1e293b; --muted:#64748b; --accent:#ff6b35; --accent2:#e8590c;
-    --green:#16a34a; --red:#dc2626;
+    /* softened palette — muted teal accent, warm neutral surfaces, gentler contrast */
+    --bg:#eef2f1; --panel:#fbfcfb; --panel2:#f3f7f6; --border:#dde6e3;
+    --text:#2b353d; --muted:#69787e; --accent:#2a9d8f; --accent2:#1f7a70;
+    --green:#2e9e63; --red:#c65b5b;
   }
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
   body{background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -36,7 +37,7 @@
   .aside-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
   .btn{border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s}
-  .btn-primary{background:linear-gradient(135deg,var(--accent),#ff8c42);color:#fff;width:100%}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),#4fb3a5);color:#fff;width:100%}
   .btn-primary:hover{filter:brightness(1.1)}
   .btn-primary:disabled{opacity:.55;cursor:wait}
   .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
@@ -52,7 +53,7 @@
   .branch-title{display:flex;align-items:center;gap:10px;margin-bottom:4px}
   .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
   .b-excellent{background:rgba(61,220,132,.15);color:var(--green)}
-  .b-good{background:rgba(255,179,71,.15);color:var(--accent2)}
+  .b-good{background:rgba(222,168,62,.16);color:#a3762a}
   .b-attention{background:rgba(255,92,92,.15);color:var(--red)}
   .sub{font-size:11.5px;color:var(--muted);margin-bottom:12px}
 
@@ -72,7 +73,7 @@
   .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  .marker-pin{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);background:linear-gradient(135deg,var(--accent),var(--accent2));border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.5)}
+  .marker-pin{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);background:linear-gradient(135deg,var(--accent),var(--accent2));border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.3)}
   .marker-pin span{transform:rotate(45deg);font-weight:800;font-size:12px;color:#fff}
   .leaflet-popup-content-wrapper{background:var(--panel2);color:var(--text);border-radius:10px;border:1px solid var(--border)}
   .leaflet-popup-tip{background:var(--panel2)}
@@ -113,8 +114,9 @@
    CONFIG — Ollama Cloud API
    ⚠ Demo only: never ship real API keys in client-side code.
 ========================================================= */
-const OLLAMA_API_URL = "https://ollama.com/api/chat";
-const OLLAMA_API_KEY = "73397312852443f6b42263f5f6f6fa69.DF8HJ2jx2QFI926WedkXZGEQ";
+/* AI calls go through the portfolio's same-origin proxy — the API key
+   stays server-side on Cloudflare and is never exposed here. */
+const OLLAMA_API_URL = "/api/ollama/chat";
 const OLLAMA_MODEL   = "gemma4:cloud";
 
 /* ================= SAMPLE DATA (demo) ================= */
@@ -306,7 +308,7 @@ async function analyzeBusiness(){
   try{
     const res=await fetch(OLLAMA_API_URL,{
       method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+OLLAMA_API_KEY},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify({model:OLLAMA_MODEL,stream:false,messages:[{role:"user",content:businessSummaryPrompt()}]})
     });
     if(!res.ok) throw new Error("API responded "+res.status);
