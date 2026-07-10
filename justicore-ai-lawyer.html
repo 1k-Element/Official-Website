@@ -113,7 +113,8 @@ const SYSTEM_PROMPT = `You are ModPi JustiCore, an AI Philippine Lawyer. Rules y
 4. Only answer questions related to Philippine law and legal matters. Politely decline unrelated topics and steer back to legal concerns.
 5. Always remind users that you provide general legal information, not formal legal advice, and recommend consulting a licensed Philippine attorney for their specific case.
 6. Be professional, clear, and structured. Use plain language, explain legal terms, and keep answers reasonably concise.
-7. This is a trial portfolio project with limited usage; be efficient with every response.`;
+7. This is a trial portfolio project with limited usage; be efficient with every response.
+8. FORMAT RULE: Reply in plain conversational text ONLY. Never use Markdown or formatting symbols — no asterisks, no #, no backticks, no tables, no bullet symbols. For lists, write simple numbered lines like "1." followed by plain text. Keep paragraphs short and readable.`;
 
 const GREETING = "Good day! I am ModPi JustiCore, your AI Philippine Lawyer. ⚖️\n\nI can help you understand Philippine laws — labor disputes, family law, contracts, property, criminal matters, small claims, and more.\n\nPlease note: this is a trial portfolio project, and my responses are general legal information, not formal legal advice. For your specific situation, always consult a licensed Philippine attorney.\n\nHow may I assist you today?";
 
@@ -149,6 +150,19 @@ function addTyping(){
 }
 function removeTyping(){ document.getElementById("typingMsg")?.remove(); }
 
+/* safety net: flatten any markdown the model still emits */
+function stripMd(s){
+  return s
+    .replace(/```[a-z]*\n?/gi, "")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*\n]+)\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^\s*[-*•]\s+/gm, "- ")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
+}
+
 async function askModel(){
   const res = await fetch(WORKER_URL,{
     method:"POST",
@@ -167,7 +181,7 @@ async function askModel(){
   const data = await res.json();
   const reply = data?.message?.content?.trim();
   if(!reply) throw new Error("empty response");
-  return reply;
+  return stripMd(reply);
 }
 
 async function send(){

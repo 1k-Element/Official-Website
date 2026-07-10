@@ -36,11 +36,21 @@
   .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
   /* Layout shell */
-  #app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:100vh;overflow:hidden}
+  #app{display:grid;grid-template-columns:1fr;grid-template-rows:100vh;overflow:hidden}
   aside{
     background:var(--graphite);color:#E7E9EC;display:flex;flex-direction:column;
     border-right:3px solid var(--hivis);
+    position:fixed;top:0;left:0;bottom:0;width:256px;z-index:60;
+    transform:translateX(-105%);transition:transform .25s ease;
+    box-shadow:0 0 40px rgba(27,31,36,.35);
   }
+  aside.open{transform:none}
+  #navBackdrop{position:fixed;inset:0;background:rgba(27,31,36,.45);z-index:55;
+    opacity:0;pointer-events:none;transition:opacity .25s}
+  #navBackdrop.show{opacity:1;pointer-events:auto}
+  #menuToggle{border:1px solid var(--line);background:var(--paper);border-radius:8px;
+    font-size:19px;line-height:1;padding:8px 12px;box-shadow:var(--shadow);flex:none}
+  #menuToggle:hover{background:#f3f4f0}
   .brand{padding:18px 18px 14px;border-bottom:1px solid #2A2F36}
   .brand .logo{
     font-family:var(--mono);font-weight:700;font-size:20px;letter-spacing:-.5px;
@@ -247,10 +257,6 @@
   .chart-empty{padding:34px 8px;text-align:center;color:var(--steel-2);font-size:14px}
 
   @media (max-width:920px){
-    #app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
-    aside{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:3px solid var(--hivis)}
-    nav{flex-direction:row;flex-wrap:wrap;flex:1}
-    .storage-note,.brand .sub{display:none}
     .sell-wrap{grid-template-columns:1fr}
     .register{position:static}
     main .grid{grid-template-columns:1fr!important}
@@ -261,6 +267,7 @@
 </head>
 <body>
 <div id="app">
+  <div id="navBackdrop"></div>
   <aside>
     <div class="brand">
       <div class="logo"><span class="dot"></span>ModPi Sample</div>
@@ -282,7 +289,8 @@
 
   <main>
     <div class="topbar">
-      <div>
+      <button id="menuToggle" title="Menu" aria-label="Open menu">☰</button>
+      <div style="flex:1">
         <div class="crumb" id="crumb">Analytics</div>
         <h1 id="pageTitle">Reports</h1>
       </div>
@@ -744,11 +752,15 @@ async function saveSettings(silent){
 }
 
 /* ---------- navigation ---------- */
+function openNav(){ document.querySelector("aside").classList.add("open"); document.getElementById("navBackdrop").classList.add("show"); }
+function closeNav(){ document.querySelector("aside").classList.remove("open"); document.getElementById("navBackdrop").classList.remove("show"); }
 const TITLES = {sell:["Register","New Sale"],products:["Inventory","Products"],
   customers:["Accounts","Customers"],expenses:["Operations","Operational Expenses"],
   reports:["Analytics","Reports"],data:["System","Data & Backup"]};
 function bindNav(){
-  $$("nav button").forEach(b=> b.onclick=()=>go(b.dataset.view));
+  $$("nav button").forEach(b=> b.onclick=()=>{ go(b.dataset.view); closeNav(); });
+  $("#menuToggle").onclick=openNav;
+  $("#navBackdrop").onclick=closeNav;
 }
 function go(view){
   $$("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
