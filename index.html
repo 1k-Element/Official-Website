@@ -251,6 +251,38 @@ footer b{color:var(--radar);font-weight:600}
   .chat-input{padding-bottom:max(14px, env(safe-area-inset-bottom))}
   .chat-input input{font-size:16px}
 }
+
+/* ── operator portrait ── */
+.bio-wrap{display:flex;flex-direction:column-reverse;gap:26px;align-items:stretch}
+.bio-txt{flex:1;min-width:0}
+.operator{width:210px;margin:0 auto}
+.op-frame{position:relative;border:1px solid var(--line2);background:var(--panel2);padding:8px;overflow:hidden}
+.op-frame img{display:block;width:100%;aspect-ratio:9/10;object-fit:cover;filter:grayscale(35%) contrast(1.06);transition:filter .4s}
+.op-frame:hover img{filter:none}
+.op-frame::after{content:"";position:absolute;left:0;right:0;top:-40%;height:32%;pointer-events:none;z-index:2;
+  background:linear-gradient(180deg,transparent,rgba(87,227,137,.2),rgba(87,227,137,.05) 65%,transparent);
+  animation:opscan 3.4s linear infinite}
+@keyframes opscan{0%{top:-40%}100%{top:115%}}
+.op-tag{margin-top:10px;font-family:var(--mono);font-size:.6rem;font-weight:600;letter-spacing:1.8px;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px}
+.op-dot{width:7px;height:7px;border-radius:50%;background:var(--radar);box-shadow:0 0 8px var(--radar);animation:opblink 1.6s infinite}
+@keyframes opblink{50%{opacity:.25}}
+
+/* ── clickable credentials ── */
+.creds-hint{font-family:var(--mono);font-size:.6rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin:-8px 0 10px}
+.creds li.cert{cursor:pointer;transition:color .2s,padding-left .2s}
+.creds li.cert:hover{color:var(--radar);padding-left:34px}
+.creds li.cert::after{content:'⌕ VIEW';position:absolute;right:2px;top:11px;font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:1.5px;color:var(--radar);opacity:0;transition:opacity .2s}
+.creds li.cert:hover::after{opacity:1}
+
+/* ── certificate lightbox ── */
+#lightbox{position:fixed;inset:0;z-index:400;background:rgba(4,8,10,.93);display:none;align-items:center;justify-content:center;padding:30px;cursor:zoom-out}
+#lightbox.open{display:flex}
+#lightbox figure{max-width:min(880px,94vw);margin:0;cursor:default}
+#lightbox img{display:block;max-width:100%;max-height:78vh;margin:0 auto;border:1px solid var(--line2);background:#fff;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+#lightbox figcaption{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--radar);text-align:center;margin-top:14px}
+#lbClose{position:absolute;top:18px;right:22px;background:none;border:1px solid var(--line2);color:var(--text);font-family:var(--mono);font-size:.75rem;letter-spacing:1px;padding:7px 15px;cursor:pointer;transition:.2s}
+#lbClose:hover{border-color:var(--radar);color:var(--radar)}
+
 </style>
 </head>
 <body>
@@ -311,23 +343,32 @@ footer b{color:var(--radar);font-weight:600}
   <h2 class="reveal">Credentials &amp; Background</h2>
   <div class="about-grid">
     <div class="bio hud reveal">
-      <h3>Military Technology Innovator &amp; AI Engineer</h3>
-      <p>Deep proficiency in <strong>artificial intelligence, automation, and IoT/robotics</strong> —
-        building practical technologies that transform complex problems into efficient, reliable solutions.</p>
-      <p><strong>8 years of freelance innovation services and consulting</strong> for 150+ clients across AI,
-        automation, and thesis projects, and <strong>4 years of innovating technologies for the military</strong>,
-        with 20+ successful innovations designed and deployed for mission-critical field use.</p>
-      <p class="quote">"We create practical technologies that optimize processes, enhance decision-making,
-        and drive meaningful progress."</p>
+      <div class="bio-wrap">
+        <div class="bio-txt">
+          <h3>Military Technology Innovator &amp; AI Engineer</h3>
+          <p>Deep proficiency in <strong>artificial intelligence, automation, and IoT/robotics</strong> —
+            building practical technologies that transform complex problems into efficient, reliable solutions.</p>
+          <p><strong>8 years of freelance innovation services and consulting</strong> for 150+ clients across AI,
+            automation, and thesis projects, and <strong>4 years of innovating technologies for the military</strong>,
+            with 20+ successful innovations designed and deployed for mission-critical field use.</p>
+          <p class="quote">"We create practical technologies that optimize processes, enhance decision-making,
+            and drive meaningful progress."</p>
+        </div>
+        <div class="operator">
+          <div class="op-frame hud"><img src="me.jpg" alt="ModPi Tech Founder"></div>
+          <div class="op-tag"><span class="op-dot"></span>INNOVATOR // ENGINEER // AGE: <span id="opAge"></span></div>
+        </div>
+      </div>
     </div>
     <div class="about-side">
       <div class="creds hud reveal">
         <h4>Credentials &amp; Eligibilities</h4>
+        <div class="creds-hint">// click to view certificate</div>
         <ul>
-          <li>IBM Certified AI Engineer</li>
-          <li>BS Computer Science — AI Specialization, University of the People</li>
-          <li>CSC Career Service Professional Eligible</li>
-          <li>Mechatronics Servicing NC II Holder</li>
+          <li class="cert" data-img="certs/ibm-ai-engineer.jpg" data-title="IBM Certified AI Engineer">IBM Certified AI Engineer</li>
+          <li class="cert" data-img="certs/bscs-diploma.jpg" data-title="BS Computer Science · University of the People">BS Computer Science, University of the People</li>
+          <li class="cert" data-img="certs/csc-professional.jpg" data-title="CSC Career Service Professional Eligibility">CSC Career Service Professional Eligible</li>
+          <li class="cert" data-img="certs/mechatronics-nc2.jpg" data-title="Mechatronics Servicing NC II">Mechatronics Servicing NC II Holder</li>
         </ul>
       </div>
       <div class="stats">
@@ -491,6 +532,15 @@ footer b{color:var(--radar);font-weight:600}
 <footer>© 2026 <b>MODPI TECH</b> · ENGINEERING INNOVATION. SOLVING REAL PROBLEMS.</footer>
 
 <!-- CHATBOT -->
+<!-- CERTIFICATE LIGHTBOX -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Certificate viewer">
+  <button id="lbClose">✕ CLOSE</button>
+  <figure>
+    <img id="lbImg" src="" alt="Certificate">
+    <figcaption id="lbCap"></figcaption>
+  </figure>
+</div>
+
 <button id="chatFab" title="ModPi Assistant">🤖</button>
 <div id="chatPanel">
   <div class="chat-head">
@@ -740,6 +790,34 @@ async function send(){
 }
 sendB.onclick = send;
 input.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
+
+/* ── auto-computed age (born Oct 1, 2000) ── */
+(function(){
+  const b = new Date(2000, 9, 1), n = new Date();
+  let age = n.getFullYear() - b.getFullYear();
+  if (n.getMonth() < 9 || (n.getMonth() === 9 && n.getDate() < 1)) age--;
+  const el = document.getElementById('opAge');
+  if (el) el.textContent = age;
+})();
+
+/* ── certificate lightbox ── */
+(function(){
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lbImg');
+  const lbCap = document.getElementById('lbCap');
+  document.querySelectorAll('.creds li.cert').forEach(li => {
+    li.addEventListener('click', () => {
+      lbImg.src = li.dataset.img;
+      lbImg.alt = li.dataset.title;
+      lbCap.textContent = li.dataset.title;
+      lb.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+  function lbHide(){ lb.classList.remove('open'); document.body.style.overflow = ''; }
+  lb.addEventListener('click', e => { if(e.target === lb || e.target.id === 'lbClose') lbHide(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') lbHide(); });
+})();
 </script>
 </body>
 </html>
