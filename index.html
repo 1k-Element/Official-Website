@@ -42,7 +42,7 @@ header.site{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(7,11
 nav{display:flex;align-items:center;justify-content:space-between;padding:13px 6vw}
 .logo{font-family:'Saira Stencil One',var(--mono);font-weight:400;font-size:1.1rem;color:var(--text);text-decoration:none;letter-spacing:.5px}
 .logo em{font-style:normal;color:var(--radar)}
-.logo small{display:block;font-family:var(--mono);font-weight:500;font-size:.55rem;font-weight:500;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase}
+.logo small{display:block;font-family:var(--mono);font-size:.55rem;font-weight:500;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase}
 .nav-links{display:flex;gap:26px;list-style:none}
 .nav-links a{font-family:var(--mono);font-size:.78rem;font-weight:500;letter-spacing:.5px;color:var(--muted);text-decoration:none;transition:color .2s;text-transform:uppercase}
 .nav-links a:hover{color:var(--radar)}
@@ -263,7 +263,7 @@ footer b{color:var(--radar);font-weight:600}
   background:linear-gradient(180deg,transparent,rgba(87,227,137,.2),rgba(87,227,137,.05) 65%,transparent);
   animation:opscan 3.4s linear infinite}
 @keyframes opscan{0%{top:-40%}100%{top:115%}}
-.op-tag{margin-top:10px;font-family:var(--mono);font-size:.6rem;font-weight:600;letter-spacing:1.8px;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px}
+.op-tag{margin-top:10px;font-family:var(--mono);font-size:.6rem;font-weight:600;letter-spacing:1.8px;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
 .op-dot{width:7px;height:7px;border-radius:50%;background:var(--radar);box-shadow:0 0 8px var(--radar);animation:opblink 1.6s infinite}
 @keyframes opblink{50%{opacity:.25}}
 
@@ -271,8 +271,29 @@ footer b{color:var(--radar);font-weight:600}
 .creds-hint{font-family:var(--mono);font-size:.6rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin:-8px 0 10px}
 .creds li.cert{cursor:pointer;transition:color .2s,padding-left .2s}
 .creds li.cert:hover{color:var(--radar);padding-left:34px}
-.creds li.cert::after{content:'⌕ VIEW';position:absolute;right:2px;top:11px;font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:1.5px;color:var(--radar);opacity:0;transition:opacity .2s}
+.creds li.cert::after{content:'\2315 VIEW';position:absolute;right:2px;top:11px;font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:1.5px;color:var(--radar);opacity:0;transition:opacity .2s}
 .creds li.cert:hover::after{opacity:1}
+
+/* ── svg icon sizing ── */
+.d-ic svg{width:24px;height:24px;color:var(--radar);display:block}
+.m-lbl svg{width:14px;height:14px;color:var(--radar);flex:none}
+#chatFab svg{width:28px;height:28px}
+
+/* ── sample program photos ── */
+.proj .ph{padding:0;overflow:hidden}
+.proj .ph img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.9) contrast(1.05)}
+
+/* ── phone mode: expandable project cards ── */
+@media(max-width:760px){
+  .dom{display:flex;align-items:center;flex-wrap:wrap;gap:12px 14px;padding:14px 40px 14px 16px;cursor:pointer}
+  .dom p,.dom .d-tag,.dom .d-code{display:none}
+  .dom .d-top{margin-bottom:0}
+  .dom h3{margin-bottom:0;font-size:.92rem;flex:1;min-width:0}
+  .dom::after{content:'\203A';position:absolute;right:16px;top:12px;font-family:var(--mono);color:var(--radar);font-size:1.1rem;font-weight:700;transition:transform .25s}
+  .dom.open::after{transform:rotate(90deg)}
+  .dom.open p{display:block;flex-basis:100%;margin:0}
+  .dom.open .d-tag{display:inline-block;margin-top:0}
+}
 
 /* ── certificate lightbox ── */
 #lightbox{position:fixed;inset:0;z-index:400;background:rgba(4,8,10,.93);display:none;align-items:center;justify-content:center;padding:30px;cursor:zoom-out}
@@ -282,7 +303,6 @@ footer b{color:var(--radar);font-weight:600}
 #lightbox figcaption{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--radar);text-align:center;margin-top:14px}
 #lbClose{position:absolute;top:18px;right:22px;background:none;border:1px solid var(--line2);color:var(--text);font-family:var(--mono);font-size:.75rem;letter-spacing:1px;padding:7px 15px;cursor:pointer;transition:.2s}
 #lbClose:hover{border-color:var(--radar);color:var(--radar)}
-
 </style>
 </head>
 <body>
@@ -345,28 +365,28 @@ footer b{color:var(--radar);font-weight:600}
     <div class="bio hud reveal">
       <div class="bio-wrap">
         <div class="bio-txt">
-          <h3>Military Technology Innovator &amp; AI Engineer</h3>
-          <p>Deep proficiency in <strong>artificial intelligence, automation, and IoT/robotics</strong> —
-            building practical technologies that transform complex problems into efficient, reliable solutions.</p>
-          <p><strong>8 years of freelance innovation services and consulting</strong> for 150+ clients across AI,
-            automation, and thesis projects, and <strong>4 years of innovating technologies for the military</strong>,
-            with 20+ successful innovations designed and deployed for mission-critical field use.</p>
-          <p class="quote">"We create practical technologies that optimize processes, enhance decision-making,
-            and drive meaningful progress."</p>
+      <h3>Military Technology Innovator &amp; AI Engineer</h3>
+      <p>Deep proficiency in <strong>artificial intelligence, automation, and IoT/robotics</strong> —
+        building practical technologies that transform complex problems into efficient, reliable solutions.</p>
+      <p><strong>8 years of freelance innovation services and consulting</strong> for 150+ clients across AI,
+        automation, and thesis projects, and <strong>4 years of innovating technologies for the military</strong>,
+        with 20+ successful innovations designed and deployed for mission-critical field use.</p>
+      <p class="quote">"We create practical technologies that optimize processes, enhance decision-making,
+        and drive meaningful progress."</p>
         </div>
         <div class="operator">
           <div class="op-frame hud"><img src="me.jpg" alt="ModPi Tech Founder"></div>
-          <div class="op-tag"><span class="op-dot"></span>INNOVATOR // ENGINEER // AGE: <span id="opAge"></span></div>
+          <div class="op-tag"><span class="op-dot"></span>Engineer // AGE:<span id="opAge"></span></div>
         </div>
       </div>
     </div>
     <div class="about-side">
       <div class="creds hud reveal">
-        <h4>Credentials &amp; Eligibilities</h4>
+        <h4>Major Professional Eligibilities</h4>
         <div class="creds-hint">// click to view certificate</div>
         <ul>
           <li class="cert" data-img="certs/ibm-ai-engineer.jpg" data-title="IBM Certified AI Engineer">IBM Certified AI Engineer</li>
-          <li class="cert" data-img="certs/bscs-diploma.jpg" data-title="BS Computer Science · University of the People">BS Computer Science, University of the People</li>
+          <li class="cert" data-img="certs/bscs-diploma.jpg" data-title="BS Computer Science &middot; University of the People">BS Computer Science, University of the People</li>
           <li class="cert" data-img="certs/csc-professional.jpg" data-title="CSC Career Service Professional Eligibility">CSC Career Service Professional Eligible</li>
           <li class="cert" data-img="certs/mechatronics-nc2.jpg" data-title="Mechatronics Servicing NC II">Mechatronics Servicing NC II Holder</li>
         </ul>
@@ -386,39 +406,39 @@ footer b{color:var(--radar);font-weight:600}
   <p class="sec-intro reveal">A look at the top projects ModPi Tech currently has deployed with the Armed Forces of the Philippines (AFP).
     Presented as generalized capability areas — operational specifics remain confidential under NDA.</p>
   <div class="dom-grid">
-    <div class="dom hud reveal"><div class="d-top"><span class="d-ic">🧠</span><span class="d-code">DOM-01</span></div>
+    <div class="dom hud reveal"><div class="d-top"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></span><span class="d-code">DOM-01</span></div>
       <h3>Facial Recognition &amp; Identity Matching</h3>
       <p>High-accuracy face matching for verification and access against enrolled identities.</p>
       <span class="d-tag">Computer Vision</span></div>
-    <div class="dom hud reveal"><div class="d-top"><span class="d-ic">🎙️</span><span class="d-code">DOM-02</span></div>
+    <div class="dom hud reveal"><div class="d-top"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></span><span class="d-code">DOM-02</span></div>
       <h3>Speech Transcription &amp; Translation</h3>
       <p>Rapid multi-language audio transcription and translation for briefings and reporting.</p>
       <span class="d-tag">Speech AI</span></div>
-    <div class="dom hud reveal"><div class="d-top"><span class="d-ic">🔒</span><span class="d-code">DOM-03</span></div>
+    <div class="dom hud reveal"><div class="d-top"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span class="d-code">DOM-03</span></div>
       <h3>Air-Gapped LLM + RAG</h3>
       <p>Fully offline, secured language models with retrieval over private documents — no data leaves the network.</p>
       <span class="d-tag">Secure AI</span></div>
-    <div class="dom hud reveal"><div class="d-top"><span class="d-ic">🛡️</span><span class="d-code">DOM-04</span></div>
+    <div class="dom hud reveal"><div class="d-top"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span><span class="d-code">DOM-04</span></div>
       <h3>Synthetic Media R&amp;D &amp; Detection</h3>
       <p>Research into generative video and voice — and, critically, the tooling to detect and counter it.</p>
       <span class="d-tag">Detection / Red-Team</span></div>
-    <div class="dom hud reveal"><div class="d-top"><span class="d-ic">🖐️</span><span class="d-code">DOM-05</span></div>
+    <div class="dom hud reveal"><div class="d-top"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg></span><span class="d-code">DOM-05</span></div>
       <h3>Multimodal Biometric Access</h3>
       <p>Layered fingerprint + facial authentication for secure facility and device access control.</p>
       <span class="d-tag">Biometrics</span></div>
-    <div class="dom hud reveal"><div class="d-top"><span class="d-ic">🗺️</span><span class="d-code">DOM-06</span></div>
+    <div class="dom hud reveal"><div class="d-top"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg></span><span class="d-code">DOM-06</span></div>
       <h3>Automated Geospatial Plotting</h3>
       <p>Turning written field reports into instant map plots and situational overlays.</p>
       <span class="d-tag">GIS / Automation</span></div>
-    <div class="dom hud reveal"><div class="d-top"><span class="d-ic">📡</span><span class="d-code">DOM-07</span></div>
+    <div class="dom hud reveal"><div class="d-top"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10a7.31 7.31 0 0 0 10 10Z"/><path d="m9 15 3-3"/><path d="M17 13a6 6 0 0 0-6-6"/><path d="M21 13A10 10 0 0 0 11 3"/></svg></span><span class="d-code">DOM-07</span></div>
       <h3>Covert &amp; Concealed Sensing</h3>
       <p>Discreet sensing packages integrated into everyday form factors for authorized monitoring.</p>
       <span class="d-tag">Sensing</span></div>
-    <div class="dom hud reveal"><div class="d-top"><span class="d-ic">🚫</span><span class="d-code">DOM-08</span></div>
+    <div class="dom hud reveal"><div class="d-top"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg></span><span class="d-code">DOM-08</span></div>
       <h3>RF Awareness &amp; Counter-UAS</h3>
       <p>Radio-frequency awareness and counter-drone capability for airspace and signal protection.</p>
       <span class="d-tag">RF / EW</span></div>
-    <div class="dom hud reveal"><div class="d-top"><span class="d-ic">📶</span><span class="d-code">DOM-09</span></div>
+    <div class="dom hud reveal"><div class="d-top"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg></span><span class="d-code">DOM-09</span></div>
       <h3>Wireless Security &amp; Red-Team</h3>
       <p>Authorized assessment tooling to probe and harden wireless networks against intrusion.</p>
       <span class="d-tag">Security Assessment</span></div>
@@ -433,7 +453,7 @@ footer b{color:var(--radar);font-weight:600}
   <p class="sec-intro reveal">Don't just read about it — operate it. These are working systems you can
     interact with right now.</p>
   <div class="demo-grid">
-    <div class="proj hud demo reveal"><div class="ph">⚡</div><div class="body">
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-energy.jpg" alt="LIVE Energy Monitoring System" loading="lazy"></div><div class="body">
       <div class="id">PRG-001 · IoT / ENERGY <span class="live-tag">● LIVE</span></div>
       <h3>LIVE Energy Monitoring System</h3>
       <p>A real IoT energy monitor installed at our house — streaming voltage, current, power factor,
@@ -441,7 +461,7 @@ footer b{color:var(--radar);font-weight:600}
       <div class="tags"><span class="tag">IoT</span><span class="tag">Blynk Cloud</span><span class="tag">Realtime</span></div>
       <a class="demo-btn" href="#energy">View Live Data ↓</a>
     </div></div>
-    <div class="proj hud demo reveal"><div class="ph">⚖️</div><div class="body">
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-justicore.jpg" alt="JustiCore — AI Philippine Lawyer" loading="lazy"></div><div class="body">
       <div class="id">PRG-002 · AI / LEGAL <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
       <h3>JustiCore — AI Philippine Lawyer</h3>
       <p>An AI legal assistant grounded in Philippine law — the Constitution, Civil Code, Labor Code,
@@ -449,7 +469,7 @@ footer b{color:var(--radar);font-weight:600}
       <div class="tags"><span class="tag">AI Chat</span><span class="tag">PH Law</span><span class="tag">LLM</span></div>
       <a class="demo-btn" href="justicore-ai-lawyer.html" target="_blank" rel="noopener">Launch Demo ↗</a>
     </div></div>
-    <div class="proj hud demo reveal"><div class="ph">🧾</div><div class="body">
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-pos.jpg" alt="Hardware Shop POS &amp; Register" loading="lazy"></div><div class="body">
       <div class="id">PRG-003 · BUSINESS SOFTWARE <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
       <h3>Hardware Shop POS &amp; Register</h3>
       <p>A complete offline point-of-sale system — sales register, inventory tracking, low-stock alerts,
@@ -457,7 +477,7 @@ footer b{color:var(--radar);font-weight:600}
       <div class="tags"><span class="tag">POS</span><span class="tag">Offline-first</span><span class="tag">Reporting</span></div>
       <a class="demo-btn" href="pos.html" target="_blank" rel="noopener">Launch Demo ↗</a>
     </div></div>
-    <div class="proj hud demo reveal"><div class="ph">🗺️</div><div class="body">
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-franchise.jpg" alt="Restaurant Franchise Tracker" loading="lazy"></div><div class="body">
       <div class="id">PRG-004 · GIS / BUSINESS <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
       <h3>Restaurant Franchise Tracker</h3>
       <p>A PH franchise tracking system for a restaurant chain — branches plotted on a live map with
@@ -482,11 +502,11 @@ footer b{color:var(--radar);font-weight:600}
 
   <div class="energy-grid reveal">
     <div class="metric hero-metric hud">
-      <div class="m-lbl">⚡ Active Power</div>
+      <div class="m-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg> Active Power</div>
       <div class="m-val"><span id="mPower">—</span><small>W</small></div>
     </div>
     <div class="metric">
-      <div class="m-lbl">🔌 Voltage</div>
+      <div class="m-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg> Voltage</div>
       <div class="m-val"><span id="mVolt">—</span><small>V</small></div>
     </div>
     <div class="metric">
@@ -494,19 +514,19 @@ footer b{color:var(--radar);font-weight:600}
       <div class="m-val"><span id="mCurr">—</span><small>A</small></div>
     </div>
     <div class="metric">
-      <div class="m-lbl">📈 Power Factor</div>
+      <div class="m-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Power Factor</div>
       <div class="m-val"><span id="mPF">—</span></div>
     </div>
     <div class="metric">
-      <div class="m-lbl">🎚️ Frequency</div>
+      <div class="m-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg> Frequency</div>
       <div class="m-val"><span id="mFreq">—</span><small>Hz</small></div>
     </div>
     <div class="metric">
-      <div class="m-lbl">🗓️ Consumption Today</div>
+      <div class="m-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Consumption Today</div>
       <div class="m-val"><span id="mKwh">—</span><small>kWh</small></div>
     </div>
     <div class="metric">
-      <div class="m-lbl">💰 Energy Cost Today</div>
+      <div class="m-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/></svg> Energy Cost Today</div>
       <div class="m-val"><span id="mCost">—</span></div>
     </div>
   </div>
@@ -534,14 +554,14 @@ footer b{color:var(--radar);font-weight:600}
 <!-- CHATBOT -->
 <!-- CERTIFICATE LIGHTBOX -->
 <div id="lightbox" role="dialog" aria-modal="true" aria-label="Certificate viewer">
-  <button id="lbClose">✕ CLOSE</button>
+  <button id="lbClose">&#10005; CLOSE</button>
   <figure>
     <img id="lbImg" src="" alt="Certificate">
     <figcaption id="lbCap"></figcaption>
   </figure>
 </div>
 
-<button id="chatFab" title="ModPi Assistant">🤖</button>
+<button id="chatFab" title="ModPi Assistant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></button>
 <div id="chatPanel">
   <div class="chat-head">
     <span class="dot"></span>
@@ -798,6 +818,19 @@ input.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
   if (n.getMonth() < 9 || (n.getMonth() === 9 && n.getDate() < 1)) age--;
   const el = document.getElementById('opAge');
   if (el) el.textContent = age;
+})();
+
+/* ── phone mode: expandable project cards ── */
+(function(){
+  const isPhone = () => window.matchMedia('(max-width:760px)').matches;
+  document.querySelectorAll('.dom').forEach(d => {
+    d.addEventListener('click', () => {
+      if(!isPhone()) return;
+      const wasOpen = d.classList.contains('open');
+      document.querySelectorAll('.dom.open').forEach(o => o.classList.remove('open'));
+      if(!wasOpen) d.classList.add('open');
+    });
+  });
 })();
 
 /* ── certificate lightbox ── */
