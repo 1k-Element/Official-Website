@@ -673,7 +673,7 @@ async function seedSampleSales(){
       const disc = Math.random()<0.15 ? Math.round(sub*0.05*100)/100 : 0;
       const total = Math.max(0, sub-disc);
       const pay = cust && tier!=="retail" && Math.random()<0.3 ? "On Account" : pick(["Cash","Cash","Card","Transfer"]);
-      const sale = { id:uid("s"), ts: tsDaysAgo(d, randInt(8,17)),
+      const sale = { id:uid("s"), seeded:true, ts: tsDaysAgo(d, randInt(8,17)),
         items, tier, customerId: cust?cust.id:null, customerName: cust?cust.name:"Walk-in",
         subtotal:sub, discount:disc, total, cost, profit: total-cost, pay };
       await Store.put("sales", sale);
@@ -705,9 +705,25 @@ async function seedSampleExpenses(){
     [2,"Supplies","Price gun labels & signage",38.90,"Cash",false],
   ];
   for(const r of rows){
-    await Store.put("expenses", { id:uid("e"), ts: tsDaysAgo(r[0], randInt(9,16)),
+    await Store.put("expenses", { id:uid("e"), seeded:true, ts: tsDaysAgo(r[0], randInt(9,16)),
       category:r[1], description:r[2], amount:r[3], method:r[4], recurring:!!r[5] });
   }
+}
+
+/* ---------- keep sample data anchored to "today" ---------- */
+function todayStart(){ const t=new Date(); t.setHours(0,0,0,0); return t.getTime(); }
+async function rollSeedData(){
+  // Shift seeded demo sales/expenses forward by whole days so the sample
+  // history always ends "today", no matter when the page was first opened.
+  const DAY=86400000;
+  const anchor=State.settings.seedAnchor;
+  if(!anchor) return;
+  const shift=Math.floor((todayStart()-anchor)/DAY)*DAY;
+  if(shift<=0) return;
+  for(const s of State.sales){ if(s.seeded){ s.ts+=shift; await Store.put("sales",s); } }
+  for(const e of State.expenses){ if(e.seeded){ e.ts+=shift; await Store.put("expenses",e); } }
+  State.settings.seedAnchor=anchor+shift;
+  await saveSettings(true);
 }
 
 /* ---------- load ---------- */
@@ -724,6 +740,7 @@ async function boot(){
   const s = await Store.all("settings");
   if(s.length){ State.settings = Object.assign(State.settings, s[0]); }
 
+  let seededNow=false;
   if(State.products.length===0){
     for(const r of SEED_PRODUCTS){ await Store.put("products", seedProduct(r)); }
     State.products = await Store.all("products");
@@ -733,12 +750,16 @@ async function boot(){
     State.customers = await Store.all("customers");
     await seedSampleSales();
     State.sales = await Store.all("sales");
+    seededNow=true;
   }
   if(State.expenses.length===0){
     await seedSampleExpenses();
     State.expenses = await Store.all("expenses");
+    seededNow=true;
   }
-  if(!s.length){ await saveSettings(true); }
+  if(seededNow){ State.settings.seedAnchor=todayStart(); }
+  if(!s.length || seededNow){ await saveSettings(true); }
+  await rollSeedData();
 
   bindNav(); bindSell(); bindProducts(); bindCustomers(); bindExpenses(); bindReports(); bindData();
   renderAll();
