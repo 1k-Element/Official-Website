@@ -89,16 +89,26 @@ h1 .grad{background:linear-gradient(90deg,var(--radar),var(--cyan));-webkit-back
 .hstat .lbl{font-family:var(--mono);font-size:.62rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-top:4px}
 
 .radar-wrap{display:flex;align-items:center;justify-content:center}
-.radar{position:relative;width:min(320px,80%);aspect-ratio:1;border-radius:50%;border:1px solid var(--line2);
+.radar{position:relative;width:min(320px,80%);aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  perspective:1000px;filter:drop-shadow(0 0 28px rgba(87,227,137,.2))}
+.radar .scene{position:relative;width:100%;height:100%;transform-style:preserve-3d;display:flex;align-items:center;justify-content:center}
+.radar .worm{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:rotateX(68deg) translateZ(-30px);transform-style:preserve-3d;pointer-events:none}
+.radar .worm .donut{position:absolute;width:96%;aspect-ratio:1;border-radius:50%;border:14px solid rgba(87,227,137,.32);
+  box-shadow:0 0 34px rgba(87,227,137,.5), inset 0 0 34px rgba(87,227,137,.5);animation:donutspin 10s linear infinite}
+.radar .worm .ring{position:absolute;width:96%;aspect-ratio:1;border-radius:50%;border:1.5px solid rgba(87,227,137,.55);animation:wormpull 3.6s linear infinite}
+.radar .worm .ring.r2{animation-delay:-1.2s}.radar .worm .ring.r3{animation-delay:-2.4s}
+.radar .poly{position:relative;width:230px;height:230px;transform-style:preserve-3d;animation:polytumble 14s linear infinite}
+.radar .pf{position:absolute;left:50%;top:50%;border:1px solid rgba(87,227,137,.5);box-shadow:inset 0 0 16px rgba(87,227,137,.12);
   background:
-    radial-gradient(circle, transparent 0 32%, rgba(43,62,71,.5) 32% calc(32% + 1px), transparent 0 65%, rgba(43,62,71,.5) 65% calc(65% + 1px), transparent 0),
-    linear-gradient(rgba(43,62,71,.5),rgba(43,62,71,.5)) center/1px 100% no-repeat,
-    linear-gradient(rgba(43,62,71,.5),rgba(43,62,71,.5)) center/100% 1px no-repeat,
-    radial-gradient(circle at 50% 50%, rgba(87,227,137,.05), transparent 70%)}
-.radar .sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg, rgba(87,227,137,.35), transparent 22%);animation:sweep 5s linear infinite}
-@keyframes sweep{to{transform:rotate(360deg)}}
-.radar .blip{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--radar);box-shadow:0 0 10px var(--radar);animation:pulse 2.4s infinite}
-.radar .blip.b1{top:26%;left:60%}.radar .blip.b2{top:62%;left:34%;animation-delay:.9s}.radar .blip.b3{top:44%;left:74%;animation-delay:1.6s}
+    repeating-linear-gradient(0deg, rgba(87,227,137,.06) 0 1px, transparent 1px 10px),
+    linear-gradient(180deg, rgba(87,227,137,.13), rgba(87,227,137,.04))}
+.radar .pf.sq{width:90px;height:90px;margin:-45px 0 0 -45px}
+.radar .pf.tri{width:90px;height:78px;margin:-39px 0 0 -45px;border:none;box-shadow:none;
+  clip-path:polygon(50% 0,0 100%,100% 100%);background:rgba(87,227,137,.17)}
+.radar .pf.tri.dn{clip-path:polygon(50% 100%,0 0,100% 0)}
+@keyframes polytumble{from{transform:rotateX(0deg) rotateY(0deg)}to{transform:rotateX(360deg) rotateY(720deg)}}
+@keyframes donutspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes wormpull{0%{transform:scale(1.45);opacity:0}12%{opacity:.8}100%{transform:scale(.12);opacity:0}}
 .radar .tag{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.6rem;letter-spacing:2px;color:var(--muted);white-space:nowrap}
 
 .about-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:36px;align-items:start}
@@ -179,7 +189,7 @@ footer b{color:var(--radar);font-weight:600}
 
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s,transform .6s}
 .reveal.on{opacity:1;transform:none}
-@media (prefers-reduced-motion: reduce){.reveal{opacity:1;transform:none;transition:none}.radar .sweep{animation:none}}
+@media (prefers-reduced-motion: reduce){.reveal{opacity:1;transform:none;transition:none}.radar .poly,.radar .worm .ring,.radar .worm .donut{animation:none}}
 
 #chatFab{position:fixed;bottom:26px;right:26px;z-index:200;width:58px;height:58px;border-radius:50%;background:var(--radar);border:none;color:#04170c;font-size:1.4rem;cursor:pointer;box-shadow:0 8px 28px rgba(87,227,137,.35);transition:.25s;display:flex;align-items:center;justify-content:center}
 #chatFab:hover{transform:scale(1.07)}
@@ -350,9 +360,41 @@ footer b{color:var(--radar);font-weight:600}
   </div>
   <div class="radar-wrap reveal">
     <div class="radar">
-      <div class="sweep"></div>
-      <span class="blip b1"></span><span class="blip b2"></span><span class="blip b3"></span>
-      <span class="tag">SENSING · TRACKING · AWARENESS</span>
+      <div class="scene" aria-hidden="true">
+        <div class="worm">
+          <div class="donut"></div>
+          <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
+        </div>
+        <div class="poly">
+          <div class="pf sq" style="transform:rotateY(0deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(45deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(90deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(135deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(180deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(225deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(270deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(315deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateX(90deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateX(-90deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(0deg) rotateX(45deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(0deg) rotateX(-45deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(90deg) rotateX(45deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(90deg) rotateX(-45deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(180deg) rotateX(45deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(180deg) rotateX(-45deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(270deg) rotateX(45deg) translateZ(108.6px)"></div>
+          <div class="pf sq" style="transform:rotateY(270deg) rotateX(-45deg) translateZ(108.6px)"></div>
+          <div class="pf tri" style="transform:rotateY(45deg) rotateX(35.26deg) translateZ(114.7px) translateY(-13px)"></div>
+          <div class="pf tri dn" style="transform:rotateY(45deg) rotateX(-35.26deg) translateZ(114.7px) translateY(13px)"></div>
+          <div class="pf tri" style="transform:rotateY(135deg) rotateX(35.26deg) translateZ(114.7px) translateY(-13px)"></div>
+          <div class="pf tri dn" style="transform:rotateY(135deg) rotateX(-35.26deg) translateZ(114.7px) translateY(13px)"></div>
+          <div class="pf tri" style="transform:rotateY(225deg) rotateX(35.26deg) translateZ(114.7px) translateY(-13px)"></div>
+          <div class="pf tri dn" style="transform:rotateY(225deg) rotateX(-35.26deg) translateZ(114.7px) translateY(13px)"></div>
+          <div class="pf tri" style="transform:rotateY(315deg) rotateX(35.26deg) translateZ(114.7px) translateY(-13px)"></div>
+          <div class="pf tri dn" style="transform:rotateY(315deg) rotateX(-35.26deg) translateZ(114.7px) translateY(13px)"></div>
+        </div>
+      </div>
+      <span class="tag">EFFICIENCY · INNOVATION · CONNECTIVITY</span>
     </div>
   </div>
 </section>
@@ -368,9 +410,10 @@ footer b{color:var(--radar);font-weight:600}
       <h3>Military Technology Innovator &amp; AI Engineer</h3>
       <p>Deep proficiency in <strong>artificial intelligence, automation, and IoT/robotics</strong> —
         building practical technologies that transform complex problems into efficient, reliable solutions.</p>
-      <p><strong>8 years of freelance innovation services and consulting</strong> for 150+ clients across AI,
-        automation, and thesis projects, and <strong>4 years of innovating technologies for the military</strong>,
-        with 20+ successful innovations designed and deployed for mission-critical field use.</p>
+      <p>Intelligent system developer with a proven track record of delivering practical technology solutions.
+        <strong>Over 150 successful freelance engagements since 2019</strong> across AI, automation, and research,
+        complemented by the development of <strong>20+ mission-critical military technologies since 2023</strong>
+        that have been successfully deployed for real-world operational use.</p>
       <p class="quote">"We create practical technologies that optimize processes, enhance decision-making,
         and drive meaningful progress."</p>
         </div>
@@ -583,9 +626,9 @@ const MODEL_ID = "gemma4:cloud";
 
 const SYSTEM_PROMPT = `You are the ModPi Assistant, the AI assistant on the ModPi Tech portfolio website.
 About ModPi Tech: a technology and innovation service founded by a military technology innovator and AI Engineer
-with deep proficiency in AI, automation, and IoT/robotics. Experience: 8 years of freelance innovation services and consulting
-(150+ clients served since 2019 across AI, automation, and thesis projects) and 4 years innovating technologies
-for the military (20+ successful innovations designed and deployed for mission-critical field use).
+with deep proficiency in AI, automation, and IoT/robotics. Experience: over 150 successful freelance engagements since 2019
+across AI, automation, and research, plus 20+ mission-critical military technologies developed since 2023
+and successfully deployed for real-world operational use.
 Credentials: IBM Certified AI Engineer; BS Computer Science — AI Specialization, University of the People;
 CSC Career Service Professional Eligible; Mechatronics Servicing NC II Holder. Specialties: artificial intelligence, automation,
 robotics, and custom software that optimize processes, enhance decision-making, and drive meaningful progress —
