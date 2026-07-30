@@ -24,9 +24,6 @@ body{background:var(--bg);color:var(--body);font-family:var(--sans);font-size:16
 ::-webkit-scrollbar-thumb{background:#22333b;border-radius:5px}::-webkit-scrollbar-thumb:hover{background:#2f4650}
 
 header.site{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(7,11,14,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.statusbar{display:flex;justify-content:space-between;gap:12px;padding:5px 6vw;font-family:var(--mono);font-size:.64rem;letter-spacing:1.5px;color:var(--muted);border-bottom:1px solid var(--line);text-transform:uppercase}
-.statusbar .ok{color:var(--radar)}
-.statusbar .ok i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--radar);margin-right:5px;animation:pulse 2s infinite}
 nav{display:flex;align-items:center;justify-content:space-between;padding:13px 6vw}
 .logo{font-family:'Saira Stencil One',var(--mono);font-weight:400;font-size:1.1rem;color:var(--text);text-decoration:none;letter-spacing:.5px}
 .logo em{font-style:normal;color:var(--radar)}
@@ -56,7 +53,7 @@ h2{font-size:clamp(1.6rem,3.4vw,2.3rem);font-weight:800;color:var(--text);letter
     linear-gradient(var(--radar),var(--radar)) right bottom / 1.5px 14px;
   background-repeat:no-repeat}
 
-.hero{min-height:96vh;display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center;padding-top:150px}
+.hero{min-height:96vh;display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center;padding-top:120px}
 .hero-left{display:flex;flex-direction:column;gap:22px}
 h1{font-size:clamp(2.4rem,5.8vw,4.1rem);font-weight:800;color:var(--text);line-height:1.07;letter-spacing:-.03em}
 h1 .grad{background:linear-gradient(90deg,var(--radar),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -218,10 +215,9 @@ footer b{color:var(--radar);font-weight:600}
   .about-grid{grid-template-columns:1fr}
   section{padding:96px 5vw 52px}
   .bio{padding:28px 24px}
-  .hero{min-height:auto;padding-top:150px;padding-bottom:50px;gap:26px}
+  .hero{min-height:auto;padding-top:120px;padding-bottom:50px;gap:26px}
   .energy-grid{grid-template-columns:repeat(2,1fr)}
   .metric.hero-metric{grid-column:span 2}
-  .statusbar{padding:5px 4vw;font-size:.56rem}
 }
 @media(max-width:560px){
   body{font-size:15.5px}
@@ -311,6 +307,8 @@ footer b{color:var(--radar);font-weight:600}
 
   --void:rgba(0,0,0,.85);
   --neon-text:#06e903;
+  --btn:#64d96f;        /* solid green fills that carry black text */
+  --btn-hi:#7ce383;
   --void-edge:rgba(57,255,20,.16);
   --void-edge-live:rgba(57,255,20,.55);
   --void-lift:0 18px 40px rgba(0,0,0,.85);
@@ -322,7 +320,6 @@ header.site{
   border-bottom:1px solid rgba(57,255,20,.18);
   box-shadow:0 12px 34px rgba(0,0,0,.7);
 }
-.statusbar{border-bottom:1px solid rgba(57,255,20,.1)}
 
 /* ── panels: pure black, hairline neon edge ─────────────────────────── */
 .bio,.creds,.stat,.hstat,.dom,.proj,.metric,.energy-chart-wrap,.contact-box,.op-frame{
@@ -357,13 +354,13 @@ header.site{
 
 /* ── neon controls ──────────────────────────────────────────────────── */
 .btn.primary,.email-btn,.demo-btn,.chat-input button{
-  background:var(--radar);
-  border:1px solid var(--radar);
-  box-shadow:0 0 18px rgba(57,255,20,.28);
+  background:var(--btn);
+  border:1px solid var(--btn);
+  box-shadow:0 0 18px rgba(100,217,111,.28);
 }
 .btn.primary:hover,.email-btn:hover,.demo-btn:hover,.chat-input button:hover:not(:disabled){
-  background:#6bff4d;
-  box-shadow:0 0 30px rgba(57,255,20,.5);
+  background:var(--btn-hi);
+  box-shadow:0 0 30px rgba(100,217,111,.45);
 }
 .btn.ghost{
   background:#000;
@@ -381,9 +378,9 @@ header.site{
 
 /* ── assistant enclosure ────────────────────────────────────────────── */
 #chatFab{
-  background:var(--radar);
-  border:1px solid var(--radar);
-  box-shadow:0 0 28px rgba(57,255,20,.45);
+  background:var(--btn);
+  border:1px solid var(--btn);
+  box-shadow:0 0 28px rgba(100,217,111,.42);
 }
 #chatPanel{
   background:#000;
@@ -392,7 +389,8 @@ header.site{
 }
 .chat-head,.chat-input{background:#000;box-shadow:none}
 .msg.bot{background:var(--void);border:1px solid var(--void-edge);box-shadow:none}
-.msg.user{background:var(--radar);box-shadow:none}
+.msg.user{background:var(--btn);box-shadow:none}
+::selection{background:var(--btn);color:#031a02}
 .chat-input input{background:#000;box-shadow:none}
 
 /* ── scrollbar ──────────────────────────────────────────────────────── */
@@ -405,7 +403,6 @@ header.site{
 }
 
 /* ── neon green, text only (glows / borders / fills stay --radar) ───── */
-.statusbar .ok{color:var(--neon-text)}
 .logo em{color:var(--neon-text)}
 .nav-links a:hover{color:var(--neon-text)}
 .kicker{color:var(--neon-text)}
@@ -449,10 +446,6 @@ footer b{color:var(--neon-text)}
 </div>
 
 <header class="site">
-  <div class="statusbar">
-    <span>MODPI TECH // ENGINEERING INNOVATION</span>
-    <span class="ok"><i></i>STATUS: OPERATIONAL — UNCLASSIFIED PORTFOLIO</span>
-  </div>
   <nav>
     <a class="logo" href="#home">ModPi <em>Tech</em><small>Mission Systems</small></a>
     <button id="menuBtn">MENU</button>
