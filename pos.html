@@ -93,6 +93,7 @@ main{min-width:0}
 .rise{animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .cols{display:grid;gap:16px}
+.cols>*{min-width:0}
 .c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(4,1fr)}
 .c21{grid-template-columns:2fr 1fr}.c12{grid-template-columns:1fr 2fr}
 @media(max-width:1050px){.c2,.c3,.c4,.c21,.c12{grid-template-columns:1fr}}
@@ -121,6 +122,8 @@ main{min-width:0}
 select,input[type=text],input[type=number],input[type=date],input[type=tel]{background:#fff;border:1px solid var(--line);border-radius:8px;
   padding:8px 10px;outline:none;transition:border .15s,box-shadow .15s}
 select:focus,input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(44,110,70,.13)}
+/* let fields shrink inside flex rows instead of overflowing the card */
+select,input,textarea{min-width:0;max-width:100%}
 .chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);cursor:pointer;user-select:none}
 .chk input{accent-color:var(--green)}
 
@@ -237,7 +240,113 @@ tr.hl td{background:#fdf6e4}
 #tip{position:fixed;z-index:130;background:#1d2517;color:#f0f2e4;font-size:11px;font-family:var(--mono);padding:6px 10px;border-radius:7px;
   pointer-events:none;opacity:0;transition:opacity .12s;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .foot{margin-top:34px;text-align:center;font-size:11px;color:var(--dim);letter-spacing:.03em}
-@media(max-width:900px){.app{grid-template-columns:1fr}.sb{display:none}}
+
+/* ── mobile shell: drawer nav + scrim + cart bar ── */
+.sbclose{display:none;margin-left:auto;background:rgba(255,255,255,.09);border:0;color:#c9cfbf;
+  width:30px;height:30px;border-radius:8px;font-size:19px;line-height:1;flex:none}
+.sbclose:active{background:rgba(255,255,255,.2);color:#fff}
+.menubtn{display:none;border:1px solid var(--line);background:var(--card);border-radius:10px;width:38px;height:38px;
+  place-items:center;color:var(--ink);flex:none;transition:background .15s}
+.menubtn:active{background:#eae5d4}
+.menubtn svg{width:20px;height:20px;stroke-width:1.8}
+#scrim{position:fixed;inset:0;background:rgba(20,28,20,.5);backdrop-filter:blur(2px);z-index:59;
+  opacity:0;pointer-events:none;transition:opacity .22s}
+body.navopen{overflow:hidden}
+body.navopen #scrim{opacity:1;pointer-events:auto}
+.cartbar{display:none;position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:95;
+  border:0;border-radius:13px;background:var(--green);color:#f2f7ee;padding:13px 16px;align-items:center;gap:10px;
+  font-family:var(--disp);font-size:14.5px;font-weight:700;box-shadow:0 10px 28px rgba(20,40,26,.4);animation:rise .28s both}
+.cartbar .n{background:rgba(255,255,255,.22);border-radius:20px;padding:2px 9px;font-family:var(--mono);font-size:12px}
+.cartbar .t{margin-left:auto;font-family:var(--mono);font-size:14px}
+
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .menubtn{display:grid}
+  .sbclose{display:block}
+  .sb{position:fixed;top:0;left:0;width:264px;max-width:84vw;height:100dvh;z-index:60;
+    transform:translateX(-100%);transition:transform .26s cubic-bezier(.2,.7,.3,1);box-shadow:0 0 44px rgba(0,0,0,.45)}
+  body.navopen .sb{transform:none}
+  .tb{padding:10px 14px;gap:10px}
+  .tb h2{font-size:17px}
+  .tb .crumb{display:none}
+  .tb .right{gap:7px}
+  .demotag,.hide-sm{display:none}
+  .pages{padding:16px 14px 40px}
+  .phead{margin-bottom:14px}
+  .phead h3{font-size:20px}
+  .phead p{font-size:12.5px}
+  .cols{gap:12px}
+  .ch{padding:11px 14px;gap:9px}
+  .cb{padding:14px}
+  .tbl th{padding:9px 12px}
+  .tbl td{padding:9px 12px}
+  /* edge shadows hint that a wide table can be swiped sideways */
+  .twrap{-webkit-overflow-scrolling:touch;
+    background:
+      linear-gradient(90deg,var(--card) 30%,rgba(251,250,244,0)) left/22px 100% no-repeat,
+      linear-gradient(270deg,var(--card) 30%,rgba(251,250,244,0)) right/22px 100% no-repeat,
+      radial-gradient(farthest-side at 0 50%,rgba(29,37,23,.16),rgba(29,37,23,0)) left/9px 100% no-repeat,
+      radial-gradient(farthest-side at 100% 50%,rgba(29,37,23,.16),rgba(29,37,23,0)) right/9px 100% no-repeat;
+    background-attachment:local,local,scroll,scroll}
+  .c4{grid-template-columns:1fr 1fr}
+  .kpi{padding:14px}
+  .kpi .v{font-size:20px}
+  .kpi label{font-size:9.5px;letter-spacing:.1em}
+  .kpi::after{width:56px;height:56px;right:-18px;top:-18px}
+  .poswrap{gap:12px}
+  .cartpanel{position:relative;top:auto}
+  .cartrows{max-height:none}
+  .cartpanel .cb .cols>div{flex-wrap:wrap}
+  #custSel,#whoSel{flex:1 1 150px}
+  .pgrid{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:9px;padding:12px}
+  .qstep button{width:30px;height:30px;font-size:15px}
+  .crow{padding:11px 14px;gap:8px}
+  .hrow{gap:9px;padding:8px 14px}
+  .hrow .lbl,.hrow .lbl[style]{width:106px!important}
+  .hrow .val{width:76px}
+  #toasts{left:14px;right:14px;bottom:14px}
+  .toast{max-width:none}
+  #tip{display:none}
+  .btn{padding:10px 15px}
+  /* 16px stops iOS/Android zooming the page when a field is focused */
+  input,select,textarea,input[type=text],input[type=number],input[type=date],input[type=tel]{font-size:16px}
+  .brand small{font-size:9px;letter-spacing:.06em}
+  #aiFab{width:50px;height:50px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom))}
+  #aiFab svg{width:22px;height:22px}
+  body.cart-live .pages{padding-bottom:96px}
+  body.cart-live .cartbar{display:flex}
+  body.cart-live #aiFab{bottom:calc(80px + env(safe-area-inset-bottom))}
+}
+
+@media(max-width:560px){
+  .tb{padding:9px 12px}
+  .tb h2{font-size:16px}
+  .uname{display:none}
+  .uchip{padding:4px 6px;gap:0}
+  .pages{padding:14px 12px 40px}
+  .pgrid{grid-template-columns:repeat(2,1fr);padding:10px;gap:8px}
+  .pcard{padding:11px 11px 10px}
+  .pcard h5{font-size:12.5px;margin:5px 0 6px}
+  .pcard .pr{font-size:14px}
+  .ch{padding:11px 13px}
+  .ch .sp{width:100%;margin-left:0}
+  .seg{width:100%}
+  .seg button{flex:1;text-align:center;padding:8px 5px;font-size:11.5px;white-space:nowrap}
+  .tbl th{padding:8px 10px;font-size:10px}
+  .tbl td{padding:8px 10px;font-size:12.5px}
+  .tbl .num{font-size:12px}
+  .mbox{padding:18px 16px 16px;max-height:88dvh;overflow-y:auto}
+  .mbox .acts{flex-direction:column-reverse;gap:8px}
+  .mbox .acts .btn{width:100%;justify-content:center}
+  .vbars{height:134px;gap:4px;padding:8px 12px 0}
+  .vbar span{font-size:8px}
+  .legend{gap:10px;font-size:10.5px;flex-wrap:wrap}
+  .hrow .lbl,.hrow .lbl[style]{width:88px!important}
+  .hrow .val{width:68px;font-size:11px}
+  .stack{margin:6px 12px 4px}
+  .foot{font-size:10px;margin-top:26px}
+  .note{font-size:11.5px;padding:10px 12px}
+}
 
 /* ── AI assistant (floating) ───────────── */
 .aibadge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;
@@ -284,7 +393,9 @@ tr.hl td{background:#fdf6e4}
 .aiin button{background:var(--green);color:#f0f5ec;border:0;border-radius:9px;padding:0 15px;font-size:12px;font-weight:600;letter-spacing:.03em}
 .aiin button:hover{background:var(--green-d)}
 .aiin button:disabled{opacity:.5;cursor:not-allowed}
-@media(max-width:520px){#aiPanel{right:10px;left:10px;width:auto;bottom:82px;height:calc(100vh - 120px)}#aiFab{right:14px;bottom:14px}}
+@media(max-width:560px){#aiPanel{right:10px;left:10px;width:auto;bottom:74px;height:auto;top:70px;max-height:none}
+ body.cart-live #aiPanel{bottom:140px}
+ .aichips{max-height:72px;overflow:auto}}
 </style>
 </head>
 <body>
@@ -295,6 +406,7 @@ tr.hl td{background:#fdf6e4}
   <div class="brand">
     <div class="mark"><svg viewBox="0 0 24 24"><path d="M12 22V9"/><path d="M12 9c-3.2-.8-4.6-3.2-4.4-6.2 3.2.8 4.6 3.2 4.4 6.2z"/><path d="M12 9c3.2-.8 4.6-3.2 4.4-6.2-3.2.8-4.6 3.2-4.4 6.2z"/><path d="M12 14.5c-3-.8-4.4-2.7-4.3-5.4M12 14.5c3-.8 4.4-2.7 4.3-5.4"/></svg></div>
     <div><h1 id="brandName">Golden Grain</h1><small>Business Management · v7</small></div>
+    <button class="sbclose" id="sbClose" aria-label="Close menu">×</button>
   </div>
   <nav id="nav"></nav>
   <div class="reg"><span>Register <b>01</b></span><span id="regStat">● Online</span></div>
@@ -307,13 +419,15 @@ tr.hl td{background:#fdf6e4}
 <!-- ═══ MAIN ═══ -->
 <main>
   <header class="tb">
+    <button class="menubtn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     <div><div class="crumb">Business Management System · v7</div><h2 id="tbTitle">Sell</h2></div>
     <div class="right">
       <span class="demotag">Portfolio demo · live sample data</span>
-      <span class="pill">🕐 <b id="clock">—</b></span>
-      <span class="pill" id="syncPill"><span class="dot"></span><span id="syncTxt">Hub synced</span></span>
+      <span class="pill hide-sm">🕐 <b id="clock">—</b></span>
+      <span class="pill hide-sm" id="syncPill"><span class="dot"></span><span id="syncTxt">Hub synced</span></span>
       <span class="pill">Today <b id="todayChip">₱0</b></span>
-      <span class="uchip"><span class="av">MS</span>Jim Espinola · Admin</span>
+      <span class="uchip"><span class="av">MS</span><span class="uname">Jim Espinola · Admin</span></span>
     </div>
   </header>
 
@@ -327,7 +441,7 @@ tr.hl td{background:#fdf6e4}
           <div class="ch"><h4>Products</h4><div class="sp"><div class="seg" id="unitSeg"></div></div></div>
           <div class="pgrid" id="pgrid"></div>
         </div>
-        <div class="card cartpanel rise" style="animation-delay:.12s;position:relative" id="cartCard">
+        <div class="card cartpanel rise" style="animation-delay:.12s" id="cartCard">
           <div class="ch"><h4>🧺 Cart</h4><div class="sp">
             <button class="btn sm ghost" id="lockBtn">🔒 Lock</button>
             <button class="btn sm ghost" id="clearCart">Clear cart</button></div></div>
@@ -423,6 +537,9 @@ tr.hl td{background:#fdf6e4}
   </div>
 </main>
 </div>
+
+<div id="scrim"></div>
+<button class="cartbar" id="cartBar"><span class="n" id="cartBarN">0</span>View cart<span class="t" id="cartBarT">₱0</span></button>
 
 <div id="toasts"></div><div id="tip"></div><div id="modalHost"></div>
 
@@ -642,8 +759,27 @@ let curPage='sell';
 function go(pg){curPage=pg;$$('.page').forEach(p=>p.classList.remove('on'));$('#pg-'+pg).classList.add('on');
  $$('.nitem').forEach(n=>n.classList.toggle('on',n.dataset.pg===pg));
  $('#tbTitle').textContent=NAV.flatMap(g=>g.items).find(i=>i[0]===pg)[1];
- RENDER[pg]();window.scrollTo({top:0})}
-$$('.nitem').forEach(n=>n.onclick=()=>go(n.dataset.pg));
+ RENDER[pg]();window.scrollTo({top:0});syncCartBar()}
+$$('.nitem').forEach(n=>n.onclick=()=>{go(n.dataset.pg);closeNav()});
+
+/* ── mobile drawer ── */
+const isPhone=()=>matchMedia('(max-width:900px)').matches;
+function openNav(){document.body.classList.add('navopen');$('#menuBtn').setAttribute('aria-expanded','true')}
+function closeNav(){document.body.classList.remove('navopen');$('#menuBtn').setAttribute('aria-expanded','false')}
+$('#menuBtn').onclick=()=>document.body.classList.contains('navopen')?closeNav():openNav();
+$('#scrim').onclick=closeNav;
+$('#sbClose').onclick=closeNav;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeNav()});
+addEventListener('resize',()=>{if(!isPhone())closeNav();syncCartBar()});
+
+/* ── mobile cart bar ── */
+function syncCartBar(){
+ const n=st.cart.reduce((s,c)=>s+c.qty,0);
+ const live=curPage==='sell'&&n>0;
+ document.body.classList.toggle('cart-live',live);
+ if(live){$('#cartBarN').textContent=n;$('#cartBarT').textContent=peso0(cartTotals().total)}}
+$('#cartBar').onclick=()=>{const c=$('#cartCard');
+ const y=c.getBoundingClientRect().top+scrollY-64;window.scrollTo({top:y,behavior:'smooth'})};
 
 /* tooltip */
 document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tip]');if(!t)return;
@@ -683,7 +819,7 @@ function renderCart(){
    <div class="nm"><b>${PRODUCTS[c.p].name}</b><span>${UL[c.unit]} · ${peso0(c.price)} each</span></div>
    <div class="qstep"><button data-a="-" data-i="${i}">−</button><b>${c.qty}</b><button data-a="+" data-i="${i}">+</button></div>
    <span class="lt">${peso0(c.price*c.qty)}</span><button class="x" data-x="${i}">✕</button></div>`).join('')
-  :`<div class="cartempty"><span class="big">🌾</span>Cart is empty.<br>Tap a product on the left to start a sale.</div>`;
+  :`<div class="cartempty"><span class="big">🌾</span>Cart is empty.<br>Tap a product to start a sale.</div>`;
  updateTotals();
 }
 function updateTotals(){const t=cartTotals();
@@ -691,7 +827,8 @@ function updateTotals(){const t=cartTotals();
   <div class="totrow"><span>Subtotal</span><span class="num">${peso(t.sub)}</span></div>
   <div class="totrow"><span>Discount</span><span class="num">− ${peso(t.disc)}</span></div>
   <div class="totrow"><span>Est. profit</span><span class="num" style="color:${t.prof>=0?'var(--green)':'var(--red)'}">${peso(t.prof)}</span></div>
-  <div class="totrow grand"><span>Total due</span><span class="num">${peso(t.total)}</span></div></div>`}
+  <div class="totrow grand"><span>Total due</span><span class="num">${peso(t.total)}</span></div></div>`;
+ syncCartBar()}
 $('#pgrid').addEventListener('click',e=>{const c=e.target.closest('.pcard');if(!c)return;
  const i=+c.dataset.i,{price,cost}=unitPrice(PRODUCTS[i],st.unit);
  const ex=st.cart.find(x=>x.p===i&&x.unit===st.unit);
