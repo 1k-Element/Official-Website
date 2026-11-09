@@ -13,7 +13,7 @@
   --line:#1c2a31;--line2:#2b3e47;
   --radar:#39ff14;--radar-dim:#22c40a;--radar-soft:rgba(57,255,20,.1);
   --amber:#f0b429;--amber-soft:rgba(240,180,41,.12);--cyan:#4cc3e8;
-  --text:#e2ece7;--body:#a9bcb4;--muted:#6d8279;
+  --text:#f1f5f3;--body:#bccbc5;--muted:#8ca4a2;
   --mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -128,7 +128,7 @@ h1 .grad{background:linear-gradient(90deg,var(--radar),var(--cyan));-webkit-back
 .demo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px}
 .proj{background:var(--panel);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;transition:.25s}
 .proj:hover{border-color:var(--line2);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.45)}
-.proj .ph{height:110px;display:flex;align-items:center;justify-content:center;font-size:2.7rem;background:linear-gradient(135deg,rgba(57,255,20,.06),rgba(76,195,232,.05));border-bottom:1px solid var(--line)}
+.proj .ph{height:180px;display:flex;align-items:center;justify-content:center;font-size:2.7rem;background:linear-gradient(135deg,rgba(57,255,20,.06),rgba(76,195,232,.05));border-bottom:1px solid var(--line)}
 .proj .body{padding:24px;display:flex;flex-direction:column;gap:12px;flex:1}
 .proj .id{font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:2px;color:var(--cyan)}
 .proj h3{font-size:1.1rem;font-weight:700;color:var(--text)}
@@ -160,6 +160,54 @@ h1 .grad{background:linear-gradient(90deg,var(--radar),var(--cyan));-webkit-back
 #powerChart{width:100%;height:150px;display:block}
 .energy-note{font-family:var(--mono);font-size:.66rem;color:var(--muted);margin-top:12px;letter-spacing:1px}
 
+/* ── personal projects · video reel ─────────────────── */
+.pv{position:relative}
+.pv-track{display:flex;gap:22px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;
+  padding:4px;outline:none;scrollbar-width:none}
+.pv-track::-webkit-scrollbar{display:none}
+.pv-track:focus-visible{box-shadow:0 0 0 1px var(--radar-dim)}
+.pv-slide{flex:0 0 100%;scroll-snap-align:center;display:grid;grid-template-columns:1.45fr 1fr;gap:22px;align-items:stretch}
+.pv-frame{position:relative;background:#04070a;border:1px solid var(--line);aspect-ratio:16/9;overflow:hidden}
+.pv-frame video{width:100%;height:100%;display:block;object-fit:contain;background:#04070a}
+.pv-poster{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;width:100%;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(57,255,20,.10),transparent 62%),
+    repeating-linear-gradient(0deg,rgba(57,255,20,.045) 0 1px,transparent 1px 4px),
+    linear-gradient(135deg,#081014,#0b1418)}
+.pv-poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;transition:opacity .3s,transform .5s}
+.pv-poster.has-thumb img{opacity:.92}
+.pv-poster.has-thumb:hover img{opacity:1;transform:scale(1.03)}
+.pv-poster.has-thumb::after{background:linear-gradient(180deg,rgba(4,7,10,0) 55%,rgba(4,7,10,.55))}
+.pv-poster::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,7,10,.15),rgba(4,7,10,.75))}
+.pv-play{position:relative;z-index:2;width:74px;height:74px;border-radius:50%;border:1.5px solid var(--radar);
+  background:rgba(7,11,14,.72);color:var(--radar);display:grid;place-items:center;transition:.22s;pointer-events:none}
+.pv-poster:hover .pv-play{background:var(--radar);color:#031a02;transform:scale(1.07);box-shadow:0 0 32px rgba(57,255,20,.4)}
+.pv-play svg{width:26px;height:26px;margin-left:3px;fill:currentColor}
+.pv-slot{position:absolute;left:14px;top:12px;z-index:2;font-family:var(--mono);font-size:.6rem;font-weight:600;letter-spacing:2px;
+  color:var(--radar);border:1px solid rgba(57,255,20,.3);background:rgba(7,11,14,.7);padding:3px 9px;border-radius:3px}
+.pv-miss{position:absolute;inset:0;z-index:3;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  text-align:center;padding:20px;background:rgba(7,11,14,.94);font-family:var(--mono);font-size:.72rem;letter-spacing:1px;color:var(--muted)}
+.pv-miss b{color:var(--amber);font-weight:600;letter-spacing:1.5px}
+.pv-frame.missing .pv-miss{display:flex}
+.pv-frame::before{z-index:4}
+.pv-meta{background:var(--panel);border:1px solid var(--line);padding:24px 24px;display:flex;flex-direction:column;gap:11px}
+.pv-meta .pv-id{font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:2px;color:var(--cyan)}
+.pv-meta h3{font-size:1.12rem;font-weight:700;color:var(--text);line-height:1.3}
+.pv-meta p{font-size:.92rem;color:var(--body);flex:1}
+.pv-nav{position:absolute;top:var(--pvArrow,50%);transform:translateY(-50%);z-index:6;width:46px;height:46px;border-radius:50%;
+  background:rgba(7,11,14,.86);border:1px solid var(--line2);color:var(--text);font-size:1.7rem;line-height:1;cursor:pointer;
+  display:grid;place-items:center;transition:.22s;backdrop-filter:blur(6px)}
+.pv-nav:hover{border-color:var(--radar);color:var(--radar);box-shadow:0 0 22px rgba(57,255,20,.22)}
+.pv-nav:disabled{opacity:.28;cursor:default;border-color:var(--line);color:var(--muted);box-shadow:none}
+.pv-nav.prev{left:-10px}.pv-nav.next{right:-10px}
+.pv-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:20px;flex-wrap:wrap}
+.pv-dots{display:flex;gap:8px;flex-wrap:wrap}
+.pv-dots button{width:30px;height:5px;border-radius:3px;border:none;background:var(--line2);cursor:pointer;transition:.22s;padding:0}
+.pv-dots button:hover{background:var(--radar-dim)}
+.pv-dots button.on{background:var(--radar);box-shadow:0 0 12px rgba(57,255,20,.5)}
+.pv-count{font-family:var(--mono);font-size:.72rem;letter-spacing:2px;color:var(--muted)}
+.pv-count b{color:var(--radar);font-weight:700}
+
 .trust-note{margin-top:26px;font-family:var(--mono);font-size:.7rem;letter-spacing:1px;color:var(--muted);border:1px dashed var(--line2);padding:14px 18px;background:var(--bg2)}
 .trust-note b{color:var(--amber);font-weight:600}
 
@@ -176,7 +224,8 @@ footer b{color:var(--radar);font-weight:600}
 .reveal.on{opacity:1;transform:none}
 @media (prefers-reduced-motion: reduce){.reveal{opacity:1;transform:none;transition:none}.radar .poly,.radar .worm .ring,.radar .worm .donut{animation:none}}
 
-#chatFab{position:fixed;bottom:26px;right:26px;z-index:200;width:58px;height:58px;border-radius:50%;background:var(--radar);border:none;color:#031a02;font-size:1.4rem;cursor:pointer;box-shadow:0 8px 28px rgba(57,255,20,.35);transition:.25s;display:flex;align-items:center;justify-content:center}
+#chatFab{position:fixed;bottom:26px;right:26px;z-index:200;height:58px;padding:0 22px 0 18px;border-radius:999px;background:var(--radar);border:none;color:#031a02;font-size:1.4rem;cursor:pointer;box-shadow:0 8px 28px rgba(57,255,20,.35);transition:.25s;display:flex;align-items:center;justify-content:center;gap:9px}
+#chatFab .fab-label{font-size:.82rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;font-family:inherit}
 #chatFab:hover{transform:scale(1.07)}
 #chatPanel{position:fixed;bottom:98px;right:26px;z-index:200;width:390px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100vh - 140px);background:var(--bg2);border:1px solid var(--line2);border-radius:10px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6)}
 #chatPanel.open{display:flex;animation:rise .25s ease}
@@ -218,6 +267,10 @@ footer b{color:var(--radar);font-weight:600}
   .hero{min-height:auto;padding-top:120px;padding-bottom:50px;gap:26px}
   .energy-grid{grid-template-columns:repeat(2,1fr)}
   .metric.hero-metric{grid-column:span 2}
+  .pv-slide{grid-template-columns:1fr;gap:0}
+  .pv-meta{border-top:none;padding:20px}
+  .pv-nav{width:42px;height:42px;font-size:1.5rem}
+  .pv-nav.prev{left:6px}.pv-nav.next{right:6px}
 }
 @media(max-width:560px){
   body{font-size:15.5px}
@@ -240,7 +293,8 @@ footer b{color:var(--radar);font-weight:600}
   .contact-box{padding:38px 22px}
   .email-btn{width:100%;font-size:.9rem;padding:15px 10px}
   footer{padding:22px 14px;font-size:.62rem}
-  #chatFab{bottom:18px;right:18px;width:54px;height:54px}
+  #chatFab{bottom:18px;right:18px;height:50px;padding:0 18px 0 15px;gap:8px}
+  #chatFab .fab-label{font-size:.74rem}
   #chatPanel{bottom:0;right:0;left:0;top:0;width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;border:none}
   .chat-input{padding-bottom:max(14px, env(safe-area-inset-bottom))}
   .chat-input input{font-size:16px}
@@ -271,7 +325,7 @@ footer b{color:var(--radar);font-weight:600}
 /* ── svg icon sizing ── */
 .d-ic svg{width:24px;height:24px;color:var(--radar);display:block}
 .m-lbl svg{width:14px;height:14px;color:var(--radar);flex:none}
-#chatFab svg{width:28px;height:28px}
+#chatFab svg{width:26px;height:26px;flex:none}
 
 /* ── sample program photos ── */
 .proj .ph{padding:0;overflow:hidden}
@@ -436,6 +490,29 @@ footer b{color:var(--neon-text)}
   background:#080c0a;
 }
 .board canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* Hero headline: centered, always exactly two lines */
+.hero{align-content:center;row-gap:34px}
+.hero-head{grid-column:1/-1;text-align:center;display:flex;flex-direction:column;align-items:center}
+.hero-head .kicker{margin-bottom:16px}
+.hero-head h1.hero-title{text-align:center;font-family:'Saira Stencil One',var(--mono);font-weight:400;letter-spacing:.01em;line-height:1.15;font-size:clamp(1.3rem,3.4vw,3.1rem)}
+.hero-title .ln{display:block;white-space:nowrap}
+@media(max-width:960px){.hero-head h1.hero-title{font-size:min(2.6rem,4.8vw)}}
+@media(max-width:820px){.hero{row-gap:22px}}
+
+/* Credentials card: organized layout */
+.bio .bio-txt h3{text-align:center;text-wrap:balance;font-size:1.3rem;line-height:1.3;margin-bottom:12px}
+.bio .bio-lead{text-align:center;max-width:460px;margin:0 auto 22px}
+.bio-facts{list-style:none;margin:0 0 22px;border-top:1px dashed var(--line)}
+.bio-facts li{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:baseline;padding:12px 0;border-bottom:1px dashed var(--line)}
+.bio-facts .k{font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--neon-text,var(--radar))}
+.bio-facts .v{color:var(--body);font-size:.97rem;line-height:1.55}
+.bio .quote{margin-top:4px}
+@media(max-width:560px){.bio-facts li{grid-template-columns:1fr;gap:4px}}
+
+/* Personal projects: media only (no description card) */
+.pv-slide{grid-template-columns:1fr}
+.pv-slide .pv-frame{width:100%;max-width:980px;margin:0 auto}
 </style>
 </head>
 <body>
@@ -447,12 +524,13 @@ footer b{color:var(--neon-text)}
 
 <header class="site">
   <nav>
-    <a class="logo" href="#home">ModPi <em>Tech</em><small>Mission Systems</small></a>
+    <a class="logo" href="#home">ModPi <em>Tech</em><small>Freelance Services</small></a>
     <button id="menuBtn">MENU</button>
     <ul class="nav-links" id="navLinks">
       <li><a href="#home">Mission</a></li>
       <li><a href="#credentials">Credentials</a></li>
       <li><a href="#domains">Projects</a></li>
+      <li><a href="#personal">Personal</a></li>
       <li><a href="#projects">Samples</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
@@ -461,9 +539,11 @@ footer b{color:var(--neon-text)}
 
 <!-- HERO -->
 <section class="hero" id="home">
-  <div class="hero-left">
+  <div class="hero-head">
     <div class="kicker reveal">AI · Automation · Robotics · IoT</div>
-    <h1 class="reveal">Engineering Innovation.<br><span class="grad">Solving Real Problems.</span></h1>
+    <h1 class="reveal hero-title"><span class="ln">Tell us your problem</span><span class="ln grad">ModPi Tech will innovate the solution</span></h1>
+  </div>
+  <div class="hero-left">
     <div class="tagline"><span id="typed"></span><span class="cursor">&nbsp;</span></div>
     <p class="sub reveal">ModPi Tech is a technology and innovation service that designs intelligent systems to
       solve real-world challenges and improve operational efficiency. We specialize in AI, automation, robotics,
@@ -529,13 +609,14 @@ footer b{color:var(--neon-text)}
     <div class="bio hud reveal">
       <div class="bio-wrap">
         <div class="bio-txt">
-      <h3>Military Technology Innovator &amp; AI Engineer</h3>
-      <p>Deep proficiency in <strong>artificial intelligence, automation, and IoT/robotics</strong> —
-        building practical technologies that transform complex problems into efficient, reliable solutions.</p>
-      <p>Intelligent system developer with a proven track record of delivering practical technology solutions.
-        <strong>Over 150 successful freelance engagements since 2019</strong> across AI, automation, and research,
-        complemented by the development of <strong>20+ mission-critical military technologies since 2023</strong>
-        that have been successfully deployed for real-world operational use.</p>
+      <h3>Multi-Awarded Military Tech Innovator and AI Engineer</h3>
+      <p class="bio-lead">Intelligent systems developer building practical technologies that turn complex
+        problems into efficient, reliable solutions.</p>
+      <ul class="bio-facts">
+        <li><span class="k">Expertise</span><span class="v"><strong>AI/Automation, Robotics, System Development, and Electrical/Electronics Assembling</strong></span></li>
+        <li><span class="k">Freelance</span><span class="v"><strong>150+ successful projects since 2019</strong> spanning system automation, robotics, and academic research, including thesis and capstone development</span></li>
+        <li><span class="k">Military</span><span class="v"><strong>20+ mission-critical technologies since 2023</strong>, deployed for real-world operational use</span></li>
+      </ul>
       <p class="quote">"Tell us your problem. ModPi Tech will innovate the solution."</p>
         </div>
         <div class="operator">
@@ -610,44 +691,97 @@ footer b{color:var(--neon-text)}
   <div class="trust-note reveal" style="margin-top:24px">THE PROJECTS ABOVE ARE GENERALIZED CAPABILITY AREAS ONLY. NO OPERATIONAL DETAILS, SPECIFICATIONS, UNITS, OR DEPLOYMENT SPECIFICS ARE DISCLOSED — <b><u>THOSE REMAIN UNDER NDA AND APPROPRIATE AUTHORIZATION</u></b>.</div>
 </section>
 
+<!-- PERSONAL PROJECTS · VIDEO SLIDER -->
+<section id="personal">
+  <div class="kicker reveal">personal_projects</div>
+  <h2 class="reveal">Personal Projects</h2>
+  <p class="sec-intro reveal">Builds, experiments and side-quests from outside the mission work — recorded as short clips.
+    Swipe or use the arrows to browse the reel.</p>
+
+  <div class="pv reveal">
+    <button class="pv-nav prev" id="pvPrev" aria-label="Previous video">&#8249;</button>
+    <div class="pv-track" id="pvTrack" tabindex="0" aria-label="Personal project videos"></div>
+    <button class="pv-nav next" id="pvNext" aria-label="Next video">&#8250;</button>
+  </div>
+
+  <div class="pv-bar reveal">
+    <div class="pv-dots" id="pvDots"></div>
+    <div class="pv-count"><b id="pvNum">01</b> / <span id="pvTot">04</span></div>
+  </div>
+</section>
+
 <!-- SAMPLE PROGRAMS -->
 <section id="projects">
   <div class="kicker reveal">sample_programs</div>
-  <h2 class="reveal">Sample Systems (Free to Try!)</h2>
+  <h2 class="reveal">Sample Projects (Free to Try!)</h2>
   <p class="sec-intro reveal">Don't just read about it — operate it. These are working systems you can
     interact with right now.</p>
   <div class="demo-grid">
-    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-energy.jpg" alt="LIVE Energy Monitoring System" loading="lazy"></div><div class="body">
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-001.jpg" alt="LIVE Energy Monitoring System" loading="lazy"></div><div class="body">
       <div class="id">PRG-001 · IoT / ENERGY <span class="live-tag">● LIVE</span></div>
       <h3>LIVE Energy Monitoring System</h3>
-      <p>A real IoT energy monitor installed at our house — streaming voltage, current, power factor,
-        frequency, active power, and daily consumption to this website in real time.</p>
-      <div class="tags"><span class="tag">IoT</span><span class="tag">Blynk Cloud</span><span class="tag">Realtime</span></div>
+      <p>A real IoT energy monitor at our house, streaming voltage, current, power factor and daily consumption to this site in real time.</p>
       <a class="demo-btn" href="#energy">View Live Data ↓</a>
     </div></div>
-    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-justicore.jpg" alt="JustiCore — AI Philippine Lawyer" loading="lazy"></div><div class="body">
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-002.jpg" alt="JustiCore — AI Philippine Lawyer" loading="lazy"></div><div class="body">
       <div class="id">PRG-002 · AI / LEGAL <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
       <h3>JustiCore — AI Philippine Lawyer</h3>
-      <p>An AI legal assistant grounded in Philippine law — the Constitution, Civil Code, Labor Code,
-        Family Code, and more. Ask it a legal question and get cited answers.</p>
-      <div class="tags"><span class="tag">AI Chat</span><span class="tag">PH Law</span><span class="tag">LLM</span></div>
+      <p>An AI legal assistant grounded in Philippine law — the Constitution, Civil, Labor and Family Codes — that answers with citations.</p>
       <a class="demo-btn" href="justicore-ai-lawyer.html" target="_blank" rel="noopener">Launch Demo ↗</a>
     </div></div>
-    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-pos.jpg" alt="Business Management System" loading="lazy"></div><div class="body">
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-003.jpg" alt="Business Management System" loading="lazy"></div><div class="body">
       <div class="id">PRG-003 · BUSINESS SOFTWARE <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
       <h3>AI-Powered Business Management System</h3>
-      <p>A complete offline business management system — sales register, inventory tracking, low-stock alerts,
-        and revenue reporting with AI recommendations. Open the demo and ring up a sale yourself.</p>
-      <div class="tags"><span class="tag">POS</span><span class="tag">Offline-first</span><span class="tag">Reporting</span></div>
+      <p>An offline business system for sales, inventory, low-stock alerts and revenue reports, with AI recommendations. Try ringing up a sale.</p>
       <a class="demo-btn" href="pos.html" target="_blank" rel="noopener">Launch Demo ↗</a>
     </div></div>
-    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-franchise.jpg" alt="Restaurant Franchise Tracker" loading="lazy"></div><div class="body">
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-004.jpg" alt="Franchise Tracking System" loading="lazy"></div><div class="body">
       <div class="id">PRG-004 · GIS / BUSINESS <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
-      <h3>Restaurant Franchise Tracker</h3>
-      <p>A PH franchise tracking system for a restaurant chain — branches plotted on a live map with
-        performance monitoring per location. Explore the map and drill into branches.</p>
-      <div class="tags"><span class="tag">GIS / Maps</span><span class="tag">Dashboards</span><span class="tag">Analytics</span></div>
+      <h3>Franchise Tracking System</h3>
+      <p>See every branch on one live map, with revenue vs plan, margin health, a risk radar and AI analysis for each location.</p>
       <a class="demo-btn" href="modpi-branch-tracker.html" target="_blank" rel="noopener">Launch Demo ↗</a>
+    </div></div>
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-005.png" alt="Build Legend — Construction Accounting" loading="lazy" onerror="this.parentNode.textContent='\ud83c\udfd7\ufe0f'"></div><div class="body">
+      <div class="id">PRG-005 · AI / ACCOUNTING <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
+      <h3>AI Construction Accounting System</h3>
+      <p>A contractor's full books — project costing, billings, payables and financial statements — with an AI that reviews the live ledger.</p>
+      <a class="demo-btn" href="build-legend.html" target="_blank" rel="noopener">Launch Demo ↗</a>
+    </div></div>
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-006.png" alt="NewPort — HR and People Operations" loading="lazy" onerror="this.parentNode.textContent='\ud83d\udc65'"></div><div class="body">
+      <div class="id">PRG-006 · HR / PEOPLE OPS <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
+      <h3>HR &amp; People Operations System</h3>
+      <p>A complete HRIS — records, attendance, leave, payroll, hiring and performance — with separate admin, manager and employee views.</p>
+      <a class="demo-btn" href="newport-hr.html" target="_blank" rel="noopener">Launch Demo ↗</a>
+    </div></div>
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-007.png" alt="PDF Editor" loading="lazy" onerror="this.parentNode.textContent='\ud83d\udcc4'"></div><div class="body">
+      <div class="id">PRG-007 · PRODUCTIVITY / DOCUMENTS <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
+      <h3>PDF Editor</h3>
+      <p>Edit text, fill forms, sign, annotate, redact and merge pages right in your browser. Your files never leave your device.</p>
+      <a class="demo-btn" href="PDF-Editor.html" target="_blank" rel="noopener">Launch Demo ↗</a>
+    </div></div>
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-008.png" alt="Air Planner — Airflow and Cooling Simulator" loading="lazy" onerror="this.parentNode.textContent='\ud83c\udf2c\ufe0f'"></div><div class="body">
+      <div class="id">PRG-008 · SIMULATION / AIRFLOW <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
+      <h3>Air Planner — Airflow &amp; Cooling Simulator</h3>
+      <p>Place rooms, windows, aircons and fans, then watch a live simulation of airflow, heat and comfort across rooms and whole floors.</p>
+      <a class="demo-btn" href="AirPlanner.html" target="_blank" rel="noopener">Launch Demo ↗</a>
+    </div></div>
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-009.png" alt="MathBench — Graphing and Math Toolkit" loading="lazy" onerror="this.parentNode.textContent='\ud83d\udcd0'"></div><div class="body">
+      <div class="id">PRG-009 · MATH / EDUCATION <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
+      <h3>MathBench — Graphing &amp; Math Toolkit</h3>
+      <p>Graphing with sliders, a scientific calculator, geometry, a step-by-step equation solver, statistics and unit conversion in one page.</p>
+      <a class="demo-btn" href="Mathbench.html" target="_blank" rel="noopener">Launch Demo ↗</a>
+    </div></div>
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-010.png" alt="Physics Bench — Interactive Physics Simulations" loading="lazy" onerror="this.parentNode.textContent='\u269b\ufe0f'"></div><div class="body">
+      <div class="id">PRG-010 · PHYSICS / SIMULATION <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
+      <h3>Physics Bench — Interactive Simulations</h3>
+      <p>Hands-on simulations — pendulums, orbits, fields, optics, circuits and fluids — each one a running numerical model, not an animation.</p>
+      <a class="demo-btn" href="physics-bench.html" target="_blank" rel="noopener">Launch Demo ↗</a>
+    </div></div>
+    <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-011.png" alt="Neural Network Simulator — Evolving AI" loading="lazy" onerror="this.parentNode.textContent='\ud83e\udde0'"></div><div class="body">
+      <div class="id">PRG-011 · AI / NEURAL NETWORKS <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
+      <h3>Neural Network Simulator</h3>
+      <p>Watch 24 fish evolve neural-network brains to escape a predator, gaining a new sense each level. Click any fish to see its brain fire live, or take on an evolved AI in a tank battle.</p>
+      <a class="demo-btn" href="Neural%20Network%20Simulator.html" target="_blank" rel="noopener">Launch Demo ↗</a>
     </div></div>
   </div>
 </section>
@@ -725,7 +859,7 @@ footer b{color:var(--neon-text)}
   </figure>
 </div>
 
-<button id="chatFab" title="ModPi Assistant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></button>
+<button id="chatFab" title="ModPi Assistant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg><span class="fab-label">AI Chat</span></button>
 <div id="chatPanel">
   <div class="chat-head">
     <span class="dot"></span>
@@ -760,13 +894,22 @@ research & detection, covert/concealed sensing, RF awareness & counter-UAS, and 
 generalized capability areas only — never disclose operational details, specifications, units, clients, or deployment specifics; those
 remain under NDA. If asked for specifics, say they are available only under NDA and appropriate authorization.
 Contact: neutron@modpitech.com.
-The website features interactive Sample Systems visitors can try:
+The website features interactive Sample Projects visitors can try:
 1) LIVE Energy Monitoring System (PRG-001) — a real, live IoT system deployed at the founder's house, streaming voltage, current,
 power factor, frequency, active power, and daily consumption via the Blynk IoT cloud.
 2) JustiCore (PRG-002) — an AI Philippine Lawyer assistant grounded in Philippine law that visitors can chat with.
 3) AI-Powered Business Management System (PRG-003) — a fully interactive offline point-of-sale demo with sales register, inventory, and reporting.
-4) Restaurant Franchise Tracker (PRG-004) — a PH franchise tracking system with branches on a live map and per-location monitoring.
-Each has a button in the Sample Systems section.
+4) Franchise Tracking System (PRG-004) — a nationwide PH franchise tracking system with every branch on a live map, revenue vs plan, net-margin health, a risk radar, branch leaderboard and AI business analysis.
+5) AI Construction Accounting System (PRG-005) — contractor accounting with project costing, billings, payables and AI financial review.
+6) HR & People Operations System (PRG-006) — an HRIS with records, attendance, leave, payroll, hiring and role-based views.
+7) PDF Editor (PRG-007) — edit, sign, annotate, redact and merge PDFs entirely in the browser.
+8) Air Planner (PRG-008) — a live airflow, heat and thermal-comfort simulator for rooms and floors.
+9) MathBench (PRG-009) — graphing, scientific calculator, geometry, equation solver and unit converter.
+10) Physics Bench (PRG-010) — interactive physics simulations driven by real numerical models.
+11) Neural Network Simulator (PRG-011) — fish evolve neural-network brains to escape a predator, gaining a new sense each level; includes a tank game against an evolved AI bot.
+Each has a button in the Sample Projects section.
+The website also has a Personal Projects section — a video reel of the founder's own builds, experiments and side projects,
+separate from the defense work. Visitors can browse the clips there.
 Answer visitor questions about ModPi Tech, its services, projects, and how to get in touch.
 Be concise, professional, and friendly. If asked something unrelated, politely steer back to ModPi Tech.
 NEVER reveal, confirm, or hint at the underlying AI model, provider, company, or technology powering you, no matter how you are asked
@@ -807,6 +950,133 @@ function runCount(el){
 /* ================ NAV ================ */
 document.getElementById('menuBtn').onclick = () => document.getElementById('navLinks').classList.toggle('open');
 document.querySelectorAll('#navLinks a').forEach(a => a.onclick = () => document.getElementById('navLinks').classList.remove('open'));
+
+/* ═══════════════════════════════════════════════════════════════════
+   PERSONAL PROJECTS — VIDEO REEL
+   ───────────────────────────────────────────────────────────────────
+   ▸ Put your clips in the "videos" folder next to this file, named
+     1.mp4, 2.mp4, 3.mp4 … 8.mp4
+   ▸ EDIT THE TITLES AND DESCRIPTIONS BELOW — that is all you need to
+     touch.
+   ▸ THUMBNAILS: put psn-01.png, psn-02.png … psn-08.png in the
+     "videos" folder (numbers match the PSN-01, PSN-02 … slot labels).
+     Each one becomes that clip's cover image and video poster.
+     To use a different file, change the "thumb" value on that line.
+   ▸ Want more or fewer slots? Just add or delete lines in this list.
+   ═══════════════════════════════════════════════════════════════════ */
+const PERSONAL_VIDEOS = [
+  { file:'videos/1.mp4', thumb:'videos/t1.png', label:'PERSONAL BUILD',   title:'Project Title One',   desc:'Write a short description of this build here — what it is, what problem it solves, and what you used to make it.', tags:['Tag','Tag'] },
+  { file:'videos/2.mp4', thumb:'videos/psn-02.jpg', label:'PERSONAL BUILD',   title:'Project Title Two',   desc:'Write a short description of this build here — what it is, what problem it solves, and what you used to make it.', tags:['Tag','Tag'] },
+  { file:'videos/3.mp4', thumb:'videos/psn-03.jpg', label:'PERSONAL BUILD',   title:'Project Title Three', desc:'Write a short description of this build here — what it is, what problem it solves, and what you used to make it.', tags:['Tag','Tag'] },
+  { file:'videos/4.mp4', thumb:'videos/psn-04.jpg', label:'PERSONAL BUILD',   title:'Project Title Four',  desc:'Write a short description of this build here — what it is, what problem it solves, and what you used to make it.', tags:['Tag','Tag'] }
+];
+
+(function personalReel(){
+  const wrap  = document.querySelector('.pv');
+  const track = document.getElementById('pvTrack');
+  const dots  = document.getElementById('pvDots');
+  const prev  = document.getElementById('pvPrev');
+  const next  = document.getElementById('pvNext');
+  const numEl = document.getElementById('pvNum');
+  if(!track) return;
+
+  const pad = n => String(n).padStart(2,'0');
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+
+  document.getElementById('pvTot').textContent = pad(PERSONAL_VIDEOS.length);
+
+  track.innerHTML = PERSONAL_VIDEOS.map((v,i) => {
+    const slot = 'PSN-' + pad(i+1);
+    const cover = v.thumb || ('videos/psn-' + pad(i+1) + '.png');
+    return `<article class="pv-slide" data-i="${i}">
+      <div class="pv-frame hud">
+        <button class="pv-poster" data-src="${esc(v.file)}" data-poster="${esc(cover)}" aria-label="Play ${esc(v.title)}">
+          <img src="${esc(cover)}" alt="${esc(v.title)} thumbnail" loading="lazy" onload="this.parentNode.classList.add('has-thumb')" onerror="this.remove()">
+          <span class="pv-slot">${slot}</span>
+          <span class="pv-play">${PLAY}</span>
+        </button>
+        <div class="pv-miss"><b class="pv-miss-h">SLOT EMPTY</b><span class="pv-miss-t">Add <b>${esc(v.file)}</b> to publish this clip.</span></div>
+      </div>
+    </article>`;
+  }).join('');
+
+  const slides = [...track.querySelectorAll('.pv-slide')];
+  dots.innerHTML = slides.map((_,i)=>`<button data-i="${i}" aria-label="Go to video ${i+1}"></button>`).join('');
+  const dotBtns = [...dots.querySelectorAll('button')];
+  let idx = 0;
+
+  /* click the cover → swap in the real <video> and play it */
+  track.addEventListener('click', e => {
+    const poster = e.target.closest('.pv-poster');
+    if(!poster) return;
+    const frame = poster.parentElement;
+    const src = poster.dataset.src;
+    const vid = document.createElement('video');
+    vid.src = src;
+    if(poster.classList.contains('has-thumb')) vid.poster = poster.dataset.poster;
+    vid.controls = true; vid.autoplay = true; vid.playsInline = true; vid.preload = 'auto';
+    vid.onerror = async () => {
+      /* the file may be missing, or present but in a format this browser
+         can't decode — say which, instead of guessing */
+      let there = false;
+      try { there = (await fetch(src, {method:'HEAD'})).ok; } catch(_){}
+      if(there){
+        frame.querySelector('.pv-miss-h').textContent = 'CANNOT PLAY';
+        frame.querySelector('.pv-miss-t').innerHTML = 'This browser could not decode <b>' + src + '</b>. Try an H.264 MP4.';
+      }
+      frame.classList.add('missing');
+      vid.remove();
+    };
+    poster.remove();
+    frame.prepend(vid);
+  });
+
+  function pauseAll(except){
+    track.querySelectorAll('video').forEach(v => { if(v !== except) v.pause(); });
+  }
+  function placeArrows(){
+    const f = track.querySelector('.pv-frame');
+    if(!f) return;
+    const r = f.getBoundingClientRect(), p = wrap.getBoundingClientRect();
+    wrap.style.setProperty('--pvArrow', (r.top - p.top + r.height/2) + 'px');
+  }
+  function paint(){
+    numEl.textContent = pad(idx+1);
+    dotBtns.forEach((d,i)=>d.classList.toggle('on', i===idx));
+    prev.disabled = idx === 0;
+    next.disabled = idx === slides.length-1;
+  }
+  function go(i){
+    idx = Math.max(0, Math.min(slides.length-1, i));
+    track.scrollTo({ left: slides[idx].offsetLeft - slides[0].offsetLeft, behavior:'smooth' });
+    pauseAll(); paint();
+  }
+
+  prev.onclick = () => go(idx-1);
+  next.onclick = () => go(idx+1);
+  dotBtns.forEach(d => d.onclick = () => go(+d.dataset.i));
+  track.addEventListener('keydown', e => {
+    if(e.key === 'ArrowRight'){ e.preventDefault(); go(idx+1); }
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); go(idx-1); }
+  });
+
+  /* keep the counter in sync when the reel is swiped by hand */
+  let st;
+  track.addEventListener('scroll', () => {
+    clearTimeout(st);
+    st = setTimeout(() => {
+      const w = slides[0].offsetWidth + 22;
+      const i = Math.round(track.scrollLeft / w);
+      if(i !== idx){ idx = i; pauseAll(); paint(); }
+      placeArrows();
+    }, 90);
+  }, {passive:true});
+
+  addEventListener('resize', placeArrows);
+  new ResizeObserver(placeArrows).observe(track);
+  paint(); placeArrows();
+})();
 
 /* ================ ENERGY MONITOR (Blynk) ================ */
 const BLYNK_TOKEN = "TCwQWQDuxRVeLL0kB8Ih0qnPAOrex2Hs";

@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#eceef0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+<title>Air Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eceef0; --panel:#ffffff; --panel-2:#f4f6f7;
+  --ink:#14181b; --ink-2:#4b5560; --muted:#79858f;
+  --line:#dbe0e4; --line-2:#c6cdd3;
+  --accent:#3355ff; --accent-ink:#ffffff;
+  --amber:#f0a202; --danger:#c8402c; --cool:#2f8fe0; --warm:#e8642c;
+  --viewport:#060a12; --radius:7px;
+  --shadow:0 1px 2px rgba(20,24,27,.08);
+  --ui:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1014; --panel:#161a1f; --panel-2:#1d2229;
+    --ink:#e7eaec; --ink-2:#a9b3bc; --muted:#7d8791;
+    --line:#252b32; --line-2:#333b44;
+    --accent:#6b83ff; --accent-ink:#0d1014; --cool:#6fb8ff; --warm:#ff8a5c;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1014; --panel:#161a1f; --panel-2:#1d2229;
+  --ink:#e7eaec; --ink-2:#a9b3bc; --muted:#7d8791;
+  --line:#252b32; --line-2:#333b44;
+  --accent:#6b83ff; --accent-ink:#0d1014; --cool:#6fb8ff; --warm:#ff8a5c;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--ui); font-size:14px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.shell{max-width:1440px;margin:0 auto;padding:16px 16px 34px;
+  padding-left:max(16px,env(safe-area-inset-left));
+  padding-right:max(16px,env(safe-area-inset-right));
+  padding-top:max(16px,env(safe-area-inset-top));
+}
+header.top{
+  display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  padding-bottom:13px;margin-bottom:15px;border-bottom:1px solid var(--line);
+}
+header.top h1{margin:0;font-size:19px;font-weight:700;letter-spacing:-.015em}
+header.top p{margin:0;color:var(--muted);font-size:13px;max-width:56ch}
+a.credit{
+  margin-left:auto;color:var(--muted);text-decoration:none;font-size:12.5px;
+  border:1px solid var(--line);border-radius:999px;padding:3px 11px;white-space:nowrap;
+}
+a.credit b{font-weight:600;color:var(--ink-2)}
+a.credit:hover{border-color:var(--accent);color:var(--accent)}
+a.credit:hover b{color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 324px;gap:16px;align-items:start}
+@media (max-width:940px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+.stage{position:relative}
+.framewrap{position:relative}
+.frame{
+  position:relative;width:100%;aspect-ratio:200/126;
+  background:var(--viewport);border:1px solid var(--line-2);
+  border-radius:var(--radius);overflow:hidden;touch-action:none;cursor:crosshair;
+}
+@supports not (aspect-ratio:1/1){ .frame{height:0;padding-bottom:63%} }
+.frame canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.frame.tool-device{cursor:default}
+.frame.dragging{cursor:grabbing}
+
+.readout{
+  position:absolute;left:10px;top:10px;z-index:2;display:flex;gap:1px;
+  background:rgba(6,10,18,.74);border:1px solid rgba(255,255,255,.14);
+  border-radius:5px;overflow:hidden;pointer-events:none;
+}
+.readout div{padding:5px 9px;min-width:0}
+.readout div+div{border-left:1px solid rgba(255,255,255,.12)}
+.readout b{display:block;font-family:var(--mono);font-size:13.5px;font-weight:500;color:#fff;white-space:nowrap}
+.readout b.word{font-family:var(--ui);font-weight:600}
+.readout span{display:block;font-size:10px;color:rgba(255,255,255,.55);margin-top:1px;white-space:nowrap}
+@media (max-width:620px){
+  .readout{position:static;margin-top:8px;background:var(--panel);border-color:var(--line)}
+  .readout div{flex:1;padding:6px 8px}
+  .readout div+div{border-left-color:var(--line)}
+  .readout b{color:var(--ink);font-size:13px}
+  .readout span{color:var(--muted)}
+}
+
+.zoomctl{position:absolute;right:9px;top:9px;display:flex;flex-direction:column;
+  background:rgba(6,10,18,.72);border:1px solid rgba(255,255,255,.14);border-radius:5px;overflow:hidden}
+.zoomctl button{
+  width:31px;height:29px;background:transparent;border:0;color:#fff;cursor:pointer;
+  font-size:15px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;
+}
+.zoomctl button+button{border-top:1px solid rgba(255,255,255,.12)}
+.zoomctl button:active{background:rgba(255,255,255,.16)}
+.zoomctl .lvl{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.65);
+  text-align:center;padding:3px 0;border-top:1px solid rgba(255,255,255,.12)}
+
+.stage-note{
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin-top:8px;color:var(--muted);font-size:12px;
+}
+.stage-note kbd{
+  font-family:inherit;background:var(--panel-2);border:1px solid var(--line);
+  border-bottom-width:2px;border-radius:4px;padding:0 4px;font-size:11px;color:var(--ink-2);
+}
+
+.rail{display:flex;flex-direction:column;gap:13px}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:13px;
+}
+.card h2{
+  margin:0 0 11px;font-size:12.5px;font-weight:600;color:var(--ink-2);
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+}
+.card h2 em{font-style:normal;color:var(--muted);font-weight:400;font-size:11.5px;text-align:right}
+
+.seg{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:2px;gap:2px}
+.seg button{
+  flex:1;background:transparent;border:0;border-radius:4px;padding:7px 2px;
+  font-size:12px;font-weight:500;cursor:pointer;color:var(--ink-2);white-space:nowrap;
+}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.dim{opacity:.4;pointer-events:none;filter:saturate(.4)}
+.soft{opacity:.55}
+[hidden]{display:none !important}
+.viewtabs{display:inline-flex;margin-bottom:9px}
+.viewtabs button{padding:7px 18px;font-size:13px}
+.climstats.four{grid-template-columns:repeat(2,1fr)}
+
+.compass-wrap{display:flex;gap:14px;align-items:center}
+.dial{width:124px;height:124px;flex:none;touch-action:none;cursor:grab;user-select:none;border-radius:50%}
+.dial.dragging{cursor:grabbing}
+.dial .ring{fill:var(--panel-2);stroke:var(--line-2)}
+.dial .tick{stroke:var(--line-2)}
+.dial .tick.major{stroke:var(--muted)}
+.dial .card-letter{fill:var(--muted);font-size:9.5px;font-weight:600;text-anchor:middle}
+.dial .vane{fill:var(--amber)}
+.dial .vane-line{stroke:var(--amber);stroke-width:2}
+.dial .hub{fill:var(--panel);stroke:var(--line-2)}
+.dial .flowline{stroke:var(--amber);stroke-opacity:.3;stroke-width:1.4;stroke-dasharray:3 4}
+
+.bearing{flex:1;min-width:0}
+.bearing .big{font-family:var(--mono);font-size:26px;font-weight:500;letter-spacing:-.03em;line-height:1}
+.bearing .sub{color:var(--muted);font-size:12px;margin-top:3px}
+.quick{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}
+.quick button{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:4px;
+  padding:4px 8px;font-size:11.5px;cursor:pointer;color:var(--ink-2);font-weight:500;
+}
+.quick button:hover{border-color:var(--accent);color:var(--accent)}
+
+.field{margin-top:11px}
+.field label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px}
+.field label span{font-size:12.5px;color:var(--ink-2)}
+.field label output{font-family:var(--mono);font-size:12.5px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--line-2);border-radius:2px}
+input[type=range]::-moz-range-track{height:3px;background:var(--line-2);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:17px;height:17px;border-radius:50%;
+  background:var(--panel);border:2px solid var(--accent);margin-top:-7px;
+  box-shadow:0 1px 2px rgba(0,0,0,.2);
+}
+input[type=range]::-moz-range-thumb{
+  width:15px;height:15px;border-radius:50%;background:var(--panel);
+  border:2px solid var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.2);
+}
+input.temp-range::-webkit-slider-runnable-track{background:linear-gradient(90deg,#3f86e0,#46c2b4 45%,#f0b23c 72%,#d8443a)}
+input.temp-range::-moz-range-track{background:linear-gradient(90deg,#3f86e0,#46c2b4 45%,#f0b23c 72%,#d8443a)}
+
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.tools button, .addrow button{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:var(--panel-2);border:1px solid var(--line);border-radius:6px;
+  padding:9px 3px 7px;cursor:pointer;font-size:11.5px;font-weight:500;color:var(--ink-2);
+}
+.tools button:hover, .addrow button:hover{border-color:var(--line-2);color:var(--ink)}
+.tools button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tools button:disabled{opacity:.4;cursor:not-allowed}
+.tools svg, .addrow svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+.addrow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:12px}
+.addrow button{padding:8px 2px 6px;font-size:11px;line-height:1.15;text-align:center}
+.addrow button .plus{font-family:var(--mono);color:var(--muted)}
+
+.climstats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:2px;
+  background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.climstats div{background:var(--panel-2);padding:7px 8px}
+.climstats b{display:block;font-family:var(--mono);font-size:15px;font-weight:500;line-height:1.15}
+.climstats span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+
+.devlist{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.devlist button{
+  display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+  background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:6px 8px;cursor:pointer;
+}
+.devlist button:hover{border-color:var(--line-2)}
+.devlist button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.devlist .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.devlist .nm{font-size:12.5px;font-weight:500;color:var(--ink)}
+.devlist .st{margin-left:auto;font-size:11.5px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+
+.deved{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.deved:empty{display:none}
+.dev-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dev-head b{font-size:13px}
+.mini{background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:5px 9px;
+  cursor:pointer;font-size:12px;font-weight:500;color:var(--ink-2)}
+.mini.warn:hover{border-color:var(--danger);color:var(--danger)}
+.deved .seg{margin-top:5px}
+.deved .lbl{font-size:12.5px;color:var(--ink-2);margin-top:11px;display:block}
+
+.row{display:flex;gap:6px;margin-top:10px}
+.row button{
+  flex:1;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;
+  padding:8px 6px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--ink-2);
+}
+.row button:hover{border-color:var(--line-2);color:var(--ink)}
+.row button.warn:hover{border-color:var(--danger);color:var(--danger)}
+
+select{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:8px;cursor:pointer}
+
+.check{display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer}
+.check input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer;margin:0}
+.check span{font-size:12.5px;color:var(--ink-2)}
+
+.legend{display:flex;align-items:center;gap:8px;margin-top:10px}
+.legend .bar{flex:1;height:8px;border-radius:2px;border:1px solid var(--line)}
+.legend small{color:var(--muted);font-size:11px;font-family:var(--mono)}
+
+.hint{color:var(--muted);font-size:11.5px;margin:8px 0 0;line-height:1.4}
+
+details.help{border-top:1px solid var(--line);margin-top:11px;padding-top:11px}
+details.help summary{cursor:pointer;font-size:12.5px;color:var(--ink-2);font-weight:500;list-style:none}
+details.help summary::-webkit-details-marker{display:none}
+details.help summary::before{content:"+ ";color:var(--muted)}
+details.help[open] summary::before{content:"– "}
+details.help div{color:var(--muted);font-size:12px;margin-top:9px}
+details.help p{margin:0 0 7px}
+
+footer.foot{
+  margin-top:22px;padding-top:13px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  color:var(--muted);font-size:12px;
+}
+footer.foot a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line-2)}
+footer.foot a:hover{color:var(--accent);border-color:var(--accent)}
+
+.toast{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(8px);
+  background:var(--ink);color:var(--bg);padding:9px 15px;border-radius:6px;
+  font-size:12.5px;opacity:0;pointer-events:none;max-width:calc(100vw - 32px);
+  transition:opacity .18s,transform .18s;z-index:50;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="top">
+    <h1>Air Planner</h1>
+    <p>Draw your rooms, open windows, place aircons and fans, and see where air moves, where heat collects, and where it feels comfortable.</p>
+    <a class="credit" href="https://modpitech.com" target="_blank" rel="noopener noreferrer">built by <b>&radic;1M</b></a>
+  </header>
+
+  <div class="layout">
+
+    <div class="stage">
+      <div class="seg viewtabs" role="group" aria-label="Scene">
+        <button id="vPlan" aria-pressed="true">Floor plan</button>
+        <button id="vSection" aria-pressed="false">Side view</button>
+      </div>
+      <div class="framewrap">
+      <div class="frame" id="frame">
+        <canvas id="view"></canvas>
+        <div class="zoomctl">
+          <button id="zIn" aria-label="Zoom in">+</button>
+          <button id="zOut" aria-label="Zoom out">−</button>
+          <button id="zFit" aria-label="Fit plan to view" style="font-size:10px">fit</button>
+          <div class="lvl" id="zLvl">1.0×</div>
+        </div>
+      </div>
+      <div class="readout" id="readout">
+        <div><b id="rSpeed">—</b><span>air speed</span></div>
+        <div><b id="rTemp">—</b><span>air temp</span></div>
+        <div><b id="rFeel">—</b><span>feels like</span></div>
+        <div><b id="rZone" class="word">—</b><span>condition</span></div>
+      </div>
+      </div>
+      <div class="stage-note">
+        <span id="hintLine"></span>
+        <span id="scaleLine"></span>
+      </div>
+    </div>
+
+    <div class="rail">
+
+      <section class="card">
+        <h2>Climate <em>indoors</em></h2>
+        <div class="climstats" id="climStats">
+          <div><b id="cAvg">—</b><span>average temp</span></div>
+          <div><b id="cComf">—</b><span>comfortable</span></div>
+          <div><b id="cAC">—</b><span>aircon output</span></div>
+          <div id="cAtticBox" hidden><b id="cAttic">—</b><span>roof space</span></div>
+        </div>
+        <div class="field">
+          <label for="sOut"><span>Outdoor air temperature</span><output id="oOut">32.0 °C</output></label>
+          <input type="range" class="temp-range" id="sOut" min="15" max="40" step="0.5" value="32">
+        </div>
+        <div class="field" id="roofTypeField">
+          <label for="roof"><span>Heat from the ceiling</span></label>
+          <select id="roof"></select>
+        </div>
+        <div class="field" id="roofField">
+          <label for="sRoof"><span id="roofLbl">Ceiling surface in midday sun</span><output id="oRoof">—</output></label>
+          <input type="range" class="temp-range" id="sRoof" min="0" max="35" step="1" value="0">
+        </div>
+
+        <div class="addrow" role="group" aria-label="Add a device">
+          <button data-add="ac">
+            <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="8" rx="2"/><path d="M6 11h12"/><path d="M8 17v2M12 17v3M16 17v2"/></svg>Aircon</button>
+          <button data-add="fan">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M12 9l3-4M12 9l-4 1M12 9l1 4"/><path d="M12 15v5M8 21h8"/></svg>Stand fan</button>
+          <button data-add="cfan">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.8"/><path d="M12 10V3M12 14v7M10 12H3M14 12h7"/></svg>Ceiling fan</button>
+          <button data-add="heat">
+            <svg viewBox="0 0 24 24"><path d="M12 3c1 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 0-8z"/></svg>Heat source</button>
+        </div>
+
+        <div class="devlist" id="devList"></div>
+        <div class="deved" id="devEditor"></div>
+      </section>
+
+      <section class="card">
+        <h2><span id="planTitle">Plan</span> <em id="planStat"></em></h2>
+        <div class="field" style="margin-top:0">
+          <label for="preset"><span>Start from a layout</span></label>
+          <select id="preset">
+            <option value="home">Home, two bedrooms with aircon</option>
+            <option value="rooms">Interior plan, cross ventilation</option>
+            <option value="openplan">Open-plan floor, core and pods</option>
+            <option value="apartment">Apartment, single aspect</option>
+            <option value="tower">Single tower on open site</option>
+            <option value="canyon">Street canyon</option>
+            <option value="court">Courtyard block, open south</option>
+            <option value="cluster">Staggered tower cluster</option>
+            <option value="slab">Slab with a gap</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sPlan"><span id="planLbl">Plan width</span><output id="oPlan">28 m</output></label>
+          <input type="range" id="sPlan" min="0" max="18" step="1" value="7">
+        </div>
+        <p class="hint" id="planHint">Widen this to fit a whole floor or site; narrow it to study one room in detail. It rescales the drawing; devices keep their real size.</p>
+      </section>
+
+      <section class="card">
+        <h2>Outdoor wind <em id="windMode">from the north</em></h2>
+        <div class="seg" role="group" aria-label="Outdoor wind">
+          <button id="mSite" aria-pressed="true">Breeze</button>
+          <button id="mCalm" aria-pressed="false">Calm, still air</button>
+        </div>
+        <div id="windControls">
+          <div class="seg" id="sideWind" role="group" aria-label="Wind side" style="margin-top:13px" hidden>
+            <button id="wLeft" aria-pressed="true">From the left</button>
+            <button id="wRight" aria-pressed="false">From the right</button>
+          </div>
+          <div class="compass-wrap" id="compassWrap" style="margin-top:13px">
+            <svg class="dial" id="dial" viewBox="0 0 120 120" role="slider"
+                 aria-label="Wind direction" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0"></svg>
+            <div class="bearing">
+              <div class="big"><span id="degOut">0</span>°</div>
+              <div class="sub" id="dirOut">from the north</div>
+              <div class="quick">
+                <button data-deg="0">N</button><button data-deg="45">NE</button>
+                <button data-deg="90">E</button><button data-deg="135">SE</button>
+                <button data-deg="180">S</button><button data-deg="225">SW</button>
+                <button data-deg="270">W</button><button data-deg="315">NW</button>
+              </div>
+            </div>
+          </div>
+          <div class="field" style="margin-top:13px">
+            <label for="sSpeed"><span>Wind speed</span><output id="oSpeed">2.0 m/s</output></label>
+            <input type="range" id="sSpeed" min="1" max="20" step="0.5" value="2">
+          </div>
+        </div>
+        <div class="field">
+          <label for="sTurb"><span>Turbulence</span><output id="oTurb">medium</output></label>
+          <input type="range" id="sTurb" min="0" max="100" step="1" value="58">
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Drawing <em id="wallStat">0.0 % built</em></h2>
+        <div class="tools" role="group" aria-label="Tools">
+          <button data-tool="brush" aria-pressed="true">
+            <svg viewBox="0 0 24 24"><path d="M4 20c2 0 3-1 3-3s-1-2-2-2-2 1-2 2"/><path d="M8.5 16.5 19 6a2 2 0 0 0-3-3L5.5 13.5"/></svg>Brush</button>
+          <button data-tool="line" aria-pressed="false">
+            <svg viewBox="0 0 24 24"><path d="M5 19 19 5"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/></svg>Wall</button>
+          <button data-tool="rect" aria-pressed="false">
+            <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/></svg>Block</button>
+          <button data-tool="erase" aria-pressed="false">
+            <svg viewBox="0 0 24 24"><path d="M4 16 13 7a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-5 5H8z"/><path d="M8 20h12"/></svg>Erase</button>
+          <button data-tool="device" aria-pressed="false">
+            <svg viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z"/></svg>Select</button>
+          <button id="bUndo" disabled>
+            <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12H8"/></svg>Undo</button>
+        </div>
+        <div class="field" id="matField" style="margin-top:11px" hidden>
+          <label><span>Draw with</span></label>
+          <div class="seg" role="group" aria-label="Material">
+            <button data-mat="1" aria-pressed="true">Wall</button>
+            <button data-mat="3" aria-pressed="false">Plywood</button>
+            <button data-mat="2" aria-pressed="false">Steel roof</button>
+          </div>
+        </div>
+        <div class="field" style="margin-top:11px">
+          <label for="sBrush"><span>Wall thickness</span><output id="oBrush">0.3 m</output></label>
+          <input type="range" id="sBrush" min="2" max="12" step="1" value="3">
+        </div>
+        <p class="hint" id="drawHint">To close a window, paint over the gap. To open one, erase a stretch of wall.</p>
+        <div class="row">
+          <button id="bClear" class="warn">Clear walls</button>
+          <button id="bReset">Restart</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Display <em id="fpsOut"></em></h2>
+        <div class="seg" role="group" aria-label="Field">
+          <button data-field="temp" aria-pressed="true">Temp</button>
+          <button data-field="speed" aria-pressed="false">Speed</button>
+          <button data-field="press" aria-pressed="false">Pressure</button>
+          <button data-field="vort" aria-pressed="false">Swirl</button>
+          <button data-field="none" aria-pressed="false">Off</button>
+        </div>
+        <div class="legend">
+          <small id="legMin">16°</small><div class="bar" id="legBar"></div><small id="legMax">38°</small>
+        </div>
+
+        <div class="field" style="margin-top:12px">
+          <label><span>Resolution</span></label>
+          <div class="seg" role="group" aria-label="Resolution">
+            <button data-q="fast" aria-pressed="false">Fast</button>
+            <button data-q="balanced" aria-pressed="false">Balanced</button>
+            <button data-q="detail" aria-pressed="true">Detail</button>
+          </div>
+        </div>
+
+        <label class="check"><input type="checkbox" id="cParticles" checked><span>Show air trails</span></label>
+        <label class="check"><input type="checkbox" id="cRun" checked><span>Run simulation</span></label>
+
+        <div class="field" style="margin-top:11px">
+          <label for="sTrails"><span>Trail density</span><output id="oTrails">1600</output></label>
+          <input type="range" id="sTrails" min="0" max="4000" step="100" value="1600">
+        </div>
+
+        <details class="help">
+          <summary>How to read this</summary>
+          <div>
+            <p><b>Temp</b> shows air temperature. Air carries its heat wherever it flows, so you can watch cool air spill out of an aircon room or warm outdoor air push in through a window.</p>
+            <p><b>Feels like</b> subtracts the cooling effect of moving air on skin, including the downdraft under a ceiling fan. Comfortable here means feeling 23–27 °C.</p>
+            <p><b>Heat from the ceiling</b> models a sun-baked roof. The ceiling becomes a warm surface that slowly heats the air beneath it and radiates onto people, so "feels like" rises even where the air is cool. It applies to every enclosed room; choose None for rooms with another floor above.</p>
+            <p><b>Aircons</b> behave like inverter units: each reads the air at the unit and throttles down as the room nears its setpoint. Capacity sets how much air it moves.</p>
+            <p><b>Speed</b> finds acceleration through doorways and around corners. <b>Pressure</b> shows windward push warm and leeward suction cool; cross ventilation works when an opening sits in each. <b>Swirl</b> shows air trapped recirculating.</p>
+            <p><b>Side view</b> cuts the house from roof to ground. Here warm air rises and cool air sinks, so you can watch heat pool under the roof, warmth climb the stairwell, and cold air from an aircon fall to the floor. The steel roof sits at the temperature you set. Plywood stops air but lets heat seep through, and the hot roof also radiates onto whatever is beneath it. Erase part of a wall to open a window, part of the ceiling to join a room to the roof space, or part of the roof to vent it.</p>
+            <p>The floor plan is a flat slice at about standing height, where rising warm air can't be shown, so there heat rides along with the air without pushing it. Both views are 2D slices. In the side view the lift of warm air is strengthened so that it shows at this scale, so read draught speeds there as a guide only. Walls leak a little heat to and from outdoors but don't store it, and sun through windows isn't modelled. Because air can't escape over the roof in 2D, wind pushes through a house harder than in reality; treat indoor breeze speeds as an upper bound. Use it to compare options, not to size equipment.</p>
+          </div>
+        </details>
+      </section>
+
+    </div>
+  </div>
+
+  <footer class="foot">
+    <span>Lattice Boltzmann D2Q9 flow with heat transport · qualitative 2D study</span>
+    <span>built by <a href="https://modpitech.com" target="_blank" rel="noopener noreferrer">&radic;1M</a></span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+function clamp(v, a, b){ return v < a ? a : v > b ? b : v; }
+
+/* ============================================================
+   Flow solver — lattice Boltzmann D2Q9, screen coords (x right, y down)
+   ============================================================ */
+var EX = [0, 1, 0,-1, 0, 1,-1,-1, 1];
+var EY = [0, 0,-1, 0, 1,-1,-1, 1, 1];
+var WT = [4/9, 1/9,1/9,1/9,1/9, 1/36,1/36,1/36,1/36];
+
+var W, H, N, N1,N2,N3,N4,N5,N6,N7,N8;
+var f, ft, ux, uy, rho, solid, damp, omL, ring, RINGLEN;
+var T, T2, indoor, zone, aboveIdx, distBuf, queueBuf, outBuf;
+var indoorIdx = new Int32Array(0), atticIdx = new Int32Array(0), steelIdx = new Int32Array(0), radIdx = new Int32Array(0);
+var feqT = new Float32Array(9);
+var REST = new Float32Array(WT);
+var SPONGE = 14;
+var KAPPA = 0.05;            // thermal diffusivity, cells^2 per step
+// Heat from the ceiling. A sun-baked roof makes the ceiling a warm surface: it
+// warms the air under it (self-limiting, never past the ceiling's own
+// temperature) and radiates onto people, which "feels like" accounts for.
+var CEIL_K = 1 / 12000;      // per step, air relaxing toward the ceiling temperature
+// Walls and gaps leak heat between indoor air and outdoors. Without this a closed
+// room under a hot roof would climb all the way to the ceiling's temperature.
+var ENV_K = 1 / 6000;
+var CEIL_VIEW = 0.2;         // share of a person's surroundings that is ceiling
+// Side view only. Cell materials: 0 air, 1 wall or slab, 2 steel roofing, 3 plywood, 4 ground.
+// The steel roof holds the temperature set for it. Plywood is warmed by the roof radiating onto
+// it, conducts through its thickness, and gives heat off from both faces. Each room is warmed by
+// whatever ceiling is over it, as in the floor plan. Air picks up only a little by touching a
+// hot surface, so that opening a vent can actually flush a roof space.
+var KP = 0.003;              // conduction inside plywood, cells^2 per step
+var PLY_OUT = 0.0013;        // plywood shedding heat from a face
+var KPA = 0.0005;            // air warming by contact with plywood
+var KS = 0.0015;             // air warming by contact with steel
+var RAD_K = 1 / 1500;        // steel roof radiating onto the top of the plywood below it
+var ATTIC_K = 1 / 12000;     // roof space leaking to outdoors through sheet laps
+var ROOF_DEPTH = 1.6;        // metres of air under bare steel that count as roof space
+var KAPPA_SIDE = 0.02;       // less smearing than the plan, so rising and falling air carries the heat
+// Lattice air is far more viscous than real air, and heat here moves on a compressed clock.
+// Buoyancy is strengthened to keep pace, so warm air visibly rises and cold air falls.
+var BUOY_GAIN = 20, BUOY_MAX_DT = 15;
+var COND_AIR = new Float32Array([KAPPA, 0, KS, KPA, 0]);         // what an air cell takes from each neighbour material
+var COND_PLY = new Float32Array([PLY_OUT, 0, KP, KP, 0]);        // and a plywood cell
+var GRAV_BETA = 9.81 / 305;  // buoyancy of warm air, m/s^2 per kelvin
+var MAT_NAME = ['', 'wall', 'steel roof', 'plywood', 'ground'];
+// how much hotter than outdoor air the ceiling surface gets in midday sun
+var ROOFS = {
+  off:      { label:'None — floor above, or shaded', dt:0 },
+  metal:    { label:'Metal roof, no ceiling', dt:25 },
+  metalceil:{ label:'Metal roof with ceiling board', dt:10 },
+  concrete: { label:'Concrete roof slab', dt:8 },
+  metalins: { label:'Metal roof, insulated', dt:4 },
+  custom:   { label:'Custom', dt:null }
+};
+function ceilT(){ return S.outdoorT + S.roofDT; }
+var HEAT_K = 2.8e-5;         // °C per step per W/m^2 of source
+
+var GRIDS = { fast:[124,78], balanced:[160,101], detail:[200,126] };
+var PLANS = [8,10,12,15,18,20,24,28,34,40,50,60,80,100,130,160,200,260,340];
+
+var S = {
+  quality:'detail', planW:28, mode:'site', bearing:0, speedMS:2,
+  omega:1/0.556, turb:0.58, tool:'brush', brush:3, field:'temp',
+  particles:true, running:true, trailCount:1600,
+  outdoorT:32, devices:[], sel:-1, simTime:0, thermalTick:0,
+  roof:'off', roofDT:0, view:'plan', mat:1,
+  steps:6, tick:0
+};
+var V = { z:1, ox:0, oy:0 };
+
+function mpc(){ return S.planW / W; }
+// Wind speed to lattice speed. Linear up to 4 m/s so a home's breeze, its fans and
+// its aircons share one scale; above that it compresses so a 20 m/s site study
+// stays inside the solver's stable range.
+var LAT_PER_MS = 0.0085;
+function latticeU(){
+  var s = S.speedMS;
+  return s <= 4 ? s * LAT_PER_MS : 4 * LAT_PER_MS + (s - 4) * (0.045 - 4 * LAT_PER_MS) / 16;
+}
+function msToLat(){ return S.mode === 'calm' ? LAT_PER_MS : latticeU() / S.speedMS; }
+function windVec(){
+  var U = latticeU(), r = S.bearing * Math.PI / 180;
+  return { x:-Math.sin(r) * U, y:Math.cos(r) * U, U:U };
+}
+function gradeOmega(){
+  for (var i = 0; i < N; i++) omL[i] = S.omega * (1 - damp[i]) + 1.0 * damp[i];
+}
+function setOmega(t){ S.turb = t; S.omega = 1 / (0.600 - t * 0.088); gradeOmega(); }
+function eqInto(out, vx, vy){
+  var usq = 1.5 * (vx*vx + vy*vy);
+  for (var i = 0; i < 9; i++){
+    var eu = 3 * (EX[i]*vx + EY[i]*vy);
+    out[i] = WT[i] * (1 + eu + 0.5*eu*eu - usq);
+  }
+}
+function setTarget(){
+  if (S.mode === 'site'){ var w = windVec(); eqInto(feqT, w.x, w.y); }
+  else eqInto(feqT, 0, 0);
+}
+
+var fieldCv = document.createElement('canvas'), fieldCx = fieldCv.getContext('2d');
+var wallCv  = document.createElement('canvas'), wallCx  = wallCv.getContext('2d');
+var fieldImg, fieldData, wallsDirty = true;
+
+function buildGrid(w, h){
+  var oldSolid = solid, oW = W, oH = H;
+  W = w; H = h; N = W * H;
+  N1=N; N2=2*N; N3=3*N; N4=4*N; N5=5*N; N6=6*N; N7=7*N; N8=8*N;
+  f = new Float32Array(9*N); ft = new Float32Array(9*N);
+  ux = new Float32Array(N); uy = new Float32Array(N); rho = new Float32Array(N);
+  solid = new Uint8Array(N);
+  damp = new Float32Array(N); omL = new Float32Array(N);
+  T = new Float32Array(N); T2 = new Float32Array(N);
+  indoor = new Uint8Array(N); zone = new Uint8Array(N); outBuf = new Uint8Array(N);
+  aboveIdx = new Int32Array(N); queueBuf = new Int32Array(N); distBuf = new Int16Array(N);
+
+  ring = [];
+  for (var x2 = 0; x2 < W; x2++){ ring.push(x2); ring.push((H-1)*W + x2); }
+  for (var y2 = 1; y2 < H-1; y2++){ ring.push(y2*W); ring.push(y2*W + W-1); }
+  RINGLEN = ring.length;
+
+  if (oldSolid){
+    resampleSolid(oldSolid, oW, oH);
+    if (S.view === 'section') stampGround();
+  }
+
+  fieldCv.width = W; fieldCv.height = H;
+  fieldImg = fieldCx.createImageData(W, H);
+  fieldData = fieldImg.data;
+  for (var k = 3; k < fieldData.length; k += 4) fieldData[k] = 255;
+  wallCv.width = W; wallCv.height = H;
+
+  buildDamp(); wallsDirty = true;
+}
+function resampleSolid(src, sw, sh){
+  for (var j = 1; j < H-1; j++){
+    var sj = Math.min(sh-1, (j * sh / H) | 0);
+    for (var i = 1; i < W-1; i++){
+      var si = Math.min(sw-1, (i * sw / W) | 0);
+      solid[j*W + i] = src[sj*sw + si];
+    }
+  }
+}
+// absorbing layer at the open edges. In the side view the bottom edge is ground, not open air.
+function buildDamp(){
+  var span = Math.max(4, Math.round(SPONGE * W / 200)), sec = S.view === 'section';
+  for (var y = 0; y < H; y++){
+    for (var x = 0; x < W; x++){
+      var d = Math.min(x, y, W-1-x, sec ? 9999 : H-1-y);
+      var t = d >= span ? 0 : (1 - d/span);
+      damp[y*W + x] = t*t;
+    }
+  }
+  COND_AIR[0] = sec ? KAPPA_SIDE : KAPPA;
+  gradeOmega();
+}
+function groundRow(){ return H - Math.max(4, Math.round(H * 0.05)); }
+function stampGround(){
+  var g = groundRow() * W;
+  for (var id = 0; id < N; id++){
+    if (id >= g) solid[id] = 4; else if (solid[id] === 4) solid[id] = 0;
+  }
+  wallsDirty = true;
+}
+
+function resetFlow(){
+  setTarget();
+  var vx = 0, vy = 0;
+  if (S.mode === 'site'){ var w = windVec(); vx = w.x; vy = w.y; }
+  var usq = 1.5 * (vx*vx + vy*vy);
+  for (var idx = 0; idx < N; idx++){
+    var n = 1 + (Math.random() - 0.5) * 0.004;
+    for (var i = 0; i < 9; i++){
+      var eu = 3 * (EX[i]*vx + EY[i]*vy);
+      f[i*N + idx] = WT[i] * (1 + eu + 0.5*eu*eu - usq) * n;
+    }
+    ux[idx] = vx; uy[idx] = vy; rho[idx] = 1;
+  }
+  ft.set(f);
+  T.fill(S.outdoorT); T2.fill(S.outdoorT);
+  S.devices.forEach(function(d){ d.power = 0; d.ret = NaN; d.integ = 0; });
+}
+
+function seedNoise(){
+  for (var k = 0; k < 60; k++){
+    var x = 8 + ((Math.random() * (W-16)) | 0);
+    var y = 6 + ((Math.random() * (H-12)) | 0);
+    var id = y*W + x;
+    if (solid[id]) continue;
+    var d = 1 + (Math.random() - 0.5) * 0.02;
+    f[N5+id] *= d; f[N7+id] /= d;
+    f[N6+id] *= d; f[N8+id] /= d;
+  }
+}
+
+/* ============================================================
+   Devices
+   ============================================================ */
+var AC_HP    = { '1':{w:0.80,k:1.00}, '1.5':{w:0.90,k:1.12}, '2':{w:1.00,k:1.22}, '2.5':{w:1.10,k:1.30} };
+var AC_FAN   = { low:2.5, med:3.5, high:4.5 };
+var AC_THROW = 1.3;                      // side view: metres over which an aircon's jet is driven
+var AC_MIN_SUPPLY = 10;                 // coldest air a unit can deliver, °C
+var AC_DTMAX = 10;                       // supply air up to 10 °C below return
+var FAN_SPEED  = { low:2.5, med:3.5, high:4.8 };
+var CFAN_SIZE  = { '42':1.07, '52':1.32, '56':1.42 };   // blade span, m
+var CFAN_SPEED = { low:1.0, med:1.6, high:2.2 };        // downdraft at centre, m/s
+var HEAT_KINDS = {
+  person:{label:'Person', w:100, r:0.30},
+  tv:    {label:'TV or computer', w:150, r:0.30},
+  fridge:{label:'Refrigerator', w:250, r:0.38},
+  stove: {label:'Stove, cooking', w:2000, r:0.45},
+  lamp:  {label:'Lamp', w:60, r:0.20}
+};
+var DEV_ID = 1, devCount = { ac:0, fan:0, cfan:0 };
+
+function makeDevice(type, fx, fy, o){
+  var d = { id:DEV_ID++, type:type, fx:fx, fy:fy, power:0, ret:NaN };
+  var side = S.view === 'section';
+  if (type === 'ac'){ devCount.ac++; d.dir = side ? 125 : 180; d.set = 24; d.hp = '1'; d.fan = 'med'; d.swing = false; d.name = 'Aircon ' + devCount.ac; }
+  else if (type === 'fan'){ devCount.fan++; d.dir = side ? 90 : 0; d.speed = 'med'; d.osc = !side; d.name = 'Stand fan ' + devCount.fan; }
+  else if (type === 'cfan'){ devCount.cfan++; d.size = '52'; d.speed = 'med'; d.name = 'Ceiling fan ' + devCount.cfan; }
+  else { d.kind = 'person'; }
+  if (o) for (var k in o) d[k] = o[k];
+  return d;
+}
+function devLabel(d){ return d.type === 'heat' ? HEAT_KINDS[d.kind].label : d.name; }
+// seen from the side a ceiling fan is a real downward jet, and a stand fan's sweep is in and out of the page
+function isJet(d){ return d.type === 'ac' || d.type === 'fan' || (d.type === 'cfan' && S.view === 'section'); }
+function baseDir(d){ return d.type === 'cfan' ? 180 : d.dir; }
+function effDir(d){
+  if (d.type === 'cfan') return 180;
+  if (d.type === 'ac' && d.swing) return d.dir + 30 * Math.sin(S.simTime * 2*Math.PI / 7 + d.id);
+  if (d.type === 'fan' && d.osc && S.view === 'plan') return d.dir + 45 * Math.sin(S.simTime * 2*Math.PI / 10 + d.id);
+  return d.dir;
+}
+function jetWidth(d){
+  if (d.type === 'ac') return AC_HP[d.hp].w * (S.view === 'section' ? 0.8 : 1);   // side on, sized to cool like the plan-view unit
+  if (d.type === 'cfan') return CFAN_SIZE[d.size];
+  return 0.45;
+}
+
+var jets = [], heats = [], cfans = [];
+function discCells(cx, cy, r){
+  var out = [], R = Math.ceil(r);
+  var x0 = Math.round(cx), y0 = Math.round(cy);
+  for (var j = -R; j <= R; j++){
+    for (var i = -R; i <= R; i++){
+      var x = x0 + i, y = y0 + j;
+      if (x < 1 || y < 1 || x >= W-1 || y >= H-1) continue;
+      var dx = x - cx, dy = y - cy;
+      if (dx*dx + dy*dy <= r*r){ var id = y*W + x; if (!solid[id]) out.push(id); }
+    }
+  }
+  return out;
+}
+
+// rebuilt every frame: outlets swing, and aircons re-read their return air
+function prepareDevices(){
+  jets.length = 0; heats.length = 0; cfans.length = 0;
+  var m = mpc(), fl = msToLat(), side = S.view === 'section';
+  for (var n = 0; n < S.devices.length; n++){
+    var d = S.devices[n];
+    var cx = d.fx * W, cy = d.fy * H;
+
+    if (isJet(d)){
+      var widthM = jetWidth(d), spd;
+      if (d.type === 'ac') spd = AC_FAN[d.fan] * AC_HP[d.hp].k * (S.view === 'section' ? 1.3 : 1);
+      else if (d.type === 'cfan') spd = CFAN_SPEED[d.speed];
+      else spd = FAN_SPEED[d.speed];
+      var a = effDir(d) * Math.PI / 180, dx = Math.sin(a), dy = -Math.cos(a);
+      var half = Math.max(1.0, widthM / m / 2), thick = Math.max(0.8, 0.12 / m);
+      // An aircon breathes in through its top grille, which a plan slice can't show.
+      // A still-air pad behind the outlet stands in for it, so the unit never tries
+      // to suck its supply through the gap between itself and the wall.
+      var back = d.type === 'ac' ? Math.max(1.5, 0.4 / m) : 0;
+      // Side on, an aircon's outlet is only a few cells tall, and so thin a jet stalls at once
+      // in air this viscous. Driving it over a short throw ahead of the unit lets it reach the room.
+      var ahead = (d.type === 'ac' && S.view === 'section') ? Math.max(4, AC_THROW / m) : thick;
+      var R = Math.ceil(Math.max(half, ahead) + thick + back + 1), cells = [], pad = [], cold = [];
+      var xc = Math.round(cx), yc = Math.round(cy);
+      for (var j = -R; j <= R; j++){
+        for (var i = -R; i <= R; i++){
+          var x = xc + i, y = yc + j;
+          if (x < 1 || y < 1 || x >= W-1 || y >= H-1) continue;
+          var rx = x - cx, ry = y - cy;
+          var along = rx*dx + ry*dy, across = -rx*dy + ry*dx;
+          if (Math.abs(across) > half + 0.5) continue;
+          var id = y*W + x; if (solid[id]) continue;
+          if (along >= -thick && along <= ahead && Math.abs(across) <= half){
+            cells.push(id);
+            if (along <= thick) cold.push(id);          // only the outlet itself sets the air temperature
+          }
+          else if (along < -thick && along >= -thick - back) pad.push(id);
+        }
+      }
+      var u = Math.min(0.055, spd * fl);   // keeps outlets well inside the low-Mach range
+      var q = new Float32Array(9); eqInto(q, u*dx, u*dy);
+      var jet = { cells:cells, cold:cold, pad:pad, feq:q, supply:null, d:d, dx:dx, dy:dy };
+
+      if (d.type === 'ac'){
+        // return air: a ring around the unit, excluding the cone it blows into
+        // return air: what the unit can see of its room out to 4 m, minus the jet itself
+        var rIn = Math.max(2, 0.8 / m), rOut = Math.max(rIn + 3, 4.0 / m);
+        var sum = 0, cnt = 0, pass;
+        for (pass = 0; pass < 2 && cnt === 0; pass++){
+          var RR = Math.ceil(rOut);
+          for (var jj = -RR; jj <= RR; jj++){
+            for (var ii = -RR; ii <= RR; ii++){
+              var xx = xc + ii, yy = yc + jj;
+              if (xx < 1 || yy < 1 || xx >= W-1 || yy >= H-1) continue;
+              var ox = xx - cx, oy = yy - cy, r2 = Math.sqrt(ox*ox + oy*oy);
+              if (r2 < rIn || r2 > rOut) continue;
+              // on the plan, skip the unit's own jet; side on, the whole room it faces counts,
+              // or it would only ever read the warm air along the ceiling
+              if (pass === 0 && !side && (ox*dx + oy*dy) / r2 > 0.5) continue;
+              var k2 = yy*W + xx; if (solid[k2]) continue;
+              if (!lineClear(cx, cy, xx, yy)) continue;
+              sum += T[k2]; cnt++;
+            }
+          }
+        }
+        var ret = cnt ? sum / cnt : S.outdoorT;
+        // inverter control: reacts to the error now, and keeps trimming until it
+        // actually reaches the setpoint instead of settling just above it
+        var err = ret - d.set, raw = err * 0.3 + (d.integ || 0);
+        if ((raw < 1 || err < 0) && (raw > 0 || err > 0))       // don't wind up while already flat out
+          d.integ = clamp((d.integ || 0) + err * 0.0004 * S.steps, 0, 1);
+        var pw = clamp(err * 0.3 + (d.integ || 0), 0, 1);
+        d.ret = ret; d.power = pw;
+        // the coil cools whatever air actually reaches the intake, so a unit that
+        // re-breathes its own cold air still removes the same heat
+        var tin = 0;
+        for (var pi = 0; pi < pad.length; pi++) tin += T[pad[pi]];
+        tin = pad.length ? tin / pad.length : ret;
+        jet.supply = Math.max(AC_MIN_SUPPLY, tin - pw * AC_DTMAX);
+      }
+      jets.push(jet);
+
+    } else if (d.type === 'cfan'){
+      var Rb = CFAN_SIZE[d.size] / 2 / m;
+      cfans.push({ cx:cx, cy:cy, R:Rb * 1.15, v:CFAN_SPEED[d.speed], cells:discCells(cx, cy, Math.max(1.5, Rb)) });
+
+    } else {
+      var hk = HEAT_KINDS[d.kind], rr = Math.max(1.5, hk.r / m);
+      var area = Math.PI * hk.r * hk.r;
+      heats.push({ cells:discCells(cx, cy, rr), rate:(hk.w / area) * HEAT_K });
+    }
+  }
+}
+// true when no wall cell sits on the straight line between two points
+function lineClear(x0, y0, x1, y1){
+  var dx = x1 - x0, dy = y1 - y0, n = Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)));
+  for (var i = 1; i < n; i++){
+    var x = Math.round(x0 + dx*i/n), y = Math.round(y0 + dy*i/n);
+    if (solid[y*W + x]) return false;
+  }
+  return true;
+}
+function downdraftAt(x, y){
+  var v = 0;
+  for (var i = 0; i < cfans.length; i++){
+    var c = cfans[i], dx = x - c.cx, dy = y - c.cy;
+    var r = Math.sqrt(dx*dx + dy*dy) / c.R;
+    if (r < 1){ var s = c.v * (1 - r*r); if (s > v) v = s; }
+  }
+  return v;
+}
+function coolEffect(v){ return v <= 0.2 ? 0 : 4 * (1 - Math.exp(-(v - 0.2) / 0.7)); }
+
+/* ============================================================
+   Step
+   ============================================================ */
+function step(){
+  if ((S.tick++ % 25) === 0) seedNoise();
+  // side view: warm air rises. Scaled from real gravity through the cell size and velocity scale.
+  var buoy = S.view === 'section', Tref = S.outdoorT, GB = 0;
+  if (buoy){ var fl0 = msToLat(); GB = BUOY_GAIN * GRAV_BETA * mpc() * fl0 * fl0; }
+
+  for (var idx = 0; idx < N; idx++){
+    if (solid[idx]){
+      var t;
+      t = f[N1+idx]; f[N1+idx] = f[N3+idx]; f[N3+idx] = t;
+      t = f[N2+idx]; f[N2+idx] = f[N4+idx]; f[N4+idx] = t;
+      t = f[N5+idx]; f[N5+idx] = f[N7+idx]; f[N7+idx] = t;
+      t = f[N6+idx]; f[N6+idx] = f[N8+idx]; f[N8+idx] = t;
+      ux[idx] = 0; uy[idx] = 0; rho[idx] = 1;
+      continue;
+    }
+    var a0=f[idx],   a1=f[N1+idx], a2=f[N2+idx], a3=f[N3+idx], a4=f[N4+idx],
+        a5=f[N5+idx],a6=f[N6+idx], a7=f[N7+idx], a8=f[N8+idx];
+    var r = a0+a1+a2+a3+a4+a5+a6+a7+a8;
+    if (r < 0.3) r = 0.3;
+    var ir = 1/r;
+    var vx = (a1 - a3 + a5 - a6 - a7 + a8) * ir;
+    var vy = (-a2 + a4 - a5 - a6 + a7 + a8) * ir;
+    var m = vx*vx + vy*vy;
+    if (m > 0.0484){ var sc = 0.22 / Math.sqrt(m); vx *= sc; vy *= sc; }
+    ux[idx] = vx; uy[idx] = vy; rho[idx] = r;
+
+    var om = omL[idx], dd = damp[idx] * 0.45, e = 1 - dd;
+    var t0 = r * (1 - 1.5*(vx*vx + vy*vy));
+    var tx = 3*vx, ty = 3*vy;
+    var c1=tx, c2=-ty, c3=-tx, c4=ty, c5=tx-ty, c6=-tx-ty, c7=-tx+ty, c8=tx+ty;
+    var q0=WT[0]*t0;
+    var q1=WT[1]*(t0+r*(c1+0.5*c1*c1)), q2=WT[2]*(t0+r*(c2+0.5*c2*c2));
+    var q3=WT[3]*(t0+r*(c3+0.5*c3*c3)), q4=WT[4]*(t0+r*(c4+0.5*c4*c4));
+    var q5=WT[5]*(t0+r*(c5+0.5*c5*c5)), q6=WT[6]*(t0+r*(c6+0.5*c6*c6));
+    var q7=WT[7]*(t0+r*(c7+0.5*c7*c7)), q8=WT[8]*(t0+r*(c8+0.5*c8*c8));
+    f[idx]    = (a0 + om*(q0-a0))*e + dd*feqT[0];
+    f[N1+idx] = (a1 + om*(q1-a1))*e + dd*feqT[1];
+    f[N2+idx] = (a2 + om*(q2-a2))*e + dd*feqT[2];
+    f[N3+idx] = (a3 + om*(q3-a3))*e + dd*feqT[3];
+    f[N4+idx] = (a4 + om*(q4-a4))*e + dd*feqT[4];
+    f[N5+idx] = (a5 + om*(q5-a5))*e + dd*feqT[5];
+    f[N6+idx] = (a6 + om*(q6-a6))*e + dd*feqT[6];
+    f[N7+idx] = (a7 + om*(q7-a7))*e + dd*feqT[7];
+    f[N8+idx] = (a8 + om*(q8-a8))*e + dd*feqT[8];
+    if (buoy){
+      var dT = T[idx] - Tref;
+      if (dT > BUOY_MAX_DT) dT = BUOY_MAX_DT; else if (dT < -BUOY_MAX_DT) dT = -BUOY_MAX_DT;
+      var Fy = -GB * dT * r, fa = Fy / 3, fb = Fy / 12;      // negative y is up the screen
+      f[N2+idx] -= fa; f[N4+idx] += fa;
+      f[N5+idx] -= fb; f[N6+idx] -= fb; f[N7+idx] += fb; f[N8+idx] += fb;
+    }
+  }
+
+  // fans and aircons push air out of their outlets
+  for (var jn = 0; jn < jets.length; jn++){
+    var J = jets[jn], cl = J.cells, q = J.feq, c, id;
+    for (c = 0; c < cl.length; c++){
+      id = cl[c];
+      f[id]=q[0]; f[N1+id]=q[1]; f[N2+id]=q[2]; f[N3+id]=q[3]; f[N4+id]=q[4];
+      f[N5+id]=q[5]; f[N6+id]=q[6]; f[N7+id]=q[7]; f[N8+id]=q[8];
+    }
+    cl = J.pad;
+    for (c = 0; c < cl.length; c++){
+      id = cl[c];
+      f[id]=REST[0]; f[N1+id]=REST[1]; f[N2+id]=REST[2]; f[N3+id]=REST[3]; f[N4+id]=REST[4];
+      f[N5+id]=REST[5]; f[N6+id]=REST[6]; f[N7+id]=REST[7]; f[N8+id]=REST[8];
+    }
+  }
+
+  ft.set(f);
+  for (var i2 = 1; i2 < 9; i2++){
+    var b = i2*N, dx = EX[i2], dy = EY[i2];
+    var x0 = dx > 0 ? 1 : 0, x1 = dx < 0 ? W-1 : W;
+    var y0 = dy > 0 ? 1 : 0, y1 = dy < 0 ? H-1 : H;
+    for (var y = y0; y < y1; y++){
+      var row = y*W, drow = (y+dy)*W;
+      for (var x = x0; x < x1; x++) ft[b + drow + x + dx] = f[b + row + x];
+    }
+  }
+  var tmp = f; f = ft; ft = tmp;
+
+  for (var k = 0; k < RINGLEN; k++){
+    var rid = ring[k];
+    for (var i3 = 0; i3 < 9; i3++) f[i3*N + rid] = feqT[i3];
+  }
+}
+
+// heat: semi-Lagrangian advection on the flow, diffusion, then sources
+function thermalStep(dt){
+  var Tout = S.outdoorT, x, y, idx, sec = S.view === 'section';
+  for (y = 1; y < H-1; y++){
+    for (x = 1; x < W-1; x++){
+      idx = y*W + x;
+      if (solid[idx]){ T2[idx] = T[idx]; continue; }
+      var bx = x - ux[idx]*dt, by = y - uy[idx]*dt;
+      if (bx < 0) bx = 0; else if (bx > W-1.001) bx = W-1.001;
+      if (by < 0) by = 0; else if (by > H-1.001) by = H-1.001;
+      var gx = bx|0, gy = by|0, fx = bx-gx, fy = by-gy;
+      var i00 = gy*W+gx, i10 = i00+1, i01 = i00+W, i11 = i01+1;
+      // walls are insulated: their cells take no part in the interpolation
+      var w00 = solid[i00] ? 0 : (1-fx)*(1-fy), w10 = solid[i10] ? 0 : fx*(1-fy);
+      var w01 = solid[i01] ? 0 : (1-fx)*fy,     w11 = solid[i11] ? 0 : fx*fy;
+      var ws = w00 + w10 + w01 + w11;
+      T2[idx] = ws > 1e-6 ? (w00*T[i00] + w10*T[i10] + w01*T[i01] + w11*T[i11]) / ws : T[idx];
+    }
+  }
+  for (y = 1; y < H-1; y++){
+    for (x = 1; x < W-1; x++){
+      idx = y*W + x;
+      var mt = solid[idx], cc = T2[idx];
+      if (mt !== 0 && mt !== 3){ T[idx] = cc; continue; }        // walls, steel and ground don't conduct here
+      var tb = mt === 0 ? COND_AIR : COND_PLY, nb, lap;
+      nb = idx-1; lap  = tb[solid[nb]] * (T2[nb] - cc);
+      nb = idx+1; lap += tb[solid[nb]] * (T2[nb] - cc);
+      nb = idx-W; lap += tb[solid[nb]] * (T2[nb] - cc);
+      nb = idx+W; lap += tb[solid[nb]] * (T2[nb] - cc);
+      var v = cc + dt*lap;
+      if (mt === 0){ var dd = damp[idx]; if (dd > 0) v += Math.min(1, dd*0.45*dt) * (Tout - v); }
+      T[idx] = v;
+    }
+  }
+  for (var k = 0; k < RINGLEN; k++){ T[ring[k]] = Tout; T2[ring[k]] = Tout; }
+
+  var ke = ENV_K * dt, q, ci, tc;
+  if (sec){
+    // rooms leak a little through their walls and are warmed by the ceiling over them
+    var Ts = ceilT(), ka = ATTIC_K * dt, kr = Math.min(1, RAD_K * dt), kcs = CEIL_K * dt, up, gain;
+    for (q = 0; q < indoorIdx.length; q++){
+      ci = indoorIdx[q]; tc = T[ci]; up = aboveIdx[ci];
+      gain = ke * (Tout - tc);
+      if (up >= 0 && (solid[up] === 2 || solid[up] === 3)) gain += kcs * (T[up] - tc);   // plywood, or bare steel
+      T[ci] = tc + gain;
+    }
+    for (q = 0; q < atticIdx.length; q++){ ci = atticIdx[q]; T[ci] += ka * (Tout - T[ci]); }
+    for (q = 0; q < radIdx.length; q++){ ci = radIdx[q]; T[ci] += kr * (Ts - T[ci]); }
+    for (q = 0; q < steelIdx.length; q++) T[steelIdx[q]] = Ts;
+  } else {
+    var kc = S.roofDT > 0 ? CEIL_K * dt : 0, Tc = ceilT();
+    for (q = 0; q < indoorIdx.length; q++){
+      ci = indoorIdx[q]; tc = T[ci];
+      T[ci] = tc + kc * (Tc - tc) + ke * (Tout - tc);
+    }
+  }
+
+  var n, c, cl;
+  for (n = 0; n < jets.length; n++){
+    if (jets[n].supply === null) continue;
+    cl = jets[n].cold; var sup = jets[n].supply;
+    for (c = 0; c < cl.length; c++) T[cl[c]] = sup;
+  }
+  for (n = 0; n < heats.length; n++){
+    cl = heats[n].cells; var add = heats[n].rate * dt;
+    for (c = 0; c < cl.length; c++){ var tv = T[cl[c]] + add; T[cl[c]] = tv > 70 ? 70 : tv; }
+  }
+  // a ceiling fan stirs the air beneath it top to bottom
+  for (n = 0; n < cfans.length; n++){
+    cl = cfans[n].cells; if (!cl.length) continue;
+    var mean = 0; for (c = 0; c < cl.length; c++) mean += T[cl[c]];
+    mean /= cl.length;
+    var s = Math.min(1, 0.05 * dt);
+    for (c = 0; c < cl.length; c++) T[cl[c]] += s * (mean - T[cl[c]]);
+  }
+}
+
+/* ============================================================
+   Colour
+   ============================================================ */
+function buildLUT(stops){
+  var lut = new Uint8Array(768);
+  for (var i = 0; i < 256; i++){
+    var t = i/255, a = stops[0], b = stops[stops.length-1];
+    for (var k = 0; k < stops.length-1; k++){
+      if (t >= stops[k][0] && t <= stops[k+1][0]){ a = stops[k]; b = stops[k+1]; break; }
+    }
+    var u = (t - a[0]) / ((b[0] - a[0]) || 1);
+    lut[i*3]   = a[1] + (b[1]-a[1])*u;
+    lut[i*3+1] = a[2] + (b[2]-a[2])*u;
+    lut[i*3+2] = a[3] + (b[3]-a[3])*u;
+  }
+  return lut;
+}
+var TMIN = 16, TMAX = 38;
+var LUT = {
+  temp:  buildLUT([[0,28,52,140],[0.18,42,118,220],[0.36,48,186,184],[0.50,128,206,120],[0.64,240,200,70],[0.80,240,124,46],[1,196,36,52]]),
+  speed: buildLUT([[0,6,10,18],[0.16,16,44,86],[0.36,18,104,140],[0.56,36,166,126],[0.74,176,200,72],[0.88,250,196,60],[1,255,252,238]]),
+  press: buildLUT([[0,48,120,214],[0.3,26,60,120],[0.5,10,14,24],[0.7,140,52,40],[1,255,176,92]]),
+  vort:  buildLUT([[0,74,208,224],[0.32,20,72,96],[0.5,8,12,20],[0.68,120,60,110],[1,255,150,200]])
+};
+function lutCSS(name){
+  var l = LUT[name], p = [];
+  for (var i = 0; i <= 10; i++){
+    var k = Math.round(i*25.5)*3;
+    p.push('rgb(' + l[k] + ',' + l[k+1] + ',' + l[k+2] + ') ' + (i*10) + '%');
+  }
+  return 'linear-gradient(90deg,' + p.join(',') + ')';
+}
+
+/* ============================================================
+   Canvas + view transform
+   ============================================================ */
+var frame = $('frame'), view = $('view'), ctx = view.getContext('2d');
+var partCv = document.createElement('canvas'), partCx = partCv.getContext('2d');
+var CW = 1, CH = 1, DPR = 1;
+
+function resize(){
+  var r = frame.getBoundingClientRect();
+  if (!r.width) return;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  CW = Math.max(1, Math.round(r.width * DPR));
+  CH = Math.max(1, Math.round(r.height * DPR));
+  view.width = CW; view.height = CH;
+  partCv.width = CW; partCv.height = CH;
+  partCx.clearRect(0, 0, CW, CH);
+  clampView();
+}
+if (window.ResizeObserver) new ResizeObserver(resize).observe(frame);
+else window.addEventListener('resize', resize);
+
+function clampView(){
+  if (V.z < 1) V.z = 1;
+  if (V.z > 12) V.z = 12;
+  var minX = CW * (1 - V.z), minY = CH * (1 - V.z);
+  if (V.ox > 0) V.ox = 0; if (V.ox < minX) V.ox = minX;
+  if (V.oy > 0) V.oy = 0; if (V.oy < minY) V.oy = minY;
+  var el = $('zLvl'); if (el) el.textContent = V.z.toFixed(1) + '×';
+}
+function zoomAt(sx, sy, factor){
+  var nz = clamp(V.z * factor, 1, 12), k = nz / V.z;
+  V.ox = sx - (sx - V.ox) * k;
+  V.oy = sy - (sy - V.oy) * k;
+  V.z = nz;
+  clampView();
+}
+
+function renderField(){
+  var mode = S.field, i, o;
+  if (mode === 'none'){
+    for (i = 0; i < N; i++){ o = i*4; fieldData[o] = 6; fieldData[o+1] = 10; fieldData[o+2] = 18; fieldData[o+3] = 255; }
+    fieldCx.putImageData(fieldImg, 0, 0);
+    return;
+  }
+  var lut = LUT[mode];
+  var Uref = S.mode === 'site' ? latticeU() : msToLat() * 2.5;
+  var sScale = S.mode === 'site' ? 1/(Uref*1.9) : 1/(msToLat()*4), vScale = 1.0/Uref;
+  var tScale = 1/(TMAX - TMIN);
+  for (var y = 0; y < H; y++){
+    for (var x = 0; x < W; x++){
+      var idx = y*W + x; o = idx*4;
+      if (solid[idx]){ fieldData[o+3] = 0; continue; }
+      fieldData[o+3] = 255;
+      var t;
+      if (mode === 'temp') t = (T[idx] - TMIN) * tScale;
+      else if (mode === 'speed') t = Math.sqrt(ux[idx]*ux[idx] + uy[idx]*uy[idx]) * sScale;
+      else if (mode === 'press') t = 0.5 + (rho[idx] - 1) * 34;
+      else {
+        var xm = x > 0 ? idx-1 : idx, xp = x < W-1 ? idx+1 : idx;
+        var ym = y > 0 ? idx-W : idx, yp = y < H-1 ? idx+W : idx;
+        t = 0.5 + ((uy[xp] - uy[xm]) - (ux[yp] - ux[ym])) * vScale;
+      }
+      if (!(t >= 0)) t = 0; else if (t > 1) t = 1;
+      var c = ((t*255) | 0) * 3;
+      fieldData[o] = lut[c]; fieldData[o+1] = lut[c+1]; fieldData[o+2] = lut[c+2];
+    }
+  }
+  fieldCx.putImageData(fieldImg, 0, 0);
+}
+
+var MAT_RGB = [null,
+  [226,232,238, 118,128,140],     // wall: edge, core
+  [196,214,232,  92,118,148],     // steel
+  [240,206,158, 184,138, 88],     // plywood
+  [120,124,112,  60, 64, 58]];    // ground
+function renderWalls(){
+  var img = wallCx.createImageData(W, H), d = img.data, count = 0;
+  for (var y = 0; y < H; y++){
+    for (var x = 0; x < W; x++){
+      var idx = y*W + x, o = idx*4, mt = solid[idx];
+      if (!mt){ d[o+3] = 0; continue; }
+      if (mt !== 4) count++;
+      var edge = (x > 0 && !solid[idx-1]) || (x < W-1 && !solid[idx+1]) ||
+                 (y > 0 && !solid[idx-W]) || (y < H-1 && !solid[idx+W]);
+      var c = MAT_RGB[mt] || MAT_RGB[1], k = edge ? 0 : 3;
+      d[o] = c[k]; d[o+1] = c[k+1]; d[o+2] = c[k+2]; d[o+3] = 255;
+    }
+  }
+  wallCx.putImageData(img, 0, 0);
+  wallsDirty = false;
+  $('wallStat').textContent = (count/N*100).toFixed(1) + ' % built';
+  computeIndoor();
+}
+
+// Chebyshev distance spread from the cells already queued in queueBuf[0..qn), up to `cap`
+function spread(dist, qn, cap){
+  var qu = queueBuf, head, id, d, x, y, dx, dy, xx, yy, nb;
+  for (head = 0; head < qn; head++){
+    id = qu[head]; d = dist[id] + 1; if (d > cap) continue;
+    x = id % W; y = (id / W) | 0;
+    for (dy = -1; dy <= 1; dy++){
+      yy = y + dy; if (yy < 0 || yy >= H) continue;
+      for (dx = -1; dx <= 1; dx++){
+        xx = x + dx; if (xx < 0 || xx >= W) continue;
+        nb = yy*W + xx;
+        if (dist[nb] > d){ dist[nb] = d; qu[qn++] = nb; }
+      }
+    }
+  }
+}
+// Which air is indoors. Doors and windows are closed with imaginary panes first (any opening
+// narrower than about a tenth of the view), then whatever the outside air still reaches is outdoors.
+function computeIndoor(){
+  var r = Math.max(4, Math.round(10 * W / 200)), sec = S.view === 'section';
+  var dist = distBuf, qu = queueBuf, out = outBuf, qn = 0, head, id, x, y, nb, e;
+  for (id = 0; id < N; id++){
+    if (solid[id]){ dist[id] = 0; qu[qn++] = id; } else dist[id] = 32767;
+  }
+  spread(dist, qn, r);                                  // 1. thicken every solid by r
+  qn = 0;
+  for (id = 0; id < N; id++){
+    if (dist[id] > r){ dist[id] = 0; qu[qn++] = id; } else dist[id] = 32767;
+  }
+  var edge = [];                                        // open air carries on past the edges, but not below the ground
+  for (x = 0; x < W; x++){ edge.push(x); if (!sec) edge.push((H-1)*W + x); }
+  for (y = 0; y < H; y++){ edge.push(y*W); edge.push(y*W + W-1); }
+  for (e = 0; e < edge.length; e++){ nb = edge[e]; if (dist[nb] === 32767){ dist[nb] = 1; qu[qn++] = nb; } }
+  spread(dist, qn, r);                                  // 2. thin it back: what stays filled (dist > r) is wall or pane
+  qn = 0;
+  for (id = 0; id < N; id++) out[id] = 0;
+  for (e = 0; e < edge.length; e++){ nb = edge[e]; if (!out[nb] && !solid[nb] && dist[nb] <= r){ out[nb] = 1; qu[qn++] = nb; } }
+  for (head = 0; head < qn; head++){                    // 3. flood the outside air in from the edges
+    id = qu[head]; x = id % W;
+    if (x > 0    && !out[id-1] && !solid[id-1] && dist[id-1] <= r){ out[id-1] = 1; qu[qn++] = id-1; }
+    if (x < W-1  && !out[id+1] && !solid[id+1] && dist[id+1] <= r){ out[id+1] = 1; qu[qn++] = id+1; }
+    if (id >= W  && !out[id-W] && !solid[id-W] && dist[id-W] <= r){ out[id-W] = 1; qu[qn++] = id-W; }
+    if (id < N-W && !out[id+W] && !solid[id+W] && dist[id+W] <= r){ out[id+W] = 1; qu[qn++] = id+W; }
+  }
+
+  // per column: the first solid above each air cell, and what it stands on
+  var nIn = 0, nAt = 0, nSt = 0, last, below, deep = Math.round(ROOF_DEPTH / mpc());
+  for (x = 0; x < W; x++){
+    last = -1;
+    for (y = 0; y < H; y++){ id = y*W + x; if (solid[id]) last = id; else aboveIdx[id] = last; }
+    below = 0;
+    for (y = H-1; y >= 0; y--){
+      id = y*W + x;
+      if (solid[id]){ below = solid[id]; zone[id] = 0; if (solid[id] === 2) nSt++; continue; }
+      // 1 room, 2 roof space: the air above a plywood ceiling, or close under bare steel
+      zone[id] = out[id] ? 0 : (sec && (below === 3 ||
+        (aboveIdx[id] >= 0 && solid[aboveIdx[id]] === 2 && y - ((aboveIdx[id] / W) | 0) <= deep)) ? 2 : 1);
+      if (zone[id] === 1) nIn++; else if (zone[id] === 2) nAt++;
+    }
+  }
+  indoorIdx = new Int32Array(nIn); atticIdx = new Int32Array(nAt); steelIdx = new Int32Array(nSt);
+  nIn = nAt = nSt = 0;
+  var rad = [];
+  for (id = 0; id < N; id++){
+    indoor[id] = zone[id] === 1 ? 1 : 0;
+    if (zone[id] === 1) indoorIdx[nIn++] = id;
+    else if (zone[id] === 2) atticIdx[nAt++] = id;
+    if (solid[id] === 2) steelIdx[nSt++] = id;
+    else if (sec && solid[id] === 3 && id >= W && !solid[id-W] && aboveIdx[id-W] >= 0 && solid[aboveIdx[id-W]] === 2) rad.push(id);
+  }
+  radIdx = new Int32Array(rad);
+}
+
+/* ============================================================
+   Air trails
+   ============================================================ */
+var px = new Float32Array(0), py = new Float32Array(0), plife = new Float32Array(0);
+function allocParticles(n){
+  px = new Float32Array(n); py = new Float32Array(n); plife = new Float32Array(n);
+  for (var i = 0; i < n; i++) respawn(i, true);
+}
+function respawn(i, anywhere){
+  var x = 0, y = 0, tries = 0;
+  do {
+    var roll = Math.random();
+    if (!anywhere && roll < 0.3 && jets.length){
+      var J = jets[(Math.random() * jets.length) | 0];
+      if (J.cells.length){ var id = J.cells[(Math.random() * J.cells.length) | 0]; x = id % W + Math.random() - 0.5; y = (id / W | 0) + Math.random() - 0.5; }
+    } else if (!anywhere && roll < 0.55 && S.mode === 'site'){
+      var w = windVec(), mm = Math.sqrt(w.x*w.x + w.y*w.y) || 1;
+      var dx = w.x/mm, dy = w.y/mm;
+      if (Math.abs(dx) > Math.abs(dy)){ x = dx > 0 ? 2 : W-3; y = 2 + Math.random()*(H-5); }
+      else { y = dy > 0 ? 2 : H-3; x = 2 + Math.random()*(W-5); }
+    } else {
+      x = 1 + Math.random()*(W-3);
+      y = 1 + Math.random()*(H-3);
+    }
+    x = clamp(x, 1, W-2); y = clamp(y, 1, H-2);
+    tries++;
+  } while (solid[(y|0)*W + (x|0)] && tries < 14);
+  px[i] = x; py[i] = y;
+  plife[i] = anywhere ? Math.random()*300 : 260 + Math.random()*260;
+}
+function drawParticles(){
+  var n = px.length;
+  if (!n || !CW) return;
+  partCx.globalCompositeOperation = 'destination-out';
+  partCx.fillStyle = 'rgba(0,0,0,0.13)';
+  partCx.fillRect(0, 0, CW, CH);
+  partCx.globalCompositeOperation = 'source-over';
+  var sx = CW/W, sy = CH/H, gain = S.steps * 2.0;
+  partCx.lineWidth = Math.max(1, 1.05*DPR);
+  partCx.lineCap = 'round';
+  partCx.strokeStyle = 'rgba(255,255,255,0.55)';
+  partCx.beginPath();
+  for (var i = 0; i < n; i++){
+    var x = px[i], y = py[i], gx = x|0, gy = y|0;
+    if (gx < 1 || gy < 1 || gx >= W-1 || gy >= H-1 || solid[gy*W+gx] || --plife[i] <= 0){ respawn(i, false); continue; }
+    var fx = x-gx, fy = y-gy;
+    var i00 = gy*W+gx, i10 = i00+1, i01 = i00+W, i11 = i01+1;
+    var vx = (ux[i00]*(1-fx)+ux[i10]*fx)*(1-fy) + (ux[i01]*(1-fx)+ux[i11]*fx)*fy;
+    var vy = (uy[i00]*(1-fx)+uy[i10]*fx)*(1-fy) + (uy[i01]*(1-fx)+uy[i11]*fx)*fy;
+    var nx = x + vx*gain, ny = y + vy*gain;
+    px[i] = nx; py[i] = ny;
+    partCx.moveTo(x*sx, y*sy); partCx.lineTo(nx*sx, ny*sy);
+  }
+  partCx.stroke();
+}
+
+/* ============================================================
+   Overlay: devices, previews, probe, compass, scale
+   ============================================================ */
+var preview = null;
+var probe = { x:-1, y:-1, pinned:false };
+
+function arrowHead(c, hx, hy, a, s){
+  c.beginPath(); c.moveTo(hx, hy);
+  c.lineTo(hx - Math.cos(a-0.42)*s, hy - Math.sin(a-0.42)*s);
+  c.lineTo(hx - Math.cos(a+0.42)*s, hy - Math.sin(a+0.42)*s);
+  c.closePath(); c.fill();
+}
+function niceMetres(target){
+  var e = Math.pow(10, Math.floor(Math.log(target)/Math.LN10)), m = target/e;
+  return (m >= 5 ? 5 : m >= 2 ? 2 : 1) * e;
+}
+// device geometry in plan pixels (before zoom)
+function devGeom(d){
+  var sx = CW/W, pxm = sx / mpc(), k = DPR / V.z;
+  var g = { cx:d.fx*CW, cy:d.fy*CH, pxm:pxm, k:k };
+  if (isJet(d)){
+    var wM = jetWidth(d);
+    g.half = Math.max(wM*pxm/2, 8*k);
+    g.th = Math.max(0.12*pxm, 3.5*k);
+    g.L = Math.max(1.0*pxm, 30*k);
+    g.r = Math.max(g.half, 12*k);
+    var a = baseDir(d) * Math.PI / 180;
+    g.hx = g.cx + Math.sin(a) * (g.th + g.L);
+    g.hy = g.cy - Math.cos(a) * (g.th + g.L);
+  } else if (d.type === 'cfan'){
+    g.r = Math.max(CFAN_SIZE[d.size]/2*pxm, 10*k);
+  } else {
+    g.r = Math.max(HEAT_KINDS[d.kind].r*pxm, 7*k);
+  }
+  return g;
+}
+function devStatus(d){
+  if (d.type === 'ac'){
+    return d.set + '° · ' + (d.power > 0.06 ? 'cooling ' + Math.round(d.power*100) + '%' : 'holding');
+  }
+  if (d.type === 'fan') return d.speed + (d.osc && S.view === 'plan' ? ' · swinging' : '');
+  if (d.type === 'cfan') return d.size + '" · ' + d.speed;
+  return HEAT_KINDS[d.kind].w + ' W';
+}
+function drawDevices(){
+  var k = DPR / V.z;
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.font = '600 ' + (10.5*k) + 'px ' + 'sans-serif';
+  ctx.textAlign = 'center';
+  for (var i = 0; i < S.devices.length; i++){
+    var d = S.devices[i], g = devGeom(d), sel = i === S.sel;
+    var label = devLabel(d), labelY;
+
+    if (isJet(d)){
+      var a = effDir(d) * Math.PI / 180;
+      var cooling = d.type === 'ac' && d.power > 0.06;
+      var bodyCol = d.type === 'ac' ? (cooling ? '#8fd0ff' : '#cdd6de') : '#eef2f6';
+      var flowCol = d.type === 'ac' ? (cooling ? 'rgba(143,208,255,0.95)' : 'rgba(205,214,222,0.9)') : 'rgba(255,255,255,0.92)';
+
+      // swing range
+      if ((d.type === 'ac' && d.swing) || (d.type === 'fan' && d.osc && S.view === 'plan')){
+        var amp = (d.type === 'ac' ? 30 : 45) * Math.PI / 180, base = d.dir * Math.PI / 180;
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.beginPath(); ctx.moveTo(g.cx, g.cy);
+        ctx.arc(g.cx, g.cy, g.th + g.L, base - amp - Math.PI/2, base + amp - Math.PI/2);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.save();
+      ctx.translate(g.cx, g.cy); ctx.rotate(a);
+      ctx.fillStyle = bodyCol; ctx.strokeStyle = 'rgba(6,10,18,0.9)'; ctx.lineWidth = 1.4*k;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-g.half, -g.th, g.half*2, g.th*2, g.th*0.8);
+      else ctx.rect(-g.half, -g.th, g.half*2, g.th*2);
+      ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = flowCol; ctx.fillStyle = flowCol; ctx.lineWidth = 2*k;
+      for (var s = -1; s <= 1; s++){
+        var ox = s * g.half * 0.55;
+        ctx.beginPath(); ctx.moveTo(ox, -g.th - 2*k); ctx.lineTo(ox, -g.th - g.L*0.72); ctx.stroke();
+        arrowHead(ctx, ox, -g.th - g.L*0.86, -Math.PI/2, 6*k);
+      }
+      ctx.restore();
+      labelY = g.cy + g.th + 15*k;
+      if (sel && d.type !== 'cfan'){
+        ctx.strokeStyle = 'rgba(107,131,255,0.9)'; ctx.lineWidth = 1.4*k;
+        ctx.setLineDash([3*k, 3*k]);
+        ctx.beginPath(); ctx.moveTo(g.cx, g.cy); ctx.lineTo(g.hx, g.hy); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#6b83ff'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6*k;
+        ctx.beginPath(); ctx.arc(g.hx, g.hy, 7*k, 0, 6.2832); ctx.fill(); ctx.stroke();
+      }
+    } else if (d.type === 'cfan'){
+      ctx.strokeStyle = 'rgba(232,238,245,0.85)'; ctx.lineWidth = 1.4*k;
+      ctx.setLineDash([4*k, 4*k]);
+      ctx.beginPath(); ctx.arc(g.cx, g.cy, g.r, 0, 6.2832); ctx.stroke();
+      ctx.setLineDash([]);
+      var spin = S.simTime * (d.speed === 'high' ? 9 : d.speed === 'med' ? 6 : 3.5);
+      ctx.lineWidth = 3*k;
+      for (var b = 0; b < 4; b++){
+        var ang = spin + b * Math.PI/2;
+        ctx.beginPath(); ctx.moveTo(g.cx, g.cy);
+        ctx.lineTo(g.cx + Math.cos(ang)*g.r*0.92, g.cy + Math.sin(ang)*g.r*0.92); ctx.stroke();
+      }
+      ctx.fillStyle = '#eef2f6';
+      ctx.beginPath(); ctx.arc(g.cx, g.cy, 4*k, 0, 6.2832); ctx.fill();
+      labelY = g.cy + g.r + 13*k;
+    } else {
+      var grad = ctx.createRadialGradient(g.cx, g.cy, 0, g.cx, g.cy, g.r*1.7);
+      grad.addColorStop(0, 'rgba(255,120,60,0.55)'); grad.addColorStop(1, 'rgba(255,120,60,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(g.cx, g.cy, g.r*1.7, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = '#ff8a4c'; ctx.strokeStyle = 'rgba(6,10,18,0.9)'; ctx.lineWidth = 1.4*k;
+      ctx.beginPath(); ctx.arc(g.cx, g.cy, g.r, 0, 6.2832); ctx.fill(); ctx.stroke();
+      labelY = g.cy + g.r + 13*k;
+    }
+    if (sel){
+      ctx.strokeStyle = '#6b83ff'; ctx.lineWidth = 2*k;
+      ctx.beginPath(); ctx.arc(g.cx, g.cy, g.r + 6*k, 0, 6.2832); ctx.stroke();
+    }
+    // labels only where they earn their space: aircon status, and the selected device
+    if (d.type !== 'ac' && !sel) continue;
+    var txt = d.type === 'ac' ? (sel ? label + ' · ' : '') + devStatus(d) : label;
+    var tw = ctx.measureText(txt).width;
+    ctx.fillStyle = 'rgba(6,10,18,0.72)';
+    ctx.fillRect(g.cx - tw/2 - 4*k, labelY - 10*k, tw + 8*k, 14*k);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(txt, g.cx, labelY);
+  }
+  ctx.restore();
+}
+function drawPlanOverlay(){
+  var sx = CW/W, sy = CH/H, k = DPR / V.z;
+  if (preview){
+    ctx.save();
+    if (preview.type === 'rect'){
+      ctx.setLineDash([5*k, 4*k]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1.2*k;
+      ctx.strokeRect(Math.min(preview.x0,preview.x1)*sx, Math.min(preview.y0,preview.y1)*sy,
+                     Math.abs(preview.x1-preview.x0)*sx, Math.abs(preview.y1-preview.y0)*sy);
+    } else {
+      ctx.lineWidth = Math.max(1.5*k, S.brush*sx); ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(255,255,255,0.42)';
+      ctx.beginPath(); ctx.moveTo(preview.x0*sx, preview.y0*sy); ctx.lineTo(preview.x1*sx, preview.y1*sy); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  drawDevices();
+  if (probe.pinned && probe.x >= 0){
+    var cx = probe.x*sx, cy = probe.y*sy;
+    ctx.save();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6*k;
+    ctx.beginPath(); ctx.arc(cx, cy, 6*k, 0, 6.2832); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 11*k, cy); ctx.lineTo(cx - 7*k, cy); ctx.moveTo(cx + 7*k, cy); ctx.lineTo(cx + 11*k, cy);
+    ctx.moveTo(cx, cy - 11*k); ctx.lineTo(cx, cy - 7*k); ctx.moveTo(cx, cy + 7*k); ctx.lineTo(cx, cy + 11*k);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawChrome(){
+  ctx.save();
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  if (S.mode === 'site'){
+    var r = S.bearing*Math.PI/180, dx = -Math.sin(r), dy = Math.cos(r);
+    var R = clamp(CW / DPR * 0.042, 13, 29) * DPR;
+    var cx = CW - R - 31*DPR, cy = CH - R - 23*DPR;
+    ctx.fillStyle = 'rgba(6,10,18,0.66)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = DPR;
+    ctx.beginPath(); ctx.arc(cx, cy, R+8*DPR, 0, 6.2832); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(240,162,2,0.95)'; ctx.fillStyle = 'rgba(240,162,2,0.95)'; ctx.lineWidth = 2.4*DPR;
+    ctx.beginPath(); ctx.moveTo(cx-dx*R, cy-dy*R); ctx.lineTo(cx+dx*R*0.5, cy+dy*R*0.5); ctx.stroke();
+    arrowHead(ctx, cx+dx*R, cy+dy*R, Math.atan2(dy,dx), 10*DPR);
+    if (S.view === 'plan'){                      // north mark only makes sense on the plan
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 1.2*DPR;
+      ctx.beginPath(); ctx.moveTo(cx, cy-R-6*DPR); ctx.lineTo(cx, cy-R-DPR); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = (Math.max(8, R/DPR*0.34)*DPR) + 'px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('N', cx, cy-R-10*DPR);
+    }
+  }
+  var metres = niceMetres(S.planW / V.z / 6);
+  var bw = (metres / mpc()) * (CW/W) * V.z;
+  var bx = 13*DPR, by = CH - 18*DPR;
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.4*DPR;
+  ctx.beginPath();
+  ctx.moveTo(bx, by-4*DPR); ctx.lineTo(bx, by); ctx.lineTo(bx+bw, by); ctx.lineTo(bx+bw, by-4*DPR);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = (10*DPR) + 'px monospace'; ctx.textAlign = 'left';
+  ctx.fillText(metres >= 1 ? metres + ' m' : Math.round(metres*100) + ' cm', bx+bw+6*DPR, by);
+  ctx.restore();
+}
+
+/* ============================================================
+   Readouts and indoor stats
+   ============================================================ */
+function feelsAt(x, y){
+  var idx = y*W + x, fl = msToLat();
+  var v = Math.sqrt(ux[idx]*ux[idx] + uy[idx]*uy[idx]) / fl;
+  var vd = downdraftAt(x, y), vt = Math.sqrt(v*v + vd*vd);
+  var t = T[idx], op = t;
+  // operative temperature: half air, half mean radiant, and a hot ceiling lifts the radiant part
+  if (S.view === 'section'){
+    // whatever is overhead: a warm plywood ceiling, or the bare steel if the ceiling is gone
+    var up = zone[idx] ? aboveIdx[idx] : -1;
+    if (up >= 0 && (solid[up] === 2 || solid[up] === 3)) op = t + CEIL_VIEW * 0.5 * (T[up] - t);
+  } else if (S.roofDT > 0 && indoor[idx]) op = t + CEIL_VIEW * 0.5 * (ceilT() - t);
+  return { v:vt, vplan:v, t:t, feel:op - coolEffect(vt) };
+}
+function condition(c){
+  if (c.vplan > 5) return 'too windy';
+  var f = c.feel;
+  return f < 20 ? 'cold' : f < 23 ? 'cool' : f <= 27 ? 'comfortable' : f <= 30 ? 'warm' : 'hot';
+}
+function updateReadout(){
+  if (probe.x < 0){ $('rSpeed').textContent='—'; $('rTemp').textContent='—'; $('rFeel').textContent='—'; $('rZone').textContent='—'; return; }
+  var x = clamp(probe.x|0, 0, W-1), y = clamp(probe.y|0, 0, H-1);
+  var mt = solid[y*W + x];
+  if (mt){
+    $('rSpeed').textContent = '—'; $('rFeel').textContent = '—';
+    $('rTemp').textContent = (mt === 2 || mt === 3) ? T[y*W + x].toFixed(1) + ' °C' : '—';
+    $('rZone').textContent = MAT_NAME[mt] || 'wall';
+    return;
+  }
+  var c = feelsAt(x, y);
+  $('rSpeed').textContent = c.v.toFixed(1) + ' m/s';
+  $('rTemp').textContent  = c.t.toFixed(1) + ' °C';
+  $('rFeel').textContent  = c.feel.toFixed(1) + ' °C';
+  $('rZone').textContent  = condition(c);
+}
+function updateStats(){
+  var n = 0, sum = 0, comf = 0;
+  for (var y = 1; y < H-1; y++){
+    for (var x = 1; x < W-1; x++){
+      if (zone[y*W + x] !== 1) continue;
+      var c = feelsAt(x, y);
+      n++; sum += c.t;
+      if (c.feel >= 23 && c.feel <= 27) comf++;
+    }
+  }
+  if (n < 20){ $('cAvg').textContent = '—'; $('cComf').textContent = '—'; }
+  else {
+    $('cAvg').textContent = (sum/n).toFixed(1) + '°';
+    $('cComf').textContent = Math.round(comf/n*100) + '%';
+  }
+  if (atticIdx.length > 10){
+    var as = 0; for (var q = 0; q < atticIdx.length; q++) as += T[atticIdx[q]];
+    $('cAttic').textContent = (as / atticIdx.length).toFixed(1) + '°';
+  } else $('cAttic').textContent = '—';
+  var acs = S.devices.filter(function(d){ return d.type === 'ac'; });
+  if (!acs.length) $('cAC').textContent = 'none';
+  else {
+    var p = 0; acs.forEach(function(d){ p += d.power; });
+    $('cAC').textContent = Math.round(p/acs.length*100) + '%';
+  }
+  refreshDevList();
+}
+
+/* ============================================================
+   Loop
+   ============================================================ */
+var lastT = 0, avgMs = 16, fpsT = 0, bad = 0, frameN = 0;
+function loop(now){
+  var dt = lastT ? now - lastT : 16;
+  lastT = now;
+  avgMs = avgMs*0.9 + Math.min(dt, 100)*0.1;
+  if (avgMs > 26 && S.steps > 2) S.steps--;
+  else if (avgMs < 14 && S.steps < 7) S.steps++;
+
+  prepareDevices();
+  if (S.running){
+    S.simTime += Math.min(dt, 100) / 1000;
+    for (var s = 0; s < S.steps; s++){
+      step();
+      if (++S.thermalTick % 3 === 0) thermalStep(3);
+    }
+    if (!isFinite(rho[(H>>1)*W + (W>>1)]) || !isFinite(T[(H>>1)*W + (W>>1)])){
+      if (++bad > 2){ resetFlow(); bad = 0; toast('The flow went unstable and was restarted.'); }
+    } else bad = 0;
+  }
+
+  renderField();
+  if (wallsDirty) renderWalls();
+
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = '#060a12';
+  ctx.fillRect(0, 0, CW, CH);
+  ctx.setTransform(V.z, 0, 0, V.z, V.ox, V.oy);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(fieldCv, 0, 0, CW, CH);
+  if (S.particles && S.running) drawParticles();
+  if (S.particles) ctx.drawImage(partCv, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(wallCv, 0, 0, CW, CH);
+  ctx.imageSmoothingEnabled = true;
+  drawPlanOverlay();
+  ctx.setTransform(1,0,0,1,0,0);
+  drawChrome();
+
+  frameN++;
+  if (frameN % 6 === 0) updateReadout();
+  if (frameN % 24 === 0) updateStats();
+  if (now - fpsT > 700){ fpsT = now; $('fpsOut').textContent = Math.round(1000/avgMs) + ' fps'; }
+  requestAnimationFrame(loop);
+}
+
+/* ============================================================
+   Walls
+   ============================================================ */
+var undoStack = [];
+function pushUndo(){
+  undoStack.push(solid.slice());
+  if (undoStack.length > 25) undoStack.shift();
+  $('bUndo').disabled = false;
+}
+function drawLimit(){ return S.view === 'section' ? groundRow() - 1 : H - 2; }   // the ground can't be drawn on
+function stamp(x, y, r, val){
+  var r2 = r*r;
+  var x0 = Math.max(1, Math.floor(x-r)), x1 = Math.min(W-2, Math.ceil(x+r));
+  var y0 = Math.max(1, Math.floor(y-r)), y1 = Math.min(drawLimit(), Math.ceil(y+r));
+  for (var j = y0; j <= y1; j++) for (var i = x0; i <= x1; i++){
+    var dx = i-x, dy = j-y;
+    if (dx*dx + dy*dy <= r2) solid[j*W + i] = val;
+  }
+  wallsDirty = true;
+}
+function stampLine(x0, y0, x1, y1, r, val){
+  var n = Math.max(1, Math.ceil(Math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))));
+  for (var k = 0; k <= n; k++){ var t = k/n; stamp(x0 + (x1-x0)*t, y0 + (y1-y0)*t, r, val); }
+}
+function stampRect(x0, y0, x1, y1, val){
+  var ax = Math.max(1, Math.min(x0,x1)|0), bx = Math.min(W-2, Math.max(x0,x1)|0);
+  var ay = Math.max(1, Math.min(y0,y1)|0), by = Math.min(drawLimit(), Math.max(y0,y1)|0);
+  for (var j = ay; j <= by; j++) for (var i = ax; i <= bx; i++) solid[j*W + i] = val;
+  wallsDirty = true;
+}
+
+/* ---- pointer handling: one finger draws or edits, two fingers pinch/pan ---- */
+var pointers = {}, pcount = 0, drag = null, pinch = null;
+function screenPt(e){
+  var r = frame.getBoundingClientRect();
+  return { x:(e.clientX - r.left) * (CW/r.width), y:(e.clientY - r.top) * (CH/r.height) };
+}
+function planPt(e){ var p = screenPt(e); return { x:(p.x - V.ox)/V.z, y:(p.y - V.oy)/V.z }; }
+function gridPos(e){
+  var p = planPt(e);
+  return { x:clamp(p.x/CW*W, 0, W-1), y:clamp(p.y/CH*H, 0, H-1) };
+}
+function devHit(pp){
+  var d = S.devices[S.sel], k = DPR / V.z, g;
+  if (d && (d.type === 'ac' || d.type === 'fan')){
+    g = devGeom(d);
+    if (Math.hypot(pp.x - g.hx, pp.y - g.hy) < 18*k) return { i:S.sel, mode:'rotate' };
+  }
+  for (var i = S.devices.length - 1; i >= 0; i--){
+    g = devGeom(S.devices[i]);
+    if (Math.hypot(pp.x - g.cx, pp.y - g.cy) < Math.max(g.r + 4*k, 16*k)) return { i:i, mode:'move' };
+  }
+  return null;
+}
+
+frame.addEventListener('pointerdown', function(e){
+  frame.setPointerCapture(e.pointerId);
+  pointers[e.pointerId] = screenPt(e); pcount++;
+
+  if (pcount === 2){
+    if (drag && drag.undone){ solid.set(undoStack.pop()); wallsDirty = true; $('bUndo').disabled = undoStack.length === 0; }
+    drag = null; preview = null;
+    var ids = Object.keys(pointers), a = pointers[ids[0]], b = pointers[ids[1]];
+    pinch = { d:Math.hypot(a.x-b.x, a.y-b.y) || 1, mx:(a.x+b.x)/2, my:(a.y+b.y)/2, z:V.z, ox:V.ox, oy:V.oy };
+    return;
+  }
+  if (pcount > 2) return;
+
+  var gp = gridPos(e);
+  if (S.tool === 'device'){
+    var pp = planPt(e), hit = devHit(pp);
+    if (hit){
+      if (S.sel !== hit.i){ S.sel = hit.i; rebuildDevList(); renderEditor(); }
+      var d = S.devices[hit.i];
+      drag = { type:hit.mode, offX:d.fx*CW - pp.x, offY:d.fy*CH - pp.y };
+      frame.classList.add('dragging');
+    } else {
+      if (S.sel !== -1){ S.sel = -1; rebuildDevList(); renderEditor(); }
+      probe.x = gp.x; probe.y = gp.y; probe.pinned = true;
+      updateReadout();
+    }
+    return;
+  }
+
+  probe.x = gp.x; probe.y = gp.y; probe.pinned = false;
+  var erasing = e.shiftKey || S.tool === 'erase';
+  if (S.tool === 'line' || S.tool === 'rect'){
+    drag = { type:S.tool, x0:gp.x, y0:gp.y, erase:erasing };
+    preview = { type:S.tool, x0:gp.x, y0:gp.y, x1:gp.x, y1:gp.y };
+    return;
+  }
+  pushUndo();
+  drag = { type:'brush', lx:gp.x, ly:gp.y, erase:erasing, undone:true };
+  stamp(gp.x, gp.y, S.brush/2, erasing ? 0 : S.mat);
+});
+
+frame.addEventListener('pointermove', function(e){
+  if (pointers[e.pointerId]) pointers[e.pointerId] = screenPt(e);
+  if (pinch && pcount >= 2){
+    var ids = Object.keys(pointers), a = pointers[ids[0]], b = pointers[ids[1]];
+    if (!a || !b) return;
+    var dd = Math.hypot(a.x-b.x, a.y-b.y) || 1, mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
+    var nz = clamp(pinch.z * (dd/pinch.d), 1, 12), k = nz/pinch.z;
+    V.z = nz; V.ox = mx - (pinch.mx - pinch.ox) * k; V.oy = my - (pinch.my - pinch.oy) * k;
+    clampView();
+    return;
+  }
+  var gp = gridPos(e);
+  if (!probe.pinned || drag){ probe.x = gp.x; probe.y = gp.y; if (!drag) probe.pinned = false; }
+  if (!drag) return;
+
+  if (drag.type === 'move' || drag.type === 'rotate'){
+    var d = S.devices[S.sel]; if (!d) return;
+    var pp = planPt(e);
+    if (drag.type === 'move'){
+      d.fx = clamp((pp.x + drag.offX) / CW, 0.01, 0.99);
+      d.fy = clamp((pp.y + drag.offY) / CH, 0.01, 0.99);
+    } else {
+      var a2 = Math.atan2(pp.x - d.fx*CW, -(pp.y - d.fy*CH)) * 180 / Math.PI;
+      d.dir = (Math.round(a2 / 5) * 5 + 360) % 360;
+      var dsl = $('dDir'); if (dsl){ dsl.value = d.dir; $('oDir').textContent = dirText(d.dir); }
+    }
+    return;
+  }
+  if (drag.type === 'brush'){
+    stampLine(drag.lx, drag.ly, gp.x, gp.y, S.brush/2, drag.erase ? 0 : S.mat);
+    drag.lx = gp.x; drag.ly = gp.y;
+  } else { preview.x1 = gp.x; preview.y1 = gp.y; }
+});
+
+function releasePointer(e){
+  if (pointers[e.pointerId]){ delete pointers[e.pointerId]; pcount = Math.max(0, pcount-1); }
+  if (pcount < 2) pinch = null;
+  if (!drag) return;
+  var gp = gridPos(e);
+  if (drag.type === 'line'){ pushUndo(); stampLine(drag.x0, drag.y0, gp.x, gp.y, S.brush/2, drag.erase ? 0 : S.mat); }
+  else if (drag.type === 'rect'){ pushUndo(); stampRect(drag.x0, drag.y0, gp.x, gp.y, drag.erase ? 0 : S.mat); }
+  preview = null; drag = null;
+  frame.classList.remove('dragging');
+}
+frame.addEventListener('pointerup', releasePointer);
+frame.addEventListener('pointercancel', releasePointer);
+frame.addEventListener('pointerleave', function(){ if (!drag && !probe.pinned){ probe.x = -1; updateReadout(); } });
+frame.addEventListener('wheel', function(e){
+  e.preventDefault();
+  var p = screenPt(e);
+  zoomAt(p.x, p.y, e.deltaY < 0 ? 1.14 : 1/1.14);
+}, { passive:false });
+
+$('zIn').addEventListener('click', function(){ zoomAt(CW/2, CH/2, 1.4); });
+$('zOut').addEventListener('click', function(){ zoomAt(CW/2, CH/2, 1/1.4); });
+$('zFit').addEventListener('click', function(){ V.z = 1; V.ox = 0; V.oy = 0; clampView(); });
+
+/* ============================================================
+   Layouts
+   ============================================================ */
+function RF(a,b,c,d,v){ stampRect(a*W, b*H, c*W, d*H, v === undefined ? 1 : v); }
+
+// home plan, drawn in metres: house 14 × 8.5 m centred in the plan
+var HOUSE_W = 14, HOUSE_D = 8.5;
+function houseOrigin(){ var m = mpc(); return { ox:(S.planW - HOUSE_W)/2, oy:(H*m - HOUSE_D)/2, m:m }; }
+function HM(x0, y0, x1, y1, v){
+  var o = houseOrigin();
+  var ax = (o.ox + x0)/o.m, bx = (o.ox + x1)/o.m, ay = (o.oy + y0)/o.m, by = (o.oy + y1)/o.m;
+  if (v !== 0){
+    if (bx - ax < 2){ var cx = (ax + bx)/2; ax = cx - 1; bx = cx + 1; }
+    if (by - ay < 2){ var cy = (ay + by)/2; ay = cy - 1; by = cy + 1; }
+  }
+  stampRect(ax, ay, bx, by, v === undefined ? 1 : v);
+}
+function HD(type, xm, ym, o){
+  var h = houseOrigin();
+  return makeDevice(type, (h.ox + xm)/S.planW, (h.oy + ym)/(H*h.m), o);
+}
+
+var presets = {
+  home: function(){
+    HM(0,0,14,0.2); HM(0,8.3,14,8.5); HM(0,0,0.2,8.5); HM(13.8,0,14,8.5);   // outer walls
+    HM(0,4.0,9.65,4.18);                       // bedrooms' south wall
+    HM(5.0,0,5.18,4.18);                       // between bedrooms
+    HM(9.5,0,9.68,4.18);                       // bedroom 2 / kitchen
+    HM(3.7,3.9,4.6,4.3,0);                     // bedroom 1 door
+    HM(5.5,3.9,6.4,4.3,0);                     // bedroom 2 door
+    HM(6.4,-0.1,8.2,0.3,0);                    // bedroom 2 window, north
+    HM(11.0,-0.1,12.6,0.3,0);                  // kitchen window, north
+    HM(1.5,8.2,3.5,8.6,0);                     // living windows, south
+    HM(6.0,8.2,8.0,8.6,0);
+    HM(13.7,5.4,14.1,7.0,0);                   // living window, east
+    S.devices = [
+      HD('ac',  2.5, 0.45, { dir:180, set:24, hp:'1', fan:'med', swing:true }),
+      HD('heat',2.0, 2.7,  { kind:'person' }),
+      HD('fan', 8.7, 3.3,  { dir:300, speed:'med', osc:true }),
+      HD('cfan',6.6, 6.2,  { size:'52', speed:'med' }),
+      HD('heat',4.6, 6.6,  { kind:'person' }),
+      HD('heat',4.6, 7.9,  { kind:'tv' }),
+      HD('heat',13.2,0.75, { kind:'fridge' })
+    ];
+  },
+  rooms: function(){
+    RF(0.10,0.14,0.90,0.175); RF(0.10,0.825,0.90,0.86);
+    RF(0.10,0.14,0.128,0.86); RF(0.872,0.14,0.90,0.86);
+    RF(0.385,0.175,0.413,0.825);
+    RF(0.128,0.44,0.385,0.468);
+    RF(0.413,0.38,0.66,0.408);
+    RF(0.632,0.408,0.66,0.825);
+    RF(0.24,0.13,0.32,0.185,0);  RF(0.60,0.13,0.68,0.185,0);
+    RF(0.22,0.818,0.30,0.87,0);  RF(0.70,0.818,0.78,0.87,0);
+    RF(0.385,0.26,0.42,0.33,0);  RF(0.385,0.60,0.42,0.67,0);
+    RF(0.20,0.432,0.28,0.476,0); RF(0.50,0.372,0.58,0.416,0);
+    RF(0.624,0.55,0.668,0.63,0);
+  },
+  openplan: function(){
+    RF(0.08,0.12,0.92,0.152); RF(0.08,0.848,0.92,0.88);
+    RF(0.08,0.12,0.112,0.88); RF(0.888,0.12,0.92,0.88);
+    RF(0.44,0.36,0.58,0.64);
+    RF(0.20,0.30,0.29,0.42); RF(0.20,0.58,0.29,0.70);
+    RF(0.71,0.30,0.80,0.42); RF(0.71,0.58,0.80,0.70);
+    RF(0.26,0.11,0.36,0.16,0); RF(0.64,0.11,0.74,0.16,0);
+    RF(0.26,0.84,0.36,0.89,0); RF(0.64,0.84,0.74,0.89,0);
+    RF(0.075,0.44,0.118,0.56,0); RF(0.882,0.44,0.925,0.56,0);
+  },
+  apartment: function(){
+    RF(0.16,0.18,0.84,0.212); RF(0.16,0.788,0.84,0.82);
+    RF(0.16,0.18,0.192,0.82); RF(0.808,0.18,0.84,0.82);
+    RF(0.40,0.212,0.428,0.55); RF(0.40,0.55,0.70,0.578);
+    RF(0.58,0.578,0.608,0.788);
+    RF(0.26,0.17,0.34,0.222,0); RF(0.56,0.17,0.64,0.222,0);
+    RF(0.396,0.30,0.432,0.37,0); RF(0.47,0.545,0.55,0.583,0);
+    RF(0.575,0.66,0.612,0.73,0);
+  },
+  tower: function(){ RF(0.42,0.38,0.58,0.62); },
+  canyon: function(){ RF(0.05,0.26,0.72,0.40); RF(0.28,0.60,0.95,0.74); },
+  court: function(){ RF(0.30,0.24,0.70,0.34); RF(0.30,0.24,0.39,0.76); RF(0.61,0.24,0.70,0.76); },
+  cluster: function(){
+    RF(0.18,0.20,0.29,0.34); RF(0.42,0.13,0.53,0.27); RF(0.66,0.22,0.77,0.36);
+    RF(0.28,0.52,0.39,0.66); RF(0.55,0.58,0.66,0.72); RF(0.76,0.52,0.87,0.66);
+    RF(0.12,0.66,0.23,0.80);
+  },
+  slab: function(){ RF(0.30,0.12,0.40,0.46); RF(0.30,0.56,0.40,0.90); }
+};
+// ---- side view of a two-storey house, in metres: x from the left wall's outer face, z up from the ground
+var SEC = { w:9, fh:2.7, slab:0.2, rise:1.6, eave:0.6 };
+function secOrigin(){ var m = mpc(); return { m:m, ox:(S.planW - SEC.w)/2, gy:groundRow() }; }
+function SM(x0, z0, x1, z1, mat){
+  var o = secOrigin();
+  var ax = Math.round((o.ox + x0)/o.m), bx = Math.round((o.ox + x1)/o.m) - 1;
+  var ay = Math.round(o.gy - z1/o.m),   by = Math.round(o.gy - z0/o.m) - 1;
+  if (mat){ if (bx - ax < 1) bx = ax + 1; if (by - ay < 1) ay = by - 1; }   // never thinner than two cells
+  stampRect(ax, ay, bx, by, mat);
+  return { top:ay, bottom:by };
+}
+function SD(type, xm, zm, o){
+  var s = secOrigin();
+  return makeDevice(type, (s.ox + xm)/S.planW, (s.gy - zm/s.m)/H, o);
+}
+// pitched steel roof, two cells thick, sitting on the row `base` where it meets the outer walls
+function secRoof(base){
+  var o = secOrigin(), half = SEC.w/2, slope = SEC.rise/half;
+  var c0 = Math.round((o.ox - SEC.eave)/o.m), c1 = Math.round((o.ox + SEC.w + SEC.eave)/o.m) - 1;
+  for (var cx = c0; cx <= c1; cx++){
+    if (cx < 1 || cx > W-2) continue;
+    var xm = (cx + 0.5)*o.m - o.ox;
+    var row = base - Math.round(slope * (half - Math.abs(xm - half)) / o.m);
+    for (var t = 0; t < 2; t++) if (row - t > 0) solid[(row - t)*W + cx] = 2;
+  }
+  wallsDirty = true;
+}
+function buildHouse2(withCeiling){
+  var F = SEC.fh, U = F + SEC.slab, top = U + F, w = SEC.w;
+  var wall = SM(0, 0, 0.2, top, 1); SM(w - 0.2, 0, w, top, 1);     // outer walls
+  SM(0, F, w, U, 1);                                               // upper floor slab
+  SM(3.9, F - 0.2, 5.1, U + 0.2, 0);                               // stairwell through it
+  SM(5.6, 0, 5.8, F, 1); SM(5.5, 0, 5.9, 2.1, 0);                  // ground-floor partition and doorway
+  SM(3.3, U, 3.5, top, 1);                                         // bedroom wall, door shut
+  SM(-0.2, 0.9, 0.4, 2.1, 0);                                      // ground-floor window, left
+  SM(w - 0.4, 0, w + 0.2, 2.1, 0);                                 // ground-floor door, right
+  SM(w - 0.4, U + 0.9, w + 0.2, U + 2.1, 0);                       // upper window, right
+  var base = wall.top - 1;
+  if (withCeiling) base = SM(0, top, w, top + 0.1, 3).top - 1;     // plywood ceiling across the top of the walls
+  secRoof(base);
+  S.devices = [
+    SD('ac',   0.5, U + 2.2, { dir:125, set:24, hp:'1', fan:'med' }),
+    SD('fan',  7.9, U + 1.0, { dir:270, speed:'med' }),
+    SD('cfan', 2.8, F - 0.45, { size:'52', speed:'med' }),
+    SD('heat', 4.9, 0.9, { kind:'tv' }),
+    SD('heat', 7.9, 0.9, { kind:'fridge' })
+  ];
+}
+presets.house2 = function(){ buildHouse2(true); };
+presets.house2open = function(){ buildHouse2(false); };
+var LAYOUTS = {
+  plan: [['home','Home, two bedrooms with aircon'],['rooms','Interior plan, cross ventilation'],
+    ['openplan','Open-plan floor, core and pods'],['apartment','Apartment, single aspect'],
+    ['tower','Single tower on open site'],['canyon','Street canyon'],['court','Courtyard block, open south'],
+    ['cluster','Staggered tower cluster'],['slab','Slab with a gap']],
+  section: [['house2','Two-storey house, steel roof, plywood ceiling'],
+    ['house2open','Same house with the ceiling removed']]
+};
+var PRESET_PLAN = { house2:24, house2open:24, home:28, rooms:60, openplan:90, apartment:26, tower:120, canyon:120, court:100, cluster:160, slab:120 };
+
+function loadPreset(k){
+  S.devices = []; S.sel = -1;
+  devCount = { ac:0, fan:0, cfan:0 };
+  S.planW = PRESET_PLAN[k] || S.planW;
+  $('sPlan').value = nearestPlanIndex(S.planW);
+  solid.fill(0);
+  if (S.view === 'section') stampGround();
+  presets[k]();
+  updatePlanLabels();
+  wallsDirty = true;
+  probe.x = -1; probe.pinned = false;
+  resetFlow();
+  partCx.clearRect(0,0,CW,CH);
+  rebuildDevList(); renderEditor();
+  if (k === 'home'){
+    var z = Math.min(0.78 * S.planW / HOUSE_W, 0.78 * H * mpc() / HOUSE_D);
+    V.z = clamp(z, 1, 12); V.ox = CW * (1 - V.z) / 2; V.oy = CH * (1 - V.z) / 2;
+  } else if (S.view === 'section'){
+    var o = secOrigin(), hw = SEC.w + 2*SEC.eave + 1.4, hh = 2*SEC.fh + SEC.slab + SEC.rise + 1.8;
+    V.z = clamp(Math.min(0.92 * S.planW / hw, 0.92 * H * o.m / hh), 1, 12);
+    V.ox = CW/2 - V.z * CW/2;
+    V.oy = CH/2 - V.z * (o.gy - (hh/2 - 0.5)/o.m) / H * CH;
+  } else { V.z = 1; V.ox = 0; V.oy = 0; }
+  clampView();
+}
+
+/* ============================================================
+   Scenes: the floor plan and the side view each keep their own drawing and devices
+   ============================================================ */
+var scenes = { plan:null, section:null };
+function setView(v){
+  if (v === S.view) return;
+  scenes[S.view] = { solid:solid.slice(), W:W, H:H, devices:S.devices, counts:devCount, planW:S.planW,
+    preset:$('preset').value, roof:S.roof, roofDT:S.roofDT, bearing:S.bearing, z:V.z, ox:V.ox/CW, oy:V.oy/CH };
+  S.view = v; S.sel = -1; S.mat = 1;
+  undoStack.length = 0; $('bUndo').disabled = true;
+  probe.x = -1; probe.pinned = false;
+  buildDamp();
+  applyViewUI();
+  var sc = scenes[v];
+  if (sc){
+    solid.fill(0);
+    if (sc.W === W && sc.H === H) solid.set(sc.solid); else resampleSolid(sc.solid, sc.W, sc.H);
+    if (v === 'section') stampGround();
+    S.devices = sc.devices; devCount = sc.counts; S.planW = sc.planW;
+    S.roof = sc.roof; S.roofDT = sc.roofDT; S.bearing = sc.bearing;
+    $('preset').value = sc.preset; $('sPlan').value = nearestPlanIndex(S.planW);
+    V.z = sc.z; V.ox = sc.ox*CW; V.oy = sc.oy*CH; clampView();
+    wallsDirty = true; updatePlanLabels(); resetFlow(); partCx.clearRect(0,0,CW,CH);
+    rebuildDevList(); renderEditor();
+  } else {
+    var side = v === 'section';
+    S.roof = side ? 'custom' : 'off'; S.roofDT = side ? 25 : 0; S.bearing = side ? 270 : 0;
+    var k = LAYOUTS[v][0][0];
+    $('preset').value = k; loadPreset(k);
+  }
+  $('roof').value = S.roof; $('sRoof').value = S.roofDT;
+  updateRoofLabel(); updateDial();
+}
+function applyViewUI(){
+  var side = S.view === 'section';
+  $('vPlan').setAttribute('aria-pressed', !side); $('vSection').setAttribute('aria-pressed', side);
+  $('preset').innerHTML = LAYOUTS[S.view].map(function(o){ return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('');
+  $('planTitle').textContent = side ? 'Section' : 'Plan';
+  $('planLbl').textContent = side ? 'Section width' : 'Plan width';
+  $('planHint').textContent = side
+    ? 'Widen this for more sky and ground around the house; narrow it to study one room in detail. It rescales the drawing; devices keep their real size.'
+    : 'Widen this to fit a whole floor or site; narrow it to study one room in detail. It rescales the drawing; devices keep their real size.';
+  $('roofTypeField').hidden = side;
+  $('roofLbl').textContent = side ? 'Steel roof in midday sun' : 'Ceiling surface in midday sun';
+  $('cAtticBox').hidden = !side; $('climStats').classList.toggle('four', side);
+  $('compassWrap').hidden = side; $('sideWind').hidden = !side;
+  $('matField').hidden = !side;
+  $('drawHint').textContent = side
+    ? 'Erase part of a wall to open a window, part of the ceiling to open the roof space, or part of the roof to vent it. Paint over a gap to close it.'
+    : 'To close a window, paint over the gap. To open one, erase a stretch of wall.';
+  document.querySelectorAll('[data-mat]').forEach(function(b){ b.setAttribute('aria-pressed', +b.getAttribute('data-mat') === S.mat); });
+  setTool(S.tool);
+}
+
+/* ============================================================
+   Device list and editor
+   ============================================================ */
+var DEV_COLOR = { ac:'#6fb8ff', fan:'#e8eef5', cfan:'#a9b3bc', heat:'#ff7a45' };
+function dirText(deg){
+  if (S.view === 'section') return deg + '° · ' + ['up','up and right','right','down and right','down','down and left','left','up and left'][Math.round(deg/45) % 8];
+  return deg + '° · ' + compassName(deg).replace('north-north-','N-N').replace(/-/g,' ');
+}
+
+function rebuildDevList(){
+  var box = $('devList');
+  box.innerHTML = '';
+  S.devices.forEach(function(d, i){
+    var b = document.createElement('button');
+    b.setAttribute('aria-pressed', i === S.sel);
+    b.innerHTML = '<span class="dot" style="background:' + DEV_COLOR[d.type] + '"></span>' +
+      '<span class="nm"></span><span class="st"></span>';
+    b.querySelector('.nm').textContent = devLabel(d);
+    b.querySelector('.st').textContent = devStatus(d);
+    b.addEventListener('click', function(){
+      S.sel = (S.sel === i) ? -1 : i;
+      if (S.sel >= 0) setTool('device');
+      rebuildDevList(); renderEditor();
+    });
+    box.appendChild(b);
+  });
+}
+function refreshDevList(){
+  var btns = $('devList').querySelectorAll('button');
+  if (btns.length !== S.devices.length){ rebuildDevList(); return; }
+  for (var i = 0; i < btns.length; i++) btns[i].querySelector('.st').textContent = devStatus(S.devices[i]);
+}
+function segHTML(key, cur, opts){
+  return '<div class="seg" data-key="' + key + '">' + opts.map(function(o){
+    return '<button data-v="' + o[0] + '" aria-pressed="' + (String(cur) === String(o[0])) + '">' + o[1] + '</button>';
+  }).join('') + '</div>';
+}
+function renderEditor(){
+  var box = $('devEditor'), d = S.devices[S.sel];
+  if (!d){
+    box.innerHTML = S.devices.length
+      ? '<p class="hint" style="margin:0">Tap a device in the list or on the plan to edit it.</p>'
+      : '<p class="hint" style="margin:0">Add a device, then drag it into place. Aircons and stand fans have a round handle for aiming.</p>';
+    return;
+  }
+  var h = ['<div class="dev-head"><b></b><button class="mini warn" id="dDel">Remove</button></div>'];
+  if (d.type === 'ac'){
+    h.push('<div class="field"><label for="dSet"><span>Set temperature</span><output id="oSet">' + d.set.toFixed(1) + ' °C</output></label>' +
+           '<input type="range" class="temp-range" id="dSet" min="16" max="30" step="0.5" value="' + d.set + '"></div>');
+    h.push('<span class="lbl">Capacity</span>' + segHTML('hp', d.hp, [['1','1 HP'],['1.5','1.5 HP'],['2','2 HP'],['2.5','2.5 HP']]));
+    h.push('<span class="lbl">Fan</span>' + segHTML('fan', d.fan, [['low','Low'],['med','Medium'],['high','High']]));
+  } else if (d.type === 'fan'){
+    h.push('<span class="lbl">Speed</span>' + segHTML('speed', d.speed, [['low','Low'],['med','Medium'],['high','High']]));
+  } else if (d.type === 'cfan'){
+    h.push('<span class="lbl">Blade span</span>' + segHTML('size', d.size, [['42','42″'],['52','52″'],['56','56″']]));
+    h.push('<span class="lbl">Speed</span>' + segHTML('speed', d.speed, [['low','Low'],['med','Medium'],['high','High']]));
+  } else {
+    h.push('<div class="field"><label for="dKind"><span>What gives off the heat</span></label><select id="dKind">' +
+      Object.keys(HEAT_KINDS).map(function(k){
+        return '<option value="' + k + '"' + (k === d.kind ? ' selected' : '') + '>' + HEAT_KINDS[k].label + ' · ' + HEAT_KINDS[k].w + ' W</option>';
+      }).join('') + '</select></div>');
+  }
+  if (d.type === 'ac' || d.type === 'fan'){
+    h.push('<div class="field"><label for="dDir"><span>Blows toward</span><output id="oDir">' + dirText(d.dir) + '</output></label>' +
+           '<input type="range" id="dDir" min="0" max="355" step="5" value="' + d.dir + '"></div>');
+    var sw = d.type === 'ac' ? 'swing' : 'osc';
+    if (d.type === 'ac' || S.view === 'plan') h.push('<label class="check"><input type="checkbox" id="dSwing"' + (d[sw] ? ' checked' : '') + '><span>' +
+           (d.type === 'ac' ? 'Swing the louvers' : 'Oscillate') + '</span></label>');
+  }
+  box.innerHTML = h.join('');
+  box.querySelector('.dev-head b').textContent = devLabel(d);
+
+  $('dDel').addEventListener('click', function(){
+    S.devices.splice(S.sel, 1); S.sel = -1;
+    rebuildDevList(); renderEditor();
+  });
+  box.querySelectorAll('.seg[data-key]').forEach(function(seg){
+    var key = seg.getAttribute('data-key');
+    seg.querySelectorAll('button').forEach(function(b){
+      b.addEventListener('click', function(){
+        d[key] = b.getAttribute('data-v');
+        seg.querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed', x === b); });
+        refreshDevList();
+      });
+    });
+  });
+  if ($('dSet')) $('dSet').addEventListener('input', function(e){ d.set = +e.target.value; $('oSet').textContent = d.set.toFixed(1) + ' °C'; refreshDevList(); });
+  if ($('dDir')) $('dDir').addEventListener('input', function(e){ d.dir = +e.target.value; $('oDir').textContent = dirText(d.dir); });
+  if ($('dSwing')) $('dSwing').addEventListener('change', function(e){ d[d.type === 'ac' ? 'swing' : 'osc'] = e.target.checked; refreshDevList(); });
+  if ($('dKind')) $('dKind').addEventListener('change', function(e){
+    d.kind = e.target.value; box.querySelector('.dev-head b').textContent = devLabel(d); rebuildDevList();
+  });
+}
+function addDevice(type){
+  var cx = (CW/2 - V.ox) / V.z, cy = (CH/2 - V.oy) / V.z;
+  var d = makeDevice(type,
+    clamp(cx/CW + (Math.random() - 0.5) * 0.06, 0.03, 0.97),
+    clamp(cy/CH + (Math.random() - 0.5) * 0.06, 0.03, 0.97));
+  S.devices.push(d); S.sel = S.devices.length - 1;
+  setTool('device'); rebuildDevList(); renderEditor();
+  toast(type === 'ac' || type === 'fan'
+    ? 'Drag it into place, then drag the round handle to aim it.'
+    : 'Drag it into place.');
+}
+document.querySelectorAll('[data-add]').forEach(function(b){
+  b.addEventListener('click', function(){ addDevice(b.getAttribute('data-add')); });
+});
+
+/* ============================================================
+   Compass dial
+   ============================================================ */
+var dial = $('dial');
+function buildDial(){
+  var p = ['<circle class="ring" cx="60" cy="60" r="53" stroke-width="1"/>'];
+  for (var a = 0; a < 360; a += 15){
+    var major = a % 45 === 0, r1 = major ? 44 : 48, rad = (a-90)*Math.PI/180;
+    p.push('<line class="tick' + (major ? ' major' : '') +
+      '" x1="' + (60+Math.cos(rad)*r1).toFixed(2) + '" y1="' + (60+Math.sin(rad)*r1).toFixed(2) +
+      '" x2="' + (60+Math.cos(rad)*52).toFixed(2) + '" y2="' + (60+Math.sin(rad)*52).toFixed(2) +
+      '" stroke-width="' + (major ? 1.3 : 0.8) + '"/>');
+  }
+  [['N',0],['E',90],['S',180],['W',270]].forEach(function(l){
+    var rad = (l[1]-90)*Math.PI/180;
+    p.push('<text class="card-letter" x="' + (60+Math.cos(rad)*36).toFixed(1) +
+      '" y="' + (60+Math.sin(rad)*36+3.4).toFixed(1) + '">' + l[0] + '</text>');
+  });
+  p.push('<g id="vaneG">',
+    '<line class="flowline" x1="49" y1="-38" x2="49" y2="34"/>',
+    '<line class="flowline" x1="71" y1="-38" x2="71" y2="34"/>',
+    '<line class="vane-line" x1="60" y1="-45" x2="60" y2="14"/>',
+    '<path class="vane" d="M60 27 L53 11 L60 15 L67 11 Z"/>',
+    '<circle class="vane" cx="60" cy="-45" r="3.4"/>',
+    '</g>',
+    '<circle class="hub" cx="60" cy="60" r="5" stroke-width="1"/>');
+  dial.innerHTML = p.join('');
+  updateDial();
+}
+function updateDial(){
+  var g = dial.querySelector('#vaneG');
+  if (g) g.setAttribute('transform', 'rotate(' + S.bearing + ' 60 60) translate(0 60)');
+  $('degOut').textContent = Math.round(S.bearing);
+  $('dirOut').textContent = 'from the ' + compassName(S.bearing);
+  dial.setAttribute('aria-valuenow', Math.round(S.bearing));
+  $('wLeft').setAttribute('aria-pressed', S.bearing === 270);
+  $('wRight').setAttribute('aria-pressed', S.bearing !== 270);
+  updateWindLabel();
+  setTarget();
+}
+function updateWindLabel(){
+  $('windMode').textContent = S.mode !== 'site' ? 'none'
+    : S.view === 'section' ? (S.bearing === 270 ? 'from the left' : 'from the right')
+    : 'from the ' + compassName(S.bearing);
+}
+function compassName(d){
+  var n = ['north','north-north-east','north-east','east-north-east','east','east-south-east',
+    'south-east','south-south-east','south','south-south-west','south-west','west-south-west',
+    'west','west-north-west','north-west','north-north-west'];
+  return n[Math.round((((d%360)+360)%360)/22.5) % 16];
+}
+var dialDrag = false;
+function dialSet(e){
+  var r = dial.getBoundingClientRect();
+  var a = Math.atan2(e.clientX - (r.left+r.width/2), -(e.clientY - (r.top+r.height/2)))*180/Math.PI;
+  a = ((a%360)+360)%360;
+  if (e.shiftKey) a = Math.round(a/15)*15;
+  S.bearing = Math.round(a)%360;
+  updateDial();
+}
+dial.setAttribute('tabindex','0');
+dial.addEventListener('pointerdown', function(e){ dialDrag = true; dial.setPointerCapture(e.pointerId); dial.classList.add('dragging'); dialSet(e); e.preventDefault(); });
+dial.addEventListener('pointermove', function(e){ if (dialDrag) dialSet(e); });
+dial.addEventListener('pointerup', function(){ dialDrag = false; dial.classList.remove('dragging'); });
+dial.addEventListener('pointercancel', function(){ dialDrag = false; dial.classList.remove('dragging'); });
+dial.addEventListener('keydown', function(e){
+  var d = e.shiftKey ? 15 : 5;
+  if (e.key==='ArrowLeft'||e.key==='ArrowDown'){ S.bearing=(S.bearing-d+360)%360; updateDial(); e.preventDefault(); }
+  if (e.key==='ArrowRight'||e.key==='ArrowUp'){ S.bearing=(S.bearing+d)%360; updateDial(); e.preventDefault(); }
+});
+
+/* ============================================================
+   Wiring
+   ============================================================ */
+var toastTimer;
+function toast(msg){
+  var t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+function updatePlanLabels(){
+  var m = mpc();
+  $('oPlan').textContent = S.planW + ' m';
+  $('planStat').textContent = S.planW + ' × ' + (H*m).toFixed(H*m < 20 ? 1 : 0) + ' m';
+  $('oBrush').textContent = (S.brush*m).toFixed(m*S.brush < 1 ? 2 : 1) + ' m';
+  $('scaleLine').textContent = 'Grid ' + W + ' × ' + H + ' · 1 cell = ' +
+    (m < 1 ? Math.round(m*100) + ' cm' : m.toFixed(2) + ' m');
+}
+function nearestPlanIndex(v){
+  var best = 0, bd = 1e9;
+  for (var i = 0; i < PLANS.length; i++){ var d = Math.abs(PLANS[i]-v); if (d < bd){ bd = d; best = i; } }
+  return best;
+}
+
+document.querySelectorAll('.quick button').forEach(function(b){
+  b.addEventListener('click', function(){ S.bearing = +b.dataset.deg; updateDial(); });
+});
+$('mSite').addEventListener('click', function(){ setMode('site'); });
+$('mCalm').addEventListener('click', function(){ setMode('calm'); });
+function setMode(m){
+  if (S.mode === m) return;
+  S.mode = m;
+  $('mSite').setAttribute('aria-pressed', m === 'site');
+  $('mCalm').setAttribute('aria-pressed', m === 'calm');
+  $('windControls').classList.toggle('dim', m === 'calm');
+  updateWindLabel();
+  setTarget();
+  partCx.clearRect(0,0,CW,CH);
+}
+
+document.querySelectorAll('.tools button[data-tool]').forEach(function(b){
+  b.addEventListener('click', function(){ setTool(b.dataset.tool); });
+});
+function setTool(t){
+  S.tool = t;
+  document.querySelectorAll('.tools button[data-tool]').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.tool === t); });
+  frame.classList.toggle('tool-device', t === 'device');
+  var touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  var hints = {
+    brush: touch ? 'Drag to paint walls. Pinch with two fingers to zoom and pan.'
+                 : 'Drag to paint walls. Hold <kbd>Shift</kbd> to erase. Scroll to zoom.',
+    line:  'Drag to set a straight wall, release to place it.',
+    rect:  'Drag to set a footprint, release to place it.',
+    erase: S.view === 'section' ? 'Drag to rub out part of a wall, the ceiling or the roof.'
+                                : 'Drag to rub out walls, or open a window in one.',
+    device:'Tap a device to edit, drag to move, drag its handle to aim. Tap the floor to read conditions there.'
+  };
+  $('hintLine').innerHTML = hints[t];
+}
+
+$('bUndo').addEventListener('click', function(){
+  if (!undoStack.length) return;
+  solid.set(undoStack.pop()); wallsDirty = true;
+  $('bUndo').disabled = undoStack.length === 0;
+});
+$('bClear').addEventListener('click', function(){
+  pushUndo(); solid.fill(0); wallsDirty = true;
+  if (S.view === 'section') stampGround();
+});
+$('vPlan').addEventListener('click', function(){ setView('plan'); });
+$('vSection').addEventListener('click', function(){ setView('section'); });
+$('wLeft').addEventListener('click', function(){ S.bearing = 270; updateDial(); });
+$('wRight').addEventListener('click', function(){ S.bearing = 90; updateDial(); });
+document.querySelectorAll('[data-mat]').forEach(function(b){
+  b.addEventListener('click', function(){
+    S.mat = +b.getAttribute('data-mat');
+    document.querySelectorAll('[data-mat]').forEach(function(x){ x.setAttribute('aria-pressed', x === b); });
+    if (S.tool === 'erase' || S.tool === 'device') setTool('brush');
+  });
+});
+$('bReset').addEventListener('click', function(){ resetFlow(); partCx.clearRect(0,0,CW,CH); toast('Air and temperatures restarted.'); });
+$('preset').addEventListener('change', function(e){ undoStack.length = 0; $('bUndo').disabled = true; loadPreset(e.target.value); });
+$('sPlan').addEventListener('input', function(e){ S.planW = PLANS[+e.target.value]; updatePlanLabels(); wallsDirty = true; });
+
+$('sOut').addEventListener('input', function(e){
+  S.outdoorT = +e.target.value;
+  $('oOut').textContent = S.outdoorT.toFixed(1) + ' °C';
+  updateRoofLabel();
+});
+(function(){
+  var sel = $('roof');
+  sel.innerHTML = Object.keys(ROOFS).map(function(k){ return '<option value="' + k + '">' + ROOFS[k].label + '</option>'; }).join('');
+  sel.addEventListener('change', function(e){
+    S.roof = e.target.value;
+    if (ROOFS[S.roof].dt !== null){ S.roofDT = ROOFS[S.roof].dt; $('sRoof').value = S.roofDT; }
+    updateRoofLabel();
+  });
+  $('sRoof').addEventListener('input', function(e){
+    S.roofDT = +e.target.value;
+    // moving the slider off a preset's value makes it custom
+    var match = null;
+    for (var k in ROOFS) if (ROOFS[k].dt === S.roofDT && k !== 'custom'){ match = k; break; }
+    S.roof = match || 'custom'; sel.value = S.roof;
+    updateRoofLabel();
+  });
+})();
+function updateRoofLabel(){
+  $('roofField').classList.toggle('soft', S.view === 'plan' && S.roofDT === 0);
+  $('oRoof').textContent = S.roofDT === 0 ? 'no extra heat' : ceilT().toFixed(0) + ' °C · +' + S.roofDT + '°';
+}
+$('sSpeed').addEventListener('input', function(e){
+  S.speedMS = +e.target.value;
+  $('oSpeed').textContent = S.speedMS.toFixed(1) + ' m/s';
+  setTarget();
+});
+$('sTurb').addEventListener('input', function(e){
+  var t = +e.target.value/100;
+  setOmega(t);
+  $('oTurb').textContent = t < 0.25 ? 'smooth' : t < 0.5 ? 'low' : t < 0.75 ? 'medium' : 'high';
+});
+$('sBrush').addEventListener('input', function(e){ S.brush = +e.target.value; updatePlanLabels(); });
+$('sTrails').addEventListener('input', function(e){
+  S.trailCount = +e.target.value;
+  $('oTrails').textContent = S.trailCount;
+  allocParticles(S.trailCount);
+  partCx.clearRect(0,0,CW,CH);
+});
+
+document.querySelectorAll('.seg button[data-field]').forEach(function(b){
+  b.addEventListener('click', function(){
+    S.field = b.dataset.field;
+    document.querySelectorAll('.seg button[data-field]').forEach(function(x){ x.setAttribute('aria-pressed', x.dataset.field === S.field); });
+    updateLegend();
+  });
+});
+function updateLegend(){
+  var bar = $('legBar');
+  if (S.field === 'none'){ bar.style.background = 'var(--panel-2)'; $('legMin').textContent = ''; $('legMax').textContent = ''; return; }
+  bar.style.background = lutCSS(S.field);
+  var labels = { temp:[TMIN+'°', TMAX+'°'], speed:['calm','fast'], press:['suction','push'], vort:['clockwise','counter'] };
+  $('legMin').textContent = labels[S.field][0];
+  $('legMax').textContent = labels[S.field][1];
+}
+
+document.querySelectorAll('.seg button[data-q]').forEach(function(b){
+  b.addEventListener('click', function(){
+    var q = b.dataset.q;
+    if (q === S.quality) return;
+    S.quality = q;
+    document.querySelectorAll('.seg button[data-q]').forEach(function(x){ x.setAttribute('aria-pressed', x.dataset.q === q); });
+    undoStack.length = 0; $('bUndo').disabled = true;
+    buildGrid(GRIDS[q][0], GRIDS[q][1]);
+    resetFlow();
+    allocParticles(S.trailCount);
+    partCx.clearRect(0,0,CW,CH);
+    updatePlanLabels();
+  });
+});
+
+$('cParticles').addEventListener('change', function(e){ S.particles = e.target.checked; partCx.clearRect(0,0,CW,CH); });
+$('cRun').addEventListener('change', function(e){ S.running = e.target.checked; });
+
+window.addEventListener('keydown', function(e){
+  if (e.target.matches('input,select,textarea')) return;
+  if (e.key === ' '){ S.running = !S.running; $('cRun').checked = S.running; e.preventDefault(); return; }
+  if ((e.key==='z'||e.key==='Z') && (e.metaKey||e.ctrlKey)){ $('bUndo').click(); e.preventDefault(); return; }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel >= 0){
+    S.devices.splice(S.sel, 1); S.sel = -1; rebuildDevList(); renderEditor(); e.preventDefault(); return;
+  }
+  if (e.key === '0'){ V.z=1; V.ox=0; V.oy=0; clampView(); return; }
+  var map = { b:'brush', w:'line', r:'rect', e:'erase', d:'device', s:'device' };
+  if (map[e.key]) setTool(map[e.key]);
+});
+
+/* ============================================================
+   Boot — home plan with aircon by default
+   ============================================================ */
+buildGrid(GRIDS.detail[0], GRIDS.detail[1]);
+setOmega(0.58);
+buildDial();
+updateLegend();
+resize();
+applyViewUI();
+$('preset').value = 'home';
+updateRoofLabel();
+loadPreset('home');
+setTool('brush');
+allocParticles(S.trailCount);
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
