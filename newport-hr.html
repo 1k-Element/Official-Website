@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NewPort Inc. — People operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16211D; --paper:#F4F5F3; --card:#FFFFFF; --line:#DDE0DA; --line-soft:#EAECE8;
+  --moss:#3F6B52; --moss-soft:#E7EFE9; --amber:#B8873B; --amber-soft:#FAF1E0;
+  --rose:#A0453E; --rose-soft:#F8EAE7; --muted:#6E7671; --muted-soft:#F0F1EE;
+  --sans:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:none;cursor:pointer}
+svg{display:block}
+:focus-visible{outline:2px solid var(--moss);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){.toast{animation:rise .18s ease-out}}
+@keyframes rise{from{transform:translate(-50%,8px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+
+.wrap{display:flex;min-height:100vh}
+.rail{width:236px;flex:0 0 236px;background:var(--card);border-right:1px solid var(--line);height:100vh;position:sticky;top:0;display:flex;flex-direction:column}
+.main{flex:1;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 28px;position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:1px solid var(--line)}
+.topbar h1{font-size:16px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.content{padding:28px;max-width:1120px}
+.burger{display:none}
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(22,33,29,.45)}
+@media(max-width:800px){
+  .rail{display:none}
+  .rail.drawer-open{display:flex;position:fixed;left:0;top:0;z-index:50;width:280px;flex:none}
+  .burger{display:block}
+  .topbar{padding:14px 16px}
+  .content{padding:20px 16px}
+  .topbar .datestamp{display:none}
+}
+
+.brand{padding:20px 16px 16px}
+.brand .name{font-family:var(--serif);font-size:21px;line-height:1}
+.brand .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.rolebox{border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.roleopt{width:100%;text-align:left;padding:6px 10px;font-size:14px;display:flex;align-items:center;justify-content:space-between;background:var(--card)}
+.roleopt+.roleopt{border-top:1px solid var(--line-soft)}
+.roleopt.on{background:var(--moss-soft);color:var(--moss);font-weight:600}
+.nav{padding:0 8px 16px;flex:1;overflow-y:auto}
+.navitem{width:100%;display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:14px;text-align:left;border-radius:3px}
+.navitem svg{opacity:.6}
+.navitem.on{background:var(--ink);color:var(--paper);font-weight:600}
+.navitem.on svg{opacity:1}
+.railfoot{padding:12px 16px;display:flex;align-items:center;gap:10px;border-top:1px solid var(--line)}
+
+.card{background:var(--card);border:1px solid var(--line)}
+.card>header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line-soft)}
+.card>header h3{font-size:14px;font-weight:600}
+.pad{padding:16px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.split{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
+.stack>*+*{margin-top:16px}
+.stat{padding:16px;background:var(--card);border:1px solid var(--line)}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-family:var(--serif);font-size:29px;line-height:1.05;margin-top:4px}
+.stat .s{font-size:12px;color:var(--muted);margin-top:4px}
+.av{display:flex;align-items:center;justify-content:center;flex:none;background:var(--ink);color:var(--paper);font-weight:600;border-radius:50%}
+.tag{display:inline-flex;align-items:center;padding:2px 8px;font-size:12px;font-weight:500;border-radius:3px;white-space:nowrap;background:var(--muted-soft);color:var(--muted)}
+.tag.good{background:var(--moss-soft);color:var(--moss)}
+.tag.warn{background:var(--amber-soft);color:var(--amber)}
+.tag.bad{background:var(--rose-soft);color:var(--rose)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:14px;font-weight:500;border-radius:3px;background:var(--ink);color:var(--paper);border:1px solid var(--ink)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.moss{background:var(--moss);color:#fff;border-color:var(--moss)}
+.btn.danger{background:transparent;color:var(--rose);border-color:var(--rose)}
+.btn.sm{padding:4px 10px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.tablewrap{overflow-x:auto}
+table{width:100%;min-width:580px;border-collapse:collapse}
+th{text-align:left;font-size:12px;font-weight:500;color:var(--muted);padding:10px 16px;border-bottom:1px solid var(--line)}
+td{padding:12px 16px;font-size:14px;vertical-align:middle;border-bottom:1px solid var(--line-soft)}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--paper)}
+.sub{font-size:12px;color:var(--muted)}
+.fw{font-weight:500}
+.num{font-variant-numeric:tabular-nums}
+.bar{width:100%;height:6px;background:var(--muted-soft);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--moss);border-radius:2px}
+.empty{text-align:center;padding:48px 24px}
+.empty p:first-child{font-size:14px;font-weight:600}
+.empty p+p{font-size:14px;color:var(--muted);margin-top:4px}
+.field{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--line-soft)}
+.field span:first-child{color:var(--muted)}
+.field span:last-child{text-align:right}
+label.f{display:block;margin-bottom:12px}
+label.f .lb{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+label.f input,label.f select,label.f textarea{width:100%;padding:6px 10px;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:3px}
+.search{display:flex;align-items:center;gap:8px;padding:6px 10px;flex:1;min-width:180px;background:var(--card);border:1px solid var(--line);border-radius:3px}
+.search input{border:none;background:none;outline:none;width:100%;font-size:14px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar select{padding:6px 10px;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:3px}
+.drawer{position:fixed;inset:0;z-index:60;display:flex;justify-content:flex-end;background:rgba(22,33,29,.4)}
+.drawer .sheet{width:420px;max-width:100%;height:100%;overflow-y:auto;padding:20px;background:var(--card)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:70;padding:10px 16px;font-size:14px;background:var(--ink);color:var(--paper);border-radius:3px;max-width:90vw;box-shadow:0 8px 24px rgba(22,33,29,.25)}
+.hero{background:var(--ink);color:var(--paper);padding:22px 24px}
+.hero .h{font-family:var(--serif);font-size:27px;margin-top:4px}
+.notice{padding:16px 20px;background:var(--amber-soft);border:1px solid var(--amber)}
+.rem{display:flex;gap:10px;padding:6px 0}
+.rem p{font-size:14px;line-height:1.35}
+.rem .m{font-size:12px;color:var(--muted)}
+.row{display:flex;align-items:center;gap:12px}
+.chip{padding:4px 10px;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:3px}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.check{width:17px;height:17px;flex:none;border-radius:3px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.check.on{background:var(--moss);border-color:var(--moss)}
+.task{width:100%;display:flex;align-items:center;gap:10px;padding:8px 0;text-align:left;border-bottom:1px solid var(--line-soft)}
+.task.done span.t{color:var(--muted);text-decoration:line-through}
+.task .t{flex:1;font-size:14px}
+.board{display:flex;gap:12px;min-width:780px}
+.col{flex:1;background:var(--card);border:1px solid var(--line)}
+.col>div:first-child{display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line-soft);font-size:14px;font-weight:600}
+.col .body{padding:8px;min-height:120px;display:flex;flex-direction:column;gap:8px}
+.cand{padding:10px;background:var(--paper);border-radius:3px}
+.mini{padding:2px 6px;font-size:12px;border:1px solid var(--line);border-radius:3px}
+.orgnode{padding-left:14px;border-left:1px solid var(--line);margin-left:20px}
+.orgnode.root{padding-left:0;border-left:none;margin-left:0}
+.orgrow{display:flex;align-items:center;gap:10px;padding:8px 0}
+.you{color:var(--moss);font-size:12px;margin-left:6px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ===================================================== icons */
+const P = {
+  dashboard:'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z',
+  users:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+  network:'M12 3v4M6 21v-4M18 21v-4M6 17h12M12 7v10M9 3h6v4H9zM3 17h6v4H3zM15 17h6v4h-6z',
+  clock:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 7v5l3 2',
+  calendar:'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2',
+  wallet:'M20 12V8H6a2 2 0 0 1 0-4h12v4M4 6v12a2 2 0 0 0 2 2h14v-4M18 12a2 2 0 0 0 0 4h4v-4z',
+  clipboard:'M9 2h6v4H9zM9 4H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2M9 12h6M9 16h4',
+  target:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2',
+  briefcase:'M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 12h18',
+  file:'M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7zM14 2v5h5M9 13h6M9 17h6',
+  usercircle:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6M6.2 18.5a6 6 0 0 1 11.6 0',
+  shield:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10',
+  search:'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16M21 21l-4.3-4.3',
+  plus:'M12 5v14M5 12h14', check:'M20 6 9 17l-5-5', x:'M18 6 6 18M6 6l12 12',
+  right:'m9 18 6-6-6-6', down:'m6 9 6 6 6-6',
+  bell:'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0',
+  login:'M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3',
+  logout:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+  download:'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
+  cake:'M20 21v-8H4v8M4 16c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1M12 4v5M9 6l3-3 3 3M2 21h20',
+  warn:'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0',
+  menu:'M3 6h18M3 12h18M3 18h18'
+};
+const icon = (n, s = 16, style = '') =>
+  `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="${style}"><path d="${P[n] || ''}"/></svg>`;
+
+/* ============================================ date + money helpers
+   Everything below is derived from the moment the page loads, so this
+   demo never goes stale. Refresh it in six months and the timesheets,
+   payroll periods and review cycle all move with the calendar. */
+const NOW = new Date();
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const addMonths = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth() + n, 1); return x; };
+const yearsAgo = y => iso(addDays(NOW, -Math.round(y * 365.25)));
+const daysAgo = n => iso(addDays(NOW, -n));
+const TODAY = iso(NOW);
+
+const isWeekday = d => d.getDay() % 6 !== 0;
+const bizBack = n => { const out = []; let d = new Date(NOW); while (out.length < n){ d = addDays(d, -1); if (isWeekday(d)) out.push(iso(d)); } return out.reverse(); };
+const bizFwd  = n => { let d = new Date(NOW), c = 0; while (c < n){ d = addDays(d, 1); if (isWeekday(d)) c++; } return iso(d); };
+
+const hhmm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const NOW_TIME = hhmm(NOW);
+/* a plausible clock-in this morning: N minutes ago, but never before 08:20 and never in the future */
+function inTime(minsAgo){
+  const floor = new Date(NOW); floor.setHours(8, 20, 0, 0);
+  const cap = new Date(NOW.getTime() - 5 * 60000);
+  let t = new Date(NOW.getTime() - minsAgo * 60000);
+  if (t < floor) t = floor;
+  if (t > cap) t = cap;
+  return hhmm(t);
+}
+const LOC = undefined; // use the visitor's own locale for dates
+const fdate = s => new Date(s + 'T00:00:00').toLocaleDateString(LOC, {day:'numeric', month:'short', year:'numeric'});
+const fshort = s => new Date(s + 'T00:00:00').toLocaleDateString(LOC, {day:'numeric', month:'short'});
+const monthLabel = d => d.toLocaleDateString(LOC, {month:'long', year:'numeric'});
+const endOfMonth = d => new Date(d.getFullYear(), d.getMonth() + 1, 0);
+/* birthday on a given offset from today, in a chosen birth year */
+const bdayIn = (offset, year) => { const d = addDays(NOW, offset); return `${year}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+function daysToBirthday(b){
+  const d = new Date(b + 'T00:00:00');
+  let next = new Date(NOW.getFullYear(), d.getMonth(), d.getDate());
+  const t = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+  if (next < t) next = new Date(NOW.getFullYear() + 1, d.getMonth(), d.getDate());
+  return Math.round((next - t) / 864e5);
+}
+const money = n => '₱' + Math.round(n).toLocaleString('en-PH');
+const compact = n => n >= 1e6 ? '₱' + (n / 1e6).toFixed(2) + 'M' : '₱' + Math.round(n / 1000) + 'k';
+
+/* ===================================================== people
+   Placeholder names, not real people. Swap this array for anything you like. */
+const EMPLOYEES = [
+  {id:1, name:'Leslie Marilag',    title:'HR Director',          dept:'People',      email:'leslie.marilag@newport.co',    phone:'+63 917 812 4410', managerId:null, hireDate:yearsAgo(7.4), status:'Active',      salary:2160000, type:'Full-time', location:'BGC, Taguig',      leave:{annual:14,sick:8,personal:3},  birthday:bdayIn(4,1986),   contractEnds:null},
+  {id:2, name:'Miguel Villanueva', title:'Engineering Manager',  dept:'Engineering', email:'miguel.villanueva@newport.co', phone:'+63 917 812 4487', managerId:1,    hireDate:yearsAgo(6.1), status:'Active',      salary:2640000, type:'Full-time', location:'BGC, Taguig',      leave:{annual:9,sick:10,personal:2},  birthday:bdayIn(148,1990), contractEnds:null},
+  {id:3, name:'Andrea Salcedo',    title:'Senior Engineer',      dept:'Engineering', email:'andrea.salcedo@newport.co',    phone:'+63 918 440 9022', managerId:2,    hireDate:yearsAgo(5.6), status:'Active',      salary:1920000, type:'Full-time', location:'Remote — Cebu',    leave:{annual:17,sick:10,personal:3}, birthday:bdayIn(212,1993), contractEnds:null},
+  {id:4, name:'Rafael Bautista',   title:'Engineer',             dept:'Engineering', email:'rafael.bautista@newport.co',   phone:'+63 918 440 3390', managerId:2,    hireDate:yearsAgo(4.3), status:'Offboarding', salary:1140000, type:'Full-time', location:'Remote — Davao',   leave:{annual:4,sick:6,personal:1},   birthday:bdayIn(96,1995),  contractEnds:null},
+  {id:5, name:'Bianca Almeda',     title:'Product Designer',     dept:'Product',     email:'bianca.almeda@newport.co',     phone:'+63 917 887 2210', managerId:6,    hireDate:yearsAgo(3.5), status:'Active',      salary:1320000, type:'Full-time', location:'Makati',           leave:{annual:11,sick:9,personal:3},  birthday:bdayIn(11,1994),  contractEnds:null},
+  {id:6, name:'Joaquin Tolentino', title:'Head of Product',      dept:'Product',     email:'joaquin.tolentino@newport.co', phone:'+63 917 887 1145', managerId:1,    hireDate:yearsAgo(5.8), status:'Active',      salary:2760000, type:'Full-time', location:'BGC, Taguig',      leave:{annual:6,sick:10,personal:0},  birthday:bdayIn(263,1984), contractEnds:null},
+  {id:7, name:'Camille Fajardo',   title:'Account Executive',    dept:'Sales',       email:'camille.fajardo@newport.co',   phone:'+63 919 330 7781', managerId:8,    hireDate:yearsAgo(1.96),status:'Active',      salary:900000,  type:'Contract',  location:'Ortigas, Pasig',   leave:{annual:8,sick:5,personal:2},   birthday:bdayIn(178,1997), contractEnds:iso(addDays(NOW,12))},
+  {id:8, name:'Teresa Lagdameo',   title:'Sales Director',       dept:'Sales',       email:'teresa.lagdameo@newport.co',   phone:'+63 919 330 2204', managerId:1,    hireDate:yearsAgo(5.0), status:'Active',      salary:2280000, type:'Full-time', location:'Ortigas, Pasig',   leave:{annual:13,sick:10,personal:3}, birthday:bdayIn(310,1988), contractEnds:null},
+  {id:9, name:'Nico Alcantara',    title:'Finance Analyst',      dept:'Finance',     email:'nico.alcantara@newport.co',    phone:'+63 917 812 6612', managerId:1,    hireDate:yearsAgo(3.2), status:'Active',      salary:1020000, type:'Full-time', location:'Makati',           leave:{annual:15,sick:10,personal:3}, birthday:bdayIn(74,1992),  contractEnds:null},
+  {id:10,name:'Patricia Ocampo',   title:'Support Specialist',   dept:'Support',     email:'patricia.ocampo@newport.co',   phone:'+63 919 330 5518', managerId:8,    hireDate:daysAgo(8),    status:'Onboarding',  salary:540000,  type:'Full-time', location:'Remote — Iloilo',  leave:{annual:20,sick:10,personal:3}, birthday:bdayIn(129,1998), contractEnds:null}
+];
+
+/* ============================================== attendance */
+function seedAttendance(){
+  const rows = [], days = bizBack(5);
+  const pat = [['09:02','17:34'],['08:51','17:12'],['09:14','18:02'],['08:58','17:45'],['09:26','17:20']];
+  let id = 1;
+  EMPLOYEES.forEach(e => days.forEach((d, i) => {
+    if (d < e.hireDate) return;
+    const [ci, co] = pat[(e.id + i) % pat.length];
+    rows.push({id:id++, empId:e.id, date:d, in:ci, out:co, hours:8.2, status: ci > '09:15' ? 'Late' : 'On time'});
+  }));
+  rows.push({id:id++, empId:2, date:TODAY, in:inTime(205), out:null, hours:null, status:'Clocked in'});
+  rows.push({id:id++, empId:3, date:TODAY, in:inTime(180), out:null, hours:null, status:'Clocked in'});
+  rows.push({id:id++, empId:5, date:TODAY, in:inTime(95),  out:null, hours:null, status:'Late'});
+  return rows;
+}
+
+/* =================================================== leave */
+const LEAVE = [
+  {id:1, empId:3, type:'Annual leave', from:bizFwd(9),  to:bizFwd(13), days:5,  reason:'Family trip to Bohol, booked months ago.', status:'Pending'},
+  {id:2, empId:7, type:'Sick leave',   from:bizFwd(1),  to:bizFwd(1),  days:1,  reason:'Dental procedure, follow-up visit.',      status:'Pending'},
+  {id:3, empId:5, type:'Personal',     from:bizFwd(5),  to:bizFwd(5),  days:1,  reason:'Moving apartments.',                      status:'Pending'},
+  {id:4, empId:9, type:'Annual leave', from:daysAgo(24),to:daysAgo(20),days:5,  reason:'Holiday leave.',                          status:'Approved'},
+  {id:5, empId:4, type:'Sick leave',   from:daysAgo(13),to:daysAgo(12),days:2,  reason:'Flu.',                                    status:'Approved'},
+  {id:6, empId:8, type:'Annual leave', from:bizFwd(19), to:bizFwd(28), days:10, reason:'Extended travel over two weeks.',         status:'Declined'}
+];
+
+/* ================================================= payroll
+   Gross is computed from the actual salary column, so editing a salary
+   above keeps the payroll page consistent. */
+function seedPayroll(){
+  const runs = [];
+  const activeGross = EMPLOYEES.reduce((s, e) => s + e.salary, 0) / 12;
+  for (let i = 0; i < 4; i++){
+    const m = addMonths(new Date(NOW.getFullYear(), NOW.getMonth(), 1), -i);
+    const shrink = i >= 2 ? 0.93 : 1;                 // the team was smaller a few months back
+    const gross = Math.round(activeGross * shrink);
+    const tax = Math.round(gross * 0.22);
+    const benefits = Math.round(gross * 0.0625);
+    runs.push({
+      id: i + 1, period: monthLabel(m), pay: iso(endOfMonth(m)),
+      gross, tax, benefits, net: gross - tax - benefits,
+      headcount: EMPLOYEES.length - (i >= 2 ? 1 : 0),
+      status: i === 0 ? 'Draft' : 'Paid'
+    });
+  }
+  return runs;
+}
+
+/* =============================================== lifecycle */
+const LAST_DAY = bizFwd(9);
+const LIFECYCLE = [
+  {id:1, empId:10, kind:'Onboarding', startedOn:daysAgo(8), tasks:[
+    {id:1,label:'Signed offer letter returned',owner:'HR',done:true},
+    {id:2,label:'BIR, SSS, PhilHealth and Pag-IBIG details collected',owner:'Finance',done:true},
+    {id:3,label:'Laptop shipped and tracked',owner:'IT',done:true},
+    {id:4,label:'Accounts provisioned (email, helpdesk, VPN)',owner:'IT',done:false},
+    {id:5,label:'Buddy assigned for first 30 days',owner:'Manager',done:false},
+    {id:6,label:'Week-one orientation scheduled',owner:'HR',done:false},
+    {id:7,label:'Probation review booked for day 90',owner:'Manager',done:false}]},
+  {id:2, empId:4, kind:'Offboarding', startedOn:daysAgo(4), tasks:[
+    {id:1,label:'Resignation acknowledged in writing',owner:'HR',done:true},
+    {id:2,label:`Last working day confirmed (${fdate(LAST_DAY)})`,owner:'HR',done:true},
+    {id:3,label:'Handover document drafted',owner:'Manager',done:true},
+    {id:4,label:'Equipment return arranged',owner:'IT',done:false},
+    {id:5,label:'Access revoked on final day',owner:'IT',done:false},
+    {id:6,label:'Final pay and unused leave calculated',owner:'Finance',done:false},
+    {id:7,label:'Clearance signed off and exit interview held',owner:'HR',done:false}]}
+];
+
+/* ============================================= performance */
+const HALF = NOW.getMonth() < 6 ? 'H1' : 'H2';
+const CYCLE = `${HALF} ${NOW.getFullYear()}`;
+const CYCLE_END = HALF === 'H1' ? new Date(NOW.getFullYear(), 5, 30) : new Date(NOW.getFullYear(), 11, 31);
+const PERF = [
+  {id:1, empId:3, cycle:CYCLE, rating:4.6, status:'Complete', reviewer:'Miguel Villanueva', note:'Owned the billing rewrite end to end and mentored two engineers through it.', goals:[
+    {id:1,title:'Ship billing service v2 to all customers',progress:100},
+    {id:2,title:'Cut p95 checkout latency below 400ms',progress:80},
+    {id:3,title:'Run one internal architecture session per quarter',progress:50}]},
+  {id:2, empId:5, cycle:CYCLE, rating:4.2, status:'Complete', reviewer:'Joaquin Tolentino', note:'Design system adoption is up sharply. Next stretch is running research without support.', goals:[
+    {id:1,title:'Publish the component library v1',progress:100},
+    {id:2,title:'Lead three end-to-end research studies',progress:66}]},
+  {id:3, empId:7, cycle:CYCLE, rating:null, status:'In review', reviewer:'Teresa Lagdameo', note:'', goals:[
+    {id:1,title:'Reach ₱24M in closed-won revenue',progress:72},
+    {id:2,title:'Build a repeatable mid-market demo script',progress:40}]},
+  {id:4, empId:9, cycle:CYCLE, rating:null, status:'Not started', reviewer:'Leslie Marilag', note:'', goals:[
+    {id:1,title:'Automate the month-end close checklist',progress:55}]},
+  {id:5, empId:4, cycle:CYCLE, rating:3.4, status:'Complete', reviewer:'Miguel Villanueva', note:'Steady delivery on assigned work. Growth area is flagging blockers earlier in the sprint.', goals:[
+    {id:1,title:'Halve the open bug count in the support queue',progress:90}]}
+];
+
+/* ================================================== hiring */
+const JOBS = [
+  {id:1, title:'Backend Engineer',          dept:'Engineering', type:'Full-time', location:'Remote — Philippines', status:'Open',   opened:daysAgo(49)},
+  {id:2, title:'Customer Success Lead',     dept:'Support',     type:'Full-time', location:'BGC, Taguig',          status:'Open',   opened:daysAgo(29)},
+  {id:3, title:'Product Marketing Manager', dept:'Product',     type:'Full-time', location:'Makati',               status:'Paused', opened:daysAgo(71)}
+];
+const STAGES = ['Applied','Screening','Interview','Offer','Hired'];
+const CANDIDATES = [
+  {id:1,name:'Katrina Buenaflor',jobId:1,stage:'Interview',applied:daysAgo(20),rating:4,source:'Referral'},
+  {id:2,name:'Emman Rosales',    jobId:1,stage:'Screening',applied:daysAgo(13),rating:3,source:'Job board'},
+  {id:3,name:'Jasmine Corpuz',   jobId:1,stage:'Applied',  applied:daysAgo(5), rating:0,source:'Careers page'},
+  {id:4,name:'Diego Manalo',     jobId:1,stage:'Offer',    applied:daysAgo(34),rating:5,source:'Referral'},
+  {id:5,name:'Trisha Bergonia',  jobId:2,stage:'Interview',applied:daysAgo(17),rating:4,source:'LinkedIn'},
+  {id:6,name:'Kim Navarro',      jobId:2,stage:'Applied',  applied:daysAgo(7), rating:0,source:'Careers page'},
+  {id:7,name:'Paolo Cariño',     jobId:3,stage:'Screening',applied:daysAgo(55),rating:3,source:'Job board'}
+];
+
+/* =============================================== documents */
+const DOCS = [
+  {id:1,name:`Employee handbook ${NOW.getFullYear()}.pdf`,      category:'Policy',  empId:null,uploaded:daysAgo(236),size:'2.4 MB',signature:'Acknowledged by 9 of 10'},
+  {id:2,name:'Employment contract — P. Ocampo.pdf',             category:'Contract',empId:10,  uploaded:daysAgo(12), size:'418 KB',signature:'Signed'},
+  {id:3,name:'Employment contract — C. Fajardo.pdf',            category:'Contract',empId:7,   uploaded:daysAgo(722),size:'402 KB',signature:'Signed'},
+  {id:4,name:'Remote work policy.pdf',                          category:'Policy',  empId:null,uploaded:daysAgo(166),size:'760 KB',signature:'Acknowledged by 10 of 10'},
+  {id:5,name:`Performance review form — ${HALF}.docx`,          category:'Template',empId:null,uploaded:daysAgo(122),size:'88 KB', signature:'—'},
+  {id:6,name:'Handover notes — R. Bautista.pdf',                category:'Exit',    empId:4,   uploaded:daysAgo(3),  size:'1.1 MB',signature:'Awaiting manager sign-off'},
+  {id:7,name:'Payslips — last cycle (all).zip',                 category:'Payroll', empId:null,uploaded:daysAgo(2),  size:'3.8 MB',signature:'—'},
+  {id:8,name:'Expense policy.pdf',                              category:'Policy',  empId:null,uploaded:daysAgo(201),size:'540 KB',signature:'Acknowledged by 8 of 10'}
+];
+
+/* ================================================== trend */
+function seedTrend(){
+  const counts = [8, 9, 9, 9, 9, EMPLOYEES.length], exits = [0, 1, 0, 0, 1, 0];
+  return counts.map((c, i) => ({
+    month: addMonths(new Date(NOW.getFullYear(), NOW.getMonth(), 1), -(5 - i)).toLocaleDateString(LOC, {month:'short'}),
+    headcount: c, exits: exits[i]
+  }));
+}
+const TREND = seedTrend();
+
+const ROLES = {
+  admin:   {label:'HR Admin', actorId:1, blurb:'Full access to every record and setting.'},
+  manager: {label:'Manager',  actorId:2, blurb:'Sees only their own direct reports.'},
+  employee:{label:'Employee', actorId:3, blurb:'Sees only their own record.'}
+};
+const NAV = [
+  {key:'dashboard',  label:'Dashboard',         icon:'dashboard',  roles:['admin','manager','employee']},
+  {key:'people',     label:'People',            icon:'users',      roles:['admin','manager']},
+  {key:'org',        label:'Org chart',         icon:'network',    roles:['admin','manager','employee']},
+  {key:'attendance', label:'Attendance',        icon:'clock',      roles:['admin','manager','employee']},
+  {key:'leave',      label:'Leave',             icon:'calendar',   roles:['admin','manager','employee']},
+  {key:'payroll',    label:'Payroll',           icon:'wallet',     roles:['admin','employee']},
+  {key:'lifecycle',  label:'Joining & leaving', icon:'clipboard',  roles:['admin','manager']},
+  {key:'performance',label:'Performance',       icon:'target',     roles:['admin','manager','employee']},
+  {key:'hiring',     label:'Hiring',            icon:'briefcase',  roles:['admin','manager']},
+  {key:'documents',  label:'Documents',         icon:'file',       roles:['admin','manager','employee']},
+  {key:'profile',    label:'My profile',        icon:'usercircle', roles:['admin','manager','employee']},
+  {key:'access',     label:'Access rules',      icon:'shield',     roles:['admin']}
+];
+
+/* ================================================== state */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const initials = n => n.split(' ').map(w => w[0]).join('').slice(0,2);
+
+const S = {
+  role:'admin', view:'dashboard', navOpen:false, drawer:null, toast:null, focus:null,
+  employees:EMPLOYEES.map(e => ({...e})), attendance:seedAttendance(),
+  leave:LEAVE.map(l => ({...l})), payroll:seedPayroll(),
+  lifecycle:LIFECYCLE.map(f => ({...f, tasks:f.tasks.map(t => ({...t}))})),
+  perf:PERF, jobs:JOBS, candidates:CANDIDATES.map(c => ({...c})), docs:DOCS,
+  peopleQ:'', peopleDept:'All', docCat:'All', hiringJob:'all', orgClosed:{},
+  newEmp:{name:'',title:'',dept:'Engineering',email:'',phone:'',location:'BGC, Taguig',hireDate:bizFwd(10)},
+  newLeave:{type:'Annual leave',from:bizFwd(14),to:bizFwd(16),reason:''}
+};
+let toastTimer = null;
+const byId = id => S.employees.find(e => e.id === id);
+const actor = () => byId(ROLES[S.role].actorId);
+const reports = () => S.employees.filter(e => e.managerId === ROLES[S.role].actorId);
+const visible = () => S.role === 'admin' ? S.employees : S.role === 'manager' ? [actor(), ...reports()] : [actor()];
+const visibleIds = () => visible().map(e => e.id);
+const say = m => { S.toast = m; clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; render(); }, 2800); };
+
+const toneFor = s => ({
+  Active:'good',Approved:'good',Paid:'good',Complete:'good','On time':'good',Hired:'good',Signed:'good',Open:'good',
+  Pending:'warn',Draft:'warn','In review':'warn',Onboarding:'warn',Late:'warn','Clocked in':'warn',Offer:'warn',Paused:'warn',
+  Declined:'bad',Offboarding:'bad',Exit:'bad'
+}[s] || '');
+
+/* ============================================== fragments */
+const av = (name, s = 34) => `<div class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.38)}px">${esc(initials(name))}</div>`;
+const tag = (t, tone) => `<span class="tag ${tone === undefined ? toneFor(t) : tone}">${esc(t)}</span>`;
+const stat = (k, v, s, color) => `<div class="stat"><p class="k">${esc(k)}</p><p class="v num"${color ? ` style="color:${color}"` : ''}>${esc(v)}</p>${s ? `<p class="s">${esc(s)}</p>` : ''}</div>`;
+const card = (title, body, action, pad = true) => `<section class="card">${title ? `<header><h3>${title}</h3>${action || ''}</header>` : ''}<div${pad ? ' class="pad"' : ''}>${body}</div></section>`;
+const table = (head, rows) => `<div class="tablewrap"><table><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+const empty = (t, h) => `<div class="empty"><p>${esc(t)}</p><p>${esc(h)}</p></div>`;
+const bar = (v, c) => `<div class="bar"><i style="width:${v}%${c ? `;background:${c}` : ''}"></i></div>`;
+const field = (k, v) => `<div class="field"><span>${esc(k)}</span><span>${esc(v)}</span></div>`;
+const btn = (label, act, opt = {}) => `<button class="btn ${opt.variant || ''} ${opt.sm ? 'sm' : ''}" data-act="${act}"${opt.disabled ? ' disabled' : ''}>${opt.icon ? icon(opt.icon, opt.sm ? 13 : 15) : ''}${esc(label)}</button>`;
+
+/* ================================================= charts */
+function barChart(data){
+  const W = 320, H = 170, padL = 26, max = Math.max(...data.map(d => d.value), 1);
+  const bw = (W - padL - 8) / data.length;
+  const bars = data.map((d, i) => {
+    const h = (d.value / max) * (H - 34), x = padL + i * bw + bw * .18, y = H - 22 - h;
+    return `<rect x="${x}" y="${y}" width="${bw*.64}" height="${h}" fill="${i%2?'var(--moss)':'var(--ink)'}" rx="2"/>
+      <text x="${x+bw*.32}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc(d.label)}</text>
+      <text x="${x+bw*.32}" y="${y-4}" text-anchor="middle" font-size="9" fill="var(--muted)">${d.value}</text>`;
+  }).join('');
+  const grid = [0,.5,1].map(f => { const y = H - 22 - f * (H - 34);
+    return `<line x1="${padL}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line-soft)"/><text x="0" y="${y+3}" font-size="9" fill="var(--muted)">${Math.round(max*f)}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">${grid}${bars}</svg>`;
+}
+function lineChart(data){
+  const W = 320, H = 170, padL = 26, max = Math.max(...data.map(d => d.headcount)) + 1;
+  const x = i => padL + (i * (W - padL - 10)) / (data.length - 1);
+  const y = v => H - 22 - (v / max) * (H - 34);
+  const path = k => data.map((d, i) => `${i ? 'L' : 'M'}${x(i)},${y(d[k])}`).join(' ');
+  const dots = (k, c) => data.map((d, i) => `<circle cx="${x(i)}" cy="${y(d[k])}" r="2.6" fill="${c}"/>`).join('');
+  const grid = [0,.5,1].map(f => { const gy = H - 22 - f * (H - 34);
+    return `<line x1="${padL}" x2="${W}" y1="${gy}" y2="${gy}" stroke="var(--line-soft)"/><text x="0" y="${gy+3}" font-size="9" fill="var(--muted)">${Math.round(max*f)}</text>`;
+  }).join('');
+  const labels = data.map((d, i) => `<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc(d.month)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">${grid}
+    <path d="${path('headcount')}" fill="none" stroke="var(--ink)" stroke-width="2"/>
+    <path d="${path('exits')}" fill="none" stroke="var(--rose)" stroke-width="2"/>
+    ${dots('headcount','var(--ink)')}${dots('exits','var(--rose)')}${labels}</svg>`;
+}
+
+/* ============================================== reminders */
+function reminders(){
+  const out = [], ids = visibleIds();
+  S.employees.forEach(e => {
+    if (!ids.includes(e.id)) return;
+    if (e.contractEnds){
+      const d = Math.round((new Date(e.contractEnds + 'T00:00:00') - new Date(TODAY + 'T00:00:00')) / 864e5);
+      if (d <= 30) out.push({icon:'warn', tone:'var(--rose)', text:`${e.name}'s contract ends in ${d} days`, meta:`Renew or confirm before ${fdate(e.contractEnds)}`});
+    }
+    const b = daysToBirthday(e.birthday);
+    if (b <= 14) out.push({icon:'cake', tone:'var(--muted)', text: b === 0 ? `${e.name}'s birthday is today` : `${e.name}'s birthday in ${b} day${b>1?'s':''}`, meta:'Team reminder'});
+    if (e.status === 'Onboarding'){
+      const d = Math.round((new Date(TODAY + 'T00:00:00') - new Date(e.hireDate + 'T00:00:00')) / 864e5);
+      out.push({icon:'clipboard', tone:'var(--amber)', text:`${e.name} is on day ${d} of onboarding`, meta:'Probation review due at day 90'});
+    }
+  });
+  const pending = S.leave.filter(l => l.status === 'Pending' && ids.includes(l.empId)).length;
+  if (pending && S.role !== 'employee')
+    out.push({icon:'calendar', tone:'var(--amber)', text:`${pending} leave request${pending>1?'s':''} waiting on you`, meta:'Oldest has been open four days'});
+  return out;
+}
+const remindersHTML = items => items.length
+  ? items.map(r => `<div class="rem">${icon(r.icon,15,`color:${r.tone};margin-top:2px;flex:none`)}<div><p>${esc(r.text)}</p><p class="m">${esc(r.meta)}</p></div></div>`).join('')
+  : `<p class="sub">Nothing needs attention today.</p>`;
+
+const greeting = () => { const h = NOW.getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; };
+
+/* ================================================== views */
+function vDashboard(){
+  const me = actor(), ids = visibleIds();
+  const today = S.attendance.filter(a => a.date === TODAY && ids.includes(a.empId));
+  const mine = S.attendance.find(a => a.empId === me.id && a.date === TODAY);
+
+  if (S.role === 'employee'){
+    const myLeave = S.leave.filter(l => l.empId === me.id);
+    const mp = S.perf.find(p => p.empId === me.id);
+    return `
+    <div class="stack">
+      <div class="hero">
+        <p style="opacity:.7;font-size:14px">${greeting()}, ${esc(me.name.split(' ')[0])}</p>
+        <p class="h">${mine && mine.out ? "You're done for today." : mine ? `Clocked in at ${mine.in}` : "You haven't clocked in yet."}</p>
+        <div style="margin-top:16px"><button class="btn" style="background:var(--paper);color:var(--ink);border-color:var(--paper)" data-act="clock">${icon(mine&&!mine.out?'logout':'login',15)}${mine&&!mine.out?'Clock out':'Clock in'}</button></div>
+      </div>
+      <div class="grid g3">
+        ${stat('Annual leave left', me.leave.annual, 'days')}
+        ${stat('Sick leave left', me.leave.sick, 'days')}
+        ${stat('Personal', me.leave.personal, 'days')}
+      </div>
+      ${card('My requests', myLeave.length
+        ? table(['Type','Dates','Days','Status'], myLeave.map(l =>
+            `<tr><td>${esc(l.type)}</td><td class="num">${fshort(l.from)} → ${fdate(l.to)}</td><td class="num">${l.days}</td><td>${tag(l.status)}</td></tr>`).join(''))
+        : empty('No requests yet','Time off you request will show up here.'),
+        btn('Request leave','drawer:leave',{sm:true,variant:'ghost'}), false)}
+      ${mp ? card(`Goals — ${esc(mp.cycle)}`, mp.goals.map(g =>
+        `<div style="margin-bottom:14px"><div class="row" style="justify-content:space-between;font-size:14px;margin-bottom:6px"><span>${esc(g.title)}</span><span class="sub num">${g.progress}%</span></div>${bar(g.progress)}</div>`).join('')) : ''}
+      ${card('Reminders', remindersHTML(reminders()))}
+    </div>`;
+  }
+
+  const pending = S.leave.filter(l => l.status === 'Pending' && ids.includes(l.empId) && l.empId !== me.id);
+  const counts = {};
+  S.employees.forEach(e => counts[e.dept] = (counts[e.dept] || 0) + 1);
+  const chartData = Object.entries(counts).map(([label, value]) => ({label, value}));
+
+  return `
+  <div class="stack">
+    <div class="grid g4">
+      ${stat(S.role === 'admin' ? 'Headcount' : 'Direct reports',
+             S.role === 'admin' ? S.employees.filter(e => e.status !== 'Offboarding').length : reports().length,
+             S.role === 'admin' ? '1 joining, 1 leaving' : 'across 1 team')}
+      ${stat('Clocked in today', `${today.length}/${visible().length}`, `${today.filter(a=>a.status==='Late').length} late`)}
+      ${stat('Awaiting approval', pending.length, 'leave requests', pending.length ? 'var(--amber)' : '')}
+      ${stat('Open roles', S.role === 'admin' ? 2 : 1, `${S.candidates.length} candidates in play`)}
+    </div>
+    <div class="split">
+      ${card('Headcount by department', barChart(chartData))}
+      ${card('Headcount and exits, last 6 months', lineChart(TREND) + `<p class="sub" style="margin-top:8px">Rolling 12-month turnover: 18%. Two exits in the period.</p>`)}
+    </div>
+    <div class="split">
+      ${card('Waiting on you', pending.length
+        ? pending.map(l => { const e = byId(l.empId);
+            return `<div class="row" style="padding:12px 16px;border-bottom:1px solid var(--line-soft)">${av(e.name,30)}
+              <div style="flex:1;min-width:0"><p class="fw" style="font-size:14px">${esc(e.name)}</p>
+              <p class="sub">${esc(l.type)} · ${l.days}d · from ${fshort(l.from)}</p></div>
+              ${icon('right',16,'color:var(--muted)')}</div>`;
+          }).join('')
+        : empty('Nothing to approve','New requests will land here.'),
+        btn('See all','view:leave',{sm:true,variant:'ghost'}), false)}
+      ${card('Reminders', remindersHTML(reminders()))}
+    </div>
+  </div>`;
+}
+
+function vPeople(){
+  const list = visible();
+  const depts = ['All', ...new Set(list.map(e => e.dept))];
+  const rows = list.filter(e =>
+    (S.peopleDept === 'All' || e.dept === S.peopleDept) &&
+    (e.name + e.title + e.email).toLowerCase().includes(S.peopleQ.toLowerCase()));
+  return `
+  <div class="stack">
+    <div class="toolbar">
+      <div class="search">${icon('search',15,'color:var(--muted)')}
+        <input id="peopleQ" data-model="peopleQ" value="${esc(S.peopleQ)}" placeholder="Search name, title, email" /></div>
+      <select data-model="peopleDept">${depts.map(d => `<option${d===S.peopleDept?' selected':''}>${esc(d)}</option>`).join('')}</select>
+      ${S.role === 'admin' ? btn('Add employee','drawer:add',{icon:'plus'}) : ''}
+    </div>
+    ${card('', rows.length
+      ? table(['Name','Department','Type','Started','Status',''], rows.map(e => `
+        <tr class="click" data-act="drawer:person:${e.id}">
+          <td><div class="row">${av(e.name,30)}<div><p class="fw">${esc(e.name)}</p><p class="sub">${esc(e.title)}</p></div></div></td>
+          <td>${esc(e.dept)}</td><td>${esc(e.type)}</td><td class="num">${fdate(e.hireDate)}</td>
+          <td>${tag(e.status)}</td><td>${icon('right',15,'color:var(--muted)')}</td></tr>`).join(''))
+      : empty('No one matches that search','Try a different name or clear the department filter.'), '', false)}
+  </div>`;
+}
+
+function vOrg(){
+  const kids = id => S.employees.filter(e => e.managerId === id);
+  const node = (e, depth) => {
+    const ch = kids(e.id), closed = S.orgClosed[e.id];
+    return `<div class="orgnode${depth ? '' : ' root'}">
+      <div class="orgrow">
+        ${ch.length ? `<button data-act="org:${e.id}" style="color:var(--muted)">${icon(closed?'right':'down',15)}</button>` : `<span style="width:15px"></span>`}
+        ${av(e.name,32)}
+        <div style="min-width:0"><p class="fw" style="font-size:14px">${esc(e.name)}${e.id===ROLES[S.role].actorId?'<span class="you">you</span>':''}</p>
+        <p class="sub">${esc(e.title)} · ${esc(e.dept)}</p></div></div>
+      ${closed ? '' : ch.map(k => node(k, depth+1)).join('')}</div>`;
+  };
+  return card('Reporting structure', S.employees.filter(e => !e.managerId).map(e => node(e, 0)).join(''));
+}
+
+function vAttendance(){
+  const ids = visibleIds(), me = actor();
+  const rows = S.attendance.filter(a => ids.includes(a.empId)).sort((a,b) => b.date.localeCompare(a.date) || a.empId - b.empId);
+  const mine = S.attendance.find(a => a.empId === me.id && a.date === TODAY);
+  const todayRows = rows.filter(r => r.date === TODAY);
+  const worked = rows.filter(r => r.hours);
+  const avg = (worked.reduce((s,r) => s + r.hours, 0) / Math.max(1, worked.length)).toFixed(1);
+  const emp = S.role === 'employee';
+  return `
+  <div class="stack">
+    <div class="grid g4">
+      ${stat('Present today', todayRows.length, `of ${visible().length}`)}
+      ${stat('Late arrivals', todayRows.filter(r => r.status === 'Late').length, 'today', todayRows.some(r=>r.status==='Late')?'var(--amber)':'')}
+      ${stat('Average day', avg + 'h', 'last two weeks')}
+      ${stat('On-time rate', '86%', 'last two weeks')}
+    </div>
+    ${card('Your day',
+      `<p class="sub">${mine && mine.out ? `Clocked in ${mine.in}, out ${mine.out}. ${mine.hours} hours logged.`
+        : mine ? `Clocked in at ${mine.in}. The timer is still running.` : "You haven't clocked in today."}</p>`,
+      btn(mine && !mine.out ? 'Clock out' : 'Clock in','clock',{sm:true,variant:mine&&!mine.out?'ghost':'moss',icon:mine&&!mine.out?'logout':'login'}))}
+    ${card(emp ? 'My timesheet' : 'Team timesheet',
+      table(emp ? ['Date','In','Out','Hours','Status'] : ['Employee','Date','In','Out','Hours','Status'],
+        rows.slice(0,24).map(r => `<tr>${emp ? '' : `<td class="fw">${esc(byId(r.empId).name)}</td>`}
+          <td class="num">${fdate(r.date)}</td><td class="num">${r.in}</td><td class="num">${r.out || '—'}</td>
+          <td class="num">${r.hours ? r.hours + 'h' : '—'}</td><td>${tag(r.status)}</td></tr>`).join('')), '', false)}
+  </div>`;
+}
+
+function vLeave(){
+  const me = actor(), ids = visibleIds();
+  const rows = S.leave.filter(l => ids.includes(l.empId));
+  const pending = rows.filter(l => l.status === 'Pending' && l.empId !== me.id);
+  const emp = S.role === 'employee';
+  return `
+  <div class="stack">
+    <div class="grid g3">${Object.entries(me.leave).map(([k,v]) => stat(k[0].toUpperCase()+k.slice(1)+' left', v, 'days')).join('')}</div>
+    <div style="display:flex;justify-content:flex-end">${btn('Request leave','drawer:leave',{icon:'plus'})}</div>
+    ${!emp ? card('Waiting on your decision', pending.length
+      ? pending.map(l => { const e = byId(l.empId);
+          return `<div style="padding:14px 16px;border-bottom:1px solid var(--line-soft)">
+            <div style="display:flex;gap:12px;align-items:flex-start">${av(e.name,32)}
+              <div style="flex:1;min-width:0">
+                <p class="fw" style="font-size:14px">${esc(e.name)}</p>
+                <p class="sub">${esc(l.type)} · ${fshort(l.from)} → ${fdate(l.to)} · ${l.days} day${l.days>1?'s':''}</p>
+                <p style="font-size:14px;margin-top:6px">${esc(l.reason)}</p>
+                <div class="row" style="gap:8px;margin-top:10px">
+                  ${btn('Approve',`leave:${l.id}:Approved`,{sm:true,variant:'moss',icon:'check'})}
+                  ${btn('Decline',`leave:${l.id}:Declined`,{sm:true,variant:'danger',icon:'x'})}</div>
+              </div></div></div>`;
+        }).join('')
+      : empty("You're all caught up",'Requests from your team will appear here.'), '', false) : ''}
+    ${card(emp ? 'My leave history' : 'All requests',
+      table(emp ? ['Type','Dates','Days','Status'] : ['Employee','Type','Dates','Days','Status'],
+        rows.map(l => `<tr>${emp ? '' : `<td class="fw">${esc(byId(l.empId).name)}</td>`}
+          <td>${esc(l.type)}</td><td class="num">${fshort(l.from)} → ${fdate(l.to)}</td>
+          <td class="num">${l.days}</td><td>${tag(l.status)}</td></tr>`).join('')), '', false)}
+  </div>`;
+}
+
+function vPayroll(){
+  const me = actor();
+  if (S.role === 'employee'){
+    const monthly = me.salary / 12, net = monthly * .72;
+    return `
+    <div class="stack">
+      <div class="grid g3">
+        ${stat('Gross per month', money(monthly))}
+        ${stat('Estimated net', money(net), 'after tax and contributions')}
+        ${stat('Next payday', fshort(iso(endOfMonth(NOW))))}
+      </div>
+      ${card('My payslips', table(['Period','Paid on','Gross','Net',''],
+        S.payroll.filter(p => p.status === 'Paid').map(p =>
+          `<tr><td>${esc(p.period)}</td><td class="num">${fdate(p.pay)}</td><td class="num">${money(monthly)}</td>
+           <td class="num">${money(net)}</td><td>${btn('PDF','say:Payslip downloaded.',{sm:true,variant:'ghost',icon:'download'})}</td></tr>`).join('')), '', false)}
+    </div>`;
+  }
+  const draft = S.payroll.find(p => p.status === 'Draft'), last = S.payroll.find(p => p.status === 'Paid');
+  return `
+  <div class="stack">
+    ${draft ? `<div class="notice">
+      <p style="color:var(--amber);font-weight:600">${esc(draft.period)} payroll is ready for review</p>
+      <p style="font-size:14px;margin-top:4px">${draft.headcount} people · ${money(draft.gross)} gross · pays out ${fdate(draft.pay)}. Nothing leaves the account until you approve it.</p>
+      <div style="margin-top:12px">${btn('Approve and pay',`payroll:${draft.id}`,{variant:'moss',icon:'check'})}</div></div>` : ''}
+    <div class="grid g4">
+      ${stat('Monthly gross', compact(last.gross))}
+      ${stat('Tax withheld', compact(last.tax))}
+      ${stat('Contributions', compact(last.benefits))}
+      ${stat('Net paid out', compact(last.net), last.period)}
+    </div>
+    ${card('Payroll runs', table(['Period','Pay date','People','Gross','Net','Status',''],
+      S.payroll.map(p => `<tr><td class="fw">${esc(p.period)}</td><td class="num">${fdate(p.pay)}</td><td class="num">${p.headcount}</td>
+        <td class="num">${money(p.gross)}</td><td class="num">${money(p.net)}</td><td>${tag(p.status)}</td>
+        <td>${btn('Export','say:Payroll register exported as CSV.',{sm:true,variant:'ghost',icon:'download'})}</td></tr>`).join('')), '', false)}
+    ${card('Payroll provider', `<p class="sub">Approved runs are pushed to your payroll provider as a CSV register. Bank files and statutory filing stay with the provider.</p>`)}
+  </div>`;
+}
+
+function vLifecycle(){
+  return `<div class="stack">${S.lifecycle.map(f => {
+    const e = byId(f.empId), done = f.tasks.filter(t => t.done).length;
+    const pct = Math.round(done / f.tasks.length * 100);
+    return card('', `
+      <div class="row" style="margin-bottom:16px">${av(e.name,40)}
+        <div style="flex:1;min-width:0"><p style="font-weight:600">${esc(e.name)}</p>
+        <p class="sub">${esc(e.title)} · started ${fdate(f.startedOn)}</p></div>${tag(f.kind)}</div>
+      <div class="row" style="margin-bottom:16px">${bar(pct, f.kind === 'Offboarding' ? 'var(--rose)' : '')}
+        <span class="sub num" style="white-space:nowrap">${done}/${f.tasks.length} done</span></div>
+      ${f.tasks.map(t => `<button class="task${t.done?' done':''}" data-act="task:${f.id}:${t.id}">
+        <span class="check${t.done?' on':''}">${t.done ? icon('check',12,'color:#fff') : ''}</span>
+        <span class="t">${esc(t.label)}</span>${tag(t.owner,'')}</button>`).join('')}`);
+  }).join('')}</div>`;
+}
+
+function vPerformance(){
+  const ids = visibleIds();
+  const rows = S.perf.filter(p => ids.includes(p.empId));
+  const rated = rows.filter(r => r.rating);
+  const avg = rated.length ? (rated.reduce((s,r) => s + r.rating, 0) / rated.length).toFixed(1) : '—';
+  const emp = S.role === 'employee';
+  return `
+  <div class="stack">
+    <div class="grid g3">
+      ${stat('Cycle', CYCLE, 'closes ' + fshort(iso(CYCLE_END)))}
+      ${stat('Reviews complete', `${rows.filter(r => r.status === 'Complete').length}/${rows.length}`)}
+      ${stat('Average rating', avg, 'out of 5')}
+    </div>
+    ${card('Reviews', rows.length
+      ? table(emp ? ['Cycle','Reviewer','Rating','Status',''] : ['Employee','Reviewer','Rating','Status',''],
+          rows.map(r => `<tr class="click" data-act="drawer:review:${r.id}">
+            <td class="fw">${esc(emp ? r.cycle : byId(r.empId).name)}</td><td>${esc(r.reviewer)}</td>
+            <td class="num">${r.rating ? r.rating + ' / 5' : '—'}</td><td>${tag(r.status)}</td>
+            <td>${icon('right',15,'color:var(--muted)')}</td></tr>`).join(''))
+      : empty('No reviews in this cycle','Reviews you own will show up here once the cycle opens.'), '', false)}
+  </div>`;
+}
+
+function vHiring(){
+  const list = S.candidates.filter(c => S.hiringJob === 'all' || c.jobId === Number(S.hiringJob));
+  return `
+  <div class="stack">
+    ${card('Open roles', table(['Role','Department','Location','Opened','Candidates','Status'],
+      S.jobs.map(j => `<tr><td class="fw">${esc(j.title)}</td><td>${esc(j.dept)}</td><td>${esc(j.location)}</td>
+        <td class="num">${fdate(j.opened)}</td><td class="num">${S.candidates.filter(c => c.jobId === j.id).length}</td>
+        <td>${tag(j.status)}</td></tr>`).join('')), '', false)}
+    <div class="row">
+      <span class="sub">Pipeline for</span>
+      <select data-model="hiringJob" style="padding:6px 10px;font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:3px">
+        <option value="all"${S.hiringJob==='all'?' selected':''}>All roles</option>
+        ${S.jobs.map(j => `<option value="${j.id}"${String(S.hiringJob)===String(j.id)?' selected':''}>${esc(j.title)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="tablewrap"><div class="board">${STAGES.map(st => {
+      const col = list.filter(c => c.stage === st);
+      return `<div class="col"><div><span>${st}</span><span class="sub num">${col.length}</span></div>
+        <div class="body">${col.map(c => `<div class="cand">
+          <p class="fw" style="font-size:14px">${esc(c.name)}</p>
+          <p class="sub" style="margin-top:2px">${esc(c.source)} · applied ${fshort(c.applied)}</p>
+          <p style="font-size:12px;margin-top:4px;color:${c.rating?'var(--moss)':'var(--muted)'}">${c.rating ? '★'.repeat(c.rating) : 'Not rated'}</p>
+          <div class="row" style="gap:4px;margin-top:8px">
+            <button class="mini" data-act="cand:${c.id}:-1">←</button>
+            <button class="mini" data-act="cand:${c.id}:1">→</button></div></div>`).join('')
+          || `<p class="sub" style="padding:12px 4px">Nobody here yet.</p>`}</div></div>`;
+    }).join('')}</div></div>
+  </div>`;
+}
+
+function vDocuments(){
+  const me = actor();
+  const rows = S.docs.filter(d => S.role === 'admin' ? true : d.empId === null || d.empId === me.id);
+  const cats = ['All', ...new Set(rows.map(d => d.category))];
+  const shown = rows.filter(d => S.docCat === 'All' || d.category === S.docCat);
+  return `
+  <div class="stack">
+    <div class="toolbar">${cats.map(c => `<button class="chip${S.docCat===c?' on':''}" data-act="doccat:${c}">${esc(c)}</button>`).join('')}</div>
+    ${card('', table(['Document','Category','Belongs to','Uploaded','Signature',''], shown.map(d => `<tr>
+      <td><div class="row" style="gap:8px">${icon('file',15,'color:var(--muted);flex:none')}
+        <div><p class="fw">${esc(d.name)}</p><p class="sub">${d.size}</p></div></div></td>
+      <td>${tag(d.category)}</td><td>${esc(d.empId ? byId(d.empId).name : 'Everyone')}</td>
+      <td class="num">${fdate(d.uploaded)}</td>
+      <td><span style="font-size:12px;color:${d.signature.includes('Awaiting')?'var(--amber)':'var(--muted)'}">${esc(d.signature)}</span></td>
+      <td>${icon('download',15,'color:var(--muted)')}</td></tr>`).join('')), '', false)}
+  </div>`;
+}
+
+function vProfile(){
+  const me = actor();
+  const mine = S.leave.filter(l => l.empId === me.id);
+  const days = S.attendance.filter(a => a.empId === me.id && a.hours).length;
+  const mp = S.perf.find(p => p.empId === me.id);
+  const myDocs = S.docs.filter(d => d.empId === me.id || d.empId === null);
+  const tenure = ((new Date(TODAY) - new Date(me.hireDate)) / 3.156e10).toFixed(1);
+  return `
+  <div class="stack">
+    <div class="card row" style="padding:20px;gap:16px">${av(me.name,58)}
+      <div><p style="font-family:var(--serif);font-size:26px;line-height:1.1">${esc(me.name)}</p>
+      <p class="sub">${esc(me.title)} · ${esc(me.dept)} · ${esc(me.location)}</p></div></div>
+    <div class="split">
+      ${card('Details you can edit',
+        field('Work email', me.email) + field('Phone', me.phone) + field('Location', me.location) + field('Emergency contact','Not set') +
+        `<div style="margin-top:16px">${btn('Edit details','say:Changes saved to your profile.',{variant:'ghost'})}</div>`)}
+      ${card('Set by HR',
+        field('Employee ID', 'NP-' + String(me.id).padStart(4,'0')) + field('Started', fdate(me.hireDate)) +
+        field('Tenure', tenure + ' years') + field('Employment', me.type) +
+        field('Reports to', me.managerId ? byId(me.managerId).name : '—') + field('Status', me.status) +
+        `<p class="sub" style="margin-top:12px">Ask HR to change anything in this section.</p>`)}
+    </div>
+    <div class="grid g4">
+      ${stat('Annual leave left', me.leave.annual, 'days')}
+      ${stat('Days logged', days, 'this period')}
+      ${stat('Review rating', mp && mp.rating ? mp.rating : '—', mp ? mp.cycle : 'no review yet')}
+      ${stat('Requests made', mine.length, 'all time')}
+    </div>
+    ${card('My documents', table(['Document','Category','Uploaded'],
+      myDocs.map(d => `<tr><td>${esc(d.name)}</td><td>${tag(d.category)}</td><td class="num">${fdate(d.uploaded)}</td></tr>`).join('')), '', false)}
+  </div>`;
+}
+
+function vAccess(){
+  const M = [
+    ['View own record',1,1,1],['View team records',1,1,0],['View every record',1,0,0],
+    ['View salary figures',1,0,0],['Approve leave',1,1,0],['Run payroll',1,0,0],
+    ['Add or remove employees',1,0,0],['Manage hiring pipeline',1,1,0],
+    ['Upload company documents',1,0,0],['Write performance reviews',1,1,0]
+  ];
+  const mark = v => v ? icon('check',15,'color:var(--moss)') : icon('x',15,'color:var(--line)');
+  return `
+  <div class="stack">
+    ${card('What each role can do', table(['Permission','HR Admin','Manager','Employee'],
+      M.map(r => `<tr><td>${esc(r[0])}</td><td>${mark(r[1])}</td><td>${mark(r[2])}</td><td>${mark(r[3])}</td></tr>`).join('')), '', false)}
+    ${card('How scoping works', `<p class="sub" style="line-height:1.6">Records are filtered before they reach the screen, not hidden in the interface. A manager's queries are scoped to their reporting line, so switching roles in the rail changes what data is fetched at all. Add a role here and every module inherits it — the navigation, tables and drawers all read from the same permission set.</p>`)}
+  </div>`;
+}
+
+/* ================================================= drawer */
+function drawerHTML(){
+  const d = S.drawer;
+  if (!d) return '';
+  let body = '';
+  if (d.type === 'person'){
+    const p = byId(d.id);
+    body = `<div class="row" style="margin-bottom:20px">${av(p.name,52)}
+      <div><p style="font-family:var(--serif);font-size:23px">${esc(p.name)}</p>
+      <p class="sub">${esc(p.title)} · ${esc(p.dept)}</p></div></div>
+      ${field('Email',p.email)}${field('Phone',p.phone)}${field('Location',p.location)}
+      ${field('Employment',p.type)}${field('Started',fdate(p.hireDate))}
+      ${field('Reports to', p.managerId ? byId(p.managerId).name : '—')}
+      ${S.role === 'admin' ? field('Base salary', money(p.salary) + ' / year') : ''}
+      ${p.contractEnds ? field('Contract ends', fdate(p.contractEnds)) : ''}
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
+        <p class="sub" style="margin-bottom:8px">Leave balance</p>
+        <div class="grid g3">${Object.entries(p.leave).map(([k,v]) =>
+          `<div style="padding:8px 10px;background:var(--paper);border-radius:3px">
+            <p style="font-family:var(--serif);font-size:20px">${v}</p>
+            <p class="sub" style="text-transform:capitalize">${k}</p></div>`).join('')}</div></div>`;
+  }
+  if (d.type === 'add'){
+    const f = S.newEmp;
+    const inp = (k,l,type='text') => `<label class="f"><span class="lb">${l}</span><input type="${type}" data-model="newEmp.${k}" value="${esc(f[k])}" /></label>`;
+    body = `<p style="font-family:var(--serif);font-size:22px;margin-bottom:16px">Add an employee</p>
+      ${inp('name','Full name')}${inp('title','Job title')}${inp('email','Work email')}
+      ${inp('phone','Phone')}${inp('location','Location')}${inp('hireDate','Start date','date')}
+      <label class="f"><span class="lb">Department</span><select data-model="newEmp.dept">
+        ${['Engineering','Product','Sales','Support','Finance','People'].map(x => `<option${x===f.dept?' selected':''}>${x}</option>`).join('')}
+      </select></label>
+      <div class="row" style="gap:8px;margin-top:20px">
+        ${btn('Add employee','addEmp',{variant:'moss',disabled:!f.name})}${btn('Cancel','closeDrawer',{variant:'ghost'})}</div>`;
+  }
+  if (d.type === 'leave'){
+    const f = S.newLeave, me = actor();
+    body = `<p style="font-family:var(--serif);font-size:22px;margin-bottom:16px">Request time off</p>
+      <label class="f"><span class="lb">Type</span><select data-model="newLeave.type">
+        ${['Annual leave','Sick leave','Personal','Unpaid'].map(t => `<option${t===f.type?' selected':''}>${t}</option>`).join('')}
+      </select></label>
+      <div class="grid g2">
+        <label class="f"><span class="lb">First day</span><input type="date" data-model="newLeave.from" value="${f.from}" /></label>
+        <label class="f"><span class="lb">Last day</span><input type="date" data-model="newLeave.to" value="${f.to}" /></label></div>
+      <label class="f"><span class="lb">Reason</span><textarea rows="3" data-model="newLeave.reason">${esc(f.reason)}</textarea></label>
+      <p class="sub" style="margin-bottom:16px">Goes to ${esc(me.managerId ? byId(me.managerId).name : 'HR')} for approval.</p>
+      <div class="row" style="gap:8px">${btn('Send request','addLeave',{variant:'moss'})}${btn('Cancel','closeDrawer',{variant:'ghost'})}</div>`;
+  }
+  if (d.type === 'review'){
+    const r = S.perf.find(p => p.id === d.id);
+    body = `<p style="font-family:var(--serif);font-size:22px">${esc(byId(r.empId).name)}</p>
+      <p class="sub" style="margin-bottom:16px">${esc(r.cycle)} · reviewed by ${esc(r.reviewer)}</p>
+      ${field('Status', r.status)}${field('Rating', r.rating ? r.rating + ' / 5' : 'Not yet rated')}
+      ${r.note ? `<p style="font-size:14px;margin-top:16px;line-height:1.6">${esc(r.note)}</p>` : ''}
+      <p class="sub" style="margin:20px 0 8px">Goals</p>
+      ${r.goals.map(g => `<div style="margin-bottom:14px">
+        <div class="row" style="justify-content:space-between;font-size:14px;margin-bottom:6px">
+          <span style="padding-right:12px">${esc(g.title)}</span><span class="sub num">${g.progress}%</span></div>${bar(g.progress)}</div>`).join('')}`;
+  }
+  return `<div class="drawer" data-act="closeDrawer"><div class="sheet" data-stop>
+    <button class="row sub" style="gap:4px;margin-bottom:12px" data-act="closeDrawer">${icon('x',15)}Close</button>${body}</div></div>`;
+}
+
+/* ================================================== shell */
+function railHTML(){
+  const me = actor();
+  return `
+  <div class="brand"><p class="name">NewPort Inc.</p><p class="sub">People operations</p></div>
+  <div style="padding:0 16px 16px">
+    <p class="sub" style="margin-bottom:6px">Viewing as</p>
+    <div class="rolebox">${Object.entries(ROLES).map(([k,r]) =>
+      `<button class="roleopt${S.role===k?' on':''}" data-act="role:${k}">${r.label}${S.role===k?icon('check',14):''}</button>`).join('')}</div>
+    <p class="sub" style="margin-top:6px;line-height:1.35">${esc(ROLES[S.role].blurb)}</p></div>
+  <nav class="nav">${NAV.filter(n => n.roles.includes(S.role)).map(n =>
+    `<button class="navitem${S.view===n.key?' on':''}" data-act="view:${n.key}">${icon(n.icon,16)}${n.label}</button>`).join('')}</nav>
+  <div class="railfoot">${av(me.name,30)}
+    <div style="min-width:0"><p class="fw" style="font-size:14px">${esc(me.name)}</p><p class="sub">${esc(me.title)}</p></div></div>`;
+}
+
+const VIEWS = {dashboard:vDashboard, people:vPeople, org:vOrg, attendance:vAttendance, leave:vLeave,
+  payroll:vPayroll, lifecycle:vLifecycle, performance:vPerformance, hiring:vHiring,
+  documents:vDocuments, profile:vProfile, access:vAccess};
+
+function render(){
+  const nav = NAV.filter(n => n.roles.includes(S.role));
+  if (!nav.some(n => n.key === S.view)) S.view = 'dashboard';
+  const heading = (nav.find(n => n.key === S.view) || {}).label || '';
+  document.getElementById('app').innerHTML = `
+    <div class="wrap">
+      <aside class="rail${S.navOpen ? ' drawer-open' : ''}">${railHTML()}</aside>
+      ${S.navOpen ? `<div class="scrim" data-act="navClose"></div>` : ''}
+      <main class="main">
+        <header class="topbar">
+          <button class="burger" data-act="navOpen">${icon('menu',20)}</button>
+          <h1>${esc(heading)}</h1>
+          <span class="row sub" style="gap:6px">${icon('bell',14)}${reminders().length}</span>
+          <span class="sub datestamp num">${NOW.toLocaleDateString(LOC,{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span>
+        </header>
+        <div class="content">${VIEWS[S.view]()}</div>
+      </main>
+    </div>
+    ${drawerHTML()}
+    ${S.toast ? `<div class="toast">${esc(S.toast)}</div>` : ''}`;
+  if (S.focus){
+    const el = document.getElementById(S.focus);
+    if (el){ el.focus(); const v = el.value; el.value = ''; el.value = v; }
+  }
+}
+
+/* ================================================= events */
+document.addEventListener('click', ev => {
+  const stop = ev.target.closest('[data-stop]');
+  const el = ev.target.closest('[data-act]');
+  if (!el) return;
+  if (stop && el.classList.contains('drawer')) return;
+  const [act, a, b] = el.dataset.act.split(':');
+  const me = actor();
+
+  if (act === 'role'){ S.role = a; S.drawer = null; S.navOpen = false; }
+  else if (act === 'view'){ S.view = a; S.navOpen = false; }
+  else if (act === 'navOpen'){ S.navOpen = true; }
+  else if (act === 'navClose'){ S.navOpen = false; }
+  else if (act === 'closeDrawer'){ S.drawer = null; }
+  else if (act === 'drawer'){ S.drawer = {type:a, id: b ? Number(b) : null}; }
+  else if (act === 'org'){ S.orgClosed[a] = !S.orgClosed[a]; }
+  else if (act === 'doccat'){ S.docCat = el.textContent.trim(); }
+  else if (act === 'say'){ say(el.dataset.act.slice(4)); }
+  else if (act === 'clock'){
+    const open = S.attendance.find(x => x.empId === me.id && x.date === TODAY && !x.out);
+    const now = hhmm(new Date());
+    if (open){
+      const [h1,m1] = open.in.split(':').map(Number), [h2,m2] = now.split(':').map(Number);
+      const hrs = Math.max(0.1, ((h2*60+m2) - (h1*60+m1)) / 60);
+      open.out = now; open.hours = Number(hrs.toFixed(1)); open.status = 'On time';
+      say(`Clocked out at ${now}. Today logged as ${open.hours} hours.`);
+    } else {
+      S.attendance.push({id:Date.now(), empId:me.id, date:TODAY, in:now, out:null, hours:null, status:'Clocked in'});
+      say(`Clocked in at ${now}.`);
+    }
+  }
+  else if (act === 'leave'){
+    S.leave.find(x => x.id === Number(a)).status = b;
+    say(b === 'Approved' ? 'Leave approved. The employee has been notified.' : 'Leave declined. The employee has been notified.');
+  }
+  else if (act === 'task'){
+    const f = S.lifecycle.find(x => x.id === Number(a));
+    const t = f.tasks.find(x => x.id === Number(b));
+    t.done = !t.done;
+  }
+  else if (act === 'cand'){
+    const c = S.candidates.find(x => x.id === Number(a));
+    c.stage = STAGES[Math.max(0, Math.min(STAGES.length - 1, STAGES.indexOf(c.stage) + Number(b)))];
+  }
+  else if (act === 'payroll'){
+    S.payroll.find(p => p.id === Number(a)).status = 'Paid';
+    say('Payroll approved. Payslips are now visible to employees.');
+  }
+  else if (act === 'addEmp'){
+    const f = S.newEmp;
+    S.employees.push({...f, id: Math.max(...S.employees.map(e => e.id)) + 1, managerId:1, status:'Onboarding',
+      salary:840000, type:'Full-time', birthday:bdayIn(200,1996), contractEnds:null, leave:{annual:20,sick:10,personal:3}});
+    S.drawer = null;
+    say(`${f.name} added. An onboarding checklist was created automatically.`);
+    S.newEmp = {name:'',title:'',dept:'Engineering',email:'',phone:'',location:'BGC, Taguig',hireDate:bizFwd(10)};
+  }
+  else if (act === 'addLeave'){
+    const f = S.newLeave;
+    const days = Math.max(1, Math.round((new Date(f.to) - new Date(f.from)) / 864e5) + 1);
+    S.leave.unshift({id:Date.now(), empId:me.id, type:f.type, from:f.from, to:f.to, days,
+      reason: f.reason || 'No reason given.', status:'Pending'});
+    S.drawer = null;
+    say('Request sent to your manager.');
+  }
+  else return;
+  render();
+});
+
+document.addEventListener('input', ev => {
+  const k = ev.target.dataset.model;
+  if (!k) return;
+  const parts = k.split('.');
+  if (parts.length === 2) S[parts[0]][parts[1]] = ev.target.value;
+  else S[k] = ev.target.value;
+  if (ev.target.tagName === 'INPUT' && ev.target.type === 'text' && ev.target.id){
+    S.focus = ev.target.id; render(); S.focus = null;
+  }
+});
+
+document.addEventListener('change', ev => {
+  if (ev.target.dataset.model && ev.target.tagName === 'SELECT') render();
+});
+
+render();
+</script>
+</body>
+</html>

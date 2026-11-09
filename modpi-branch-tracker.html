@@ -3,362 +3,1059 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ModPi Restaurant — PH Franchise Tracking System</title>
+<title>ModPi IT Services — Franchise Tracking System</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 <style>
-  :root{
-    /* softened palette — muted teal accent, warm neutral surfaces, gentler contrast */
-    --bg:#eef2f1; --panel:#fbfcfb; --panel2:#f3f7f6; --border:#dde6e3;
-    --text:#2b353d; --muted:#69787e; --accent:#2a9d8f; --accent2:#1f7a70;
-    --green:#2e9e63; --red:#c65b5b;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
-  body{background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+:root{
+  --bg:#070b14; --bg2:#0b1120;
+  --panel:rgba(255,255,255,.035); --panel-solid:#0d1526;
+  --stroke:rgba(255,255,255,.09); --stroke-hot:rgba(255,122,47,.45);
+  --txt:#e8edf7; --muted:#8b96ad; --faint:#5b6579;
+  --orange:#ff7a2f; --cyan:#22d3ee; --good:#34d399; --warn:#fbbf24; --crit:#fb7185;
+  --grad:linear-gradient(135deg,#ff7a2f,#ffb347);
+  --r:18px; --font-d:'Space Grotesk',sans-serif; --font-b:'Inter',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+   radial-gradient(900px 500px at 12% -10%, rgba(255,122,47,.13), transparent 60%),
+   radial-gradient(800px 500px at 95% 8%, rgba(34,211,238,.10), transparent 60%),
+   radial-gradient(700px 700px at 50% 115%, rgba(124,58,237,.10), transparent 60%);}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 75%);}
+.wrap{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:0 28px 40px}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:6px}
 
-  header{display:flex;align-items:center;gap:14px;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#fff}
-  header h1{font-size:17px;font-weight:700}
-  header h1 span{color:var(--accent)}
-  header p{font-size:11px;color:var(--muted)}
-  .kpis{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
-  .kpi{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:6px 14px;text-align:center;min-width:104px}
-  .kpi .v{font-size:15px;font-weight:700;color:var(--accent2)}
-  .kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+/* ===== TOP BAR ===== */
+.topbar{position:sticky;top:0;z-index:900;backdrop-filter:blur(16px);background:rgba(7,11,20,.72);border-bottom:1px solid var(--stroke);margin:0 -28px;padding:14px 28px;display:flex;align-items:center;gap:16px}
+.logo{width:44px;height:44px;border-radius:13px;background:var(--grad);display:grid;place-items:center;font-family:var(--font-d);font-weight:700;font-size:17px;color:#1a0d02;box-shadow:0 0 26px rgba(255,122,47,.45);flex-shrink:0}
+.brand h1{font-family:var(--font-d);font-size:19px;font-weight:700;letter-spacing:.3px}
+.brand h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.brand p{font-size:11.5px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:1px}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.clock{font-family:var(--font-d);font-size:15px;font-weight:600;letter-spacing:.06em;color:var(--txt);padding:8px 14px;border:1px solid var(--stroke);border-radius:12px;background:var(--panel)}
+.clock small{color:var(--muted);font-size:10px;letter-spacing:.15em;display:block;font-weight:500}
+.live-chip{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:12px;border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.08);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--good)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 0 rgba(52,211,153,.6);animation:ping 1.8s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+.btn{cursor:pointer;border:1px solid var(--stroke);background:var(--panel);color:var(--txt);font-family:var(--font-b);font-size:12px;font-weight:600;padding:9px 16px;border-radius:12px;transition:.25s}
+.btn:hover{border-color:var(--stroke-hot);background:rgba(255,122,47,.08);transform:translateY(-1px)}
+.btn.primary{background:var(--grad);color:#1a0d02;border:none;box-shadow:0 6px 20px rgba(255,122,47,.3)}
+.btn:disabled{opacity:.55;cursor:wait;transform:none}
+.fy-chip{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--cyan);border:1px solid rgba(34,211,238,.3);background:rgba(34,211,238,.07);padding:8px 13px;border-radius:12px}
 
-  main{flex:1;display:flex;min-height:0}
-  #map{flex:1;min-width:0}
-  aside{width:390px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
-  .aside-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .aside-head h2{font-size:14px}
-  .aside-body{flex:1;overflow-y:auto;padding:16px}
-  .aside-body::-webkit-scrollbar{width:8px}
-  .aside-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+/* ===== TICKER ===== */
+.ticker{margin:0 -28px;border-bottom:1px solid var(--stroke);background:rgba(255,255,255,.02);overflow:hidden;white-space:nowrap}
+.ticker-track{display:inline-flex;gap:48px;padding:9px 0;animation:scroll 52s linear infinite;will-change:transform}
+.ticker span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ticker b{color:var(--txt)} .ticker .up{color:var(--good)} .ticker .dn{color:var(--crit)} .ticker .wt{color:var(--warn)}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-  .btn{border:none;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s}
-  .btn-primary{background:linear-gradient(135deg,var(--accent),#4fb3a5);color:#fff;width:100%}
-  .btn-primary:hover{filter:brightness(1.1)}
-  .btn-primary:disabled{opacity:.55;cursor:wait}
-  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
-  .btn-ghost:hover{color:var(--text)}
+/* ===== HERO ===== */
+.hero{padding:44px 0 8px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.hero h2{font-family:var(--font-d);font-size:clamp(30px,4.4vw,52px);font-weight:700;line-height:1.05;letter-spacing:-.02em}
+.hero h2 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);margin-top:12px;max-width:60ch;font-size:14.5px;line-height:1.6}
+.flag{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.flag .ph{font-size:20px}
 
-  .card{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
-  .card h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .stat .sv{font-size:17px;font-weight:700}
-  .stat .sl{font-size:10.5px;color:var(--muted)}
-  .pos{color:var(--green)} .neg{color:var(--red)}
+/* ===== CHIPS ===== */
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 26px}
+.chip{cursor:pointer;padding:9px 18px;border-radius:99px;border:1px solid var(--stroke);background:var(--panel);color:var(--muted);font-size:12.5px;font-weight:600;letter-spacing:.04em;transition:.25s;font-family:var(--font-b)}
+.chip small{opacity:.65;margin-left:6px}
+.chip:hover{color:var(--txt);border-color:rgba(255,255,255,.22)}
+.chip.active{background:var(--grad);color:#1a0d02;border-color:transparent;box-shadow:0 6px 22px rgba(255,122,47,.35)}
 
-  .branch-title{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-  .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
-  .b-excellent{background:rgba(61,220,132,.15);color:var(--green)}
-  .b-good{background:rgba(222,168,62,.16);color:#a3762a}
-  .b-attention{background:rgba(255,92,92,.15);color:var(--red)}
-  .sub{font-size:11.5px;color:var(--muted);margin-bottom:12px}
+/* ===== KPI ===== */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:18px}
+.kpi{position:relative;overflow:hidden;border:1px solid var(--stroke);border-radius:var(--r);background:var(--panel);backdrop-filter:blur(10px);padding:18px 18px 14px;transition:.3s}
+.kpi::before{content:"";position:absolute;top:-40px;right:-40px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(255,122,47,.16),transparent 70%);pointer-events:none}
+.kpi:hover{transform:translateY(-4px);border-color:var(--stroke-hot);box-shadow:0 16px 40px rgba(0,0,0,.45)}
+.kpi .lbl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kpi .val{font-family:var(--font-d);font-size:clamp(21px,1.9vw,27px);font-weight:700;margin:8px 0 4px}
+.kpi .delta{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px}
+.delta.up{color:var(--good);background:rgba(52,211,153,.1)} .delta.dn{color:var(--crit);background:rgba(251,113,133,.1)}
+.delta.neutral{color:var(--cyan);background:rgba(34,211,238,.1)}
+.kpi svg{width:100%;height:34px;margin-top:10px;opacity:.9}
 
-  table{width:100%;border-collapse:collapse;font-size:12px}
-  td{padding:5px 0;border-bottom:1px solid var(--border)}
-  td:last-child{text-align:right;font-weight:600}
-  tr:last-child td{border-bottom:none}
+/* ===== LAYOUT & PANELS ===== */
+.layout{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:start}
+.col{display:grid;gap:18px}
+.panel{border:1px solid var(--stroke);border-radius:var(--r);background:var(--panel);backdrop-filter:blur(10px);overflow:hidden;transition:.3s}
+.panel:hover{border-color:rgba(255,255,255,.15)}
+.p-head{display:flex;align-items:center;gap:10px;padding:18px 22px 0}
+.p-tick{width:4px;height:20px;border-radius:4px;background:var(--grad);flex-shrink:0}
+.p-head h3{font-family:var(--font-d);font-size:16px;font-weight:700;letter-spacing:.01em}
+.p-head .sub{margin-left:auto;font-size:11px;color:var(--faint);letter-spacing:.1em;text-transform:uppercase;font-weight:600;text-align:right}
+.p-body{padding:16px 22px 22px}
 
-  .bar-row{display:flex;align-items:center;gap:8px;font-size:11.5px;margin-bottom:7px}
-  .bar-row .name{width:110px;color:var(--muted)}
-  .bar-track{flex:1;height:7px;background:var(--bg);border-radius:4px;overflow:hidden}
-  .bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px}
-  .bar-row .val{width:52px;text-align:right;font-weight:600}
+/* ===== LEAFLET MAP ===== */
+.map-panel .p-body{padding:16px 0 0}
+#map{height:470px;width:100%;background:#0a1020}
+/* The basemap tiles are light; invert + hue-rotate turns it dark while
+   keeping water blue and land neutral. Scoped to the tile pane so markers,
+   popups and controls keep their real colours. */
+.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.94) contrast(.86) saturate(.55)}
+.leaflet-container{font-family:var(--font-b);background:#0a1020}
+.leaflet-control-zoom a{background:var(--panel-solid)!important;color:var(--txt)!important;border-color:rgba(255,255,255,.12)!important}
+.leaflet-control-zoom a:hover{background:#16223a!important;color:var(--orange)!important}
+.leaflet-control-attribution{background:rgba(7,11,20,.8)!important;color:var(--faint)!important;font-size:10px}
+.leaflet-control-attribution a{color:var(--muted)!important}
+.leaflet-popup-content-wrapper{background:var(--panel-solid);color:var(--txt);border:1px solid var(--stroke-hot);border-radius:12px;box-shadow:0 12px 34px rgba(0,0,0,.6)}
+.leaflet-popup-tip{background:var(--panel-solid);border:1px solid var(--stroke-hot)}
+.leaflet-popup-content{margin:11px 15px;font-size:12px;line-height:1.5}
+.leaflet-popup-close-button{color:var(--muted)!important}
+.popup-name{font-family:var(--font-d);font-weight:700;font-size:13.5px;margin-bottom:4px}
+.popup-row{display:flex;justify-content:space-between;gap:16px;color:var(--muted);margin-top:3px}
+.popup-row b{color:var(--txt)}
+.popup-cta{display:block;margin-top:7px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan)}
 
-  #aiOutput{white-space:pre-wrap;font-size:12.5px;line-height:1.65;color:#334155;display:none;margin-top:12px}
-  .ai-note{font-size:10.5px;color:var(--muted);margin-top:8px}
-  .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px}
-  @keyframes spin{to{transform:rotate(360deg)}}
+.pin{position:relative;width:28px;height:28px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);border:2px solid rgba(255,255,255,.9);box-shadow:0 4px 12px rgba(0,0,0,.55);transition:transform .2s}
+.pin i{position:absolute;inset:-9px;border-radius:50%;border:1.5px solid currentColor;animation:pinPulse 2.6s ease-out infinite;opacity:0}
+@keyframes pinPulse{0%{transform:scale(.55);opacity:.75}100%{transform:scale(1.25);opacity:0}}
+.pin.thriving{background:linear-gradient(135deg,#34d399,#0f9b6c);color:#34d399}
+.pin.stable{background:linear-gradient(135deg,#22d3ee,#0e7f96);color:#22d3ee}
+.pin.watch{background:linear-gradient(135deg,#fbbf24,#b5820c);color:#fbbf24}
+.pin.critical{background:linear-gradient(135deg,#fb7185,#b03349);color:#fb7185}
+.pin-mk:hover .pin{transform:rotate(-45deg) scale(1.18)}
+.pin-mk.selected .pin{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,122,47,.28),0 4px 14px rgba(0,0,0,.6)}
+.pin-mk.dim{opacity:.16;pointer-events:none}
+.map-note{font-size:11px;color:var(--faint);padding:10px 22px 0}
 
-  .marker-pin{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);background:linear-gradient(135deg,var(--accent),var(--accent2));border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.3)}
-  .marker-pin span{transform:rotate(45deg);font-weight:800;font-size:12px;color:#fff}
-  .leaflet-popup-content-wrapper{background:var(--panel2);color:var(--text);border-radius:10px;border:1px solid var(--border)}
-  .leaflet-popup-tip{background:var(--panel2)}
-  .leaflet-popup-content{margin:10px 14px;font-size:12px}
-  .popup-name{font-weight:700;font-size:13px;color:var(--accent2)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;padding:12px 22px 18px;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+.legend small{color:var(--faint)}
 
-  @media(max-width:820px){
-    /* let the page scroll on phones so every detail is reachable */
-    body{height:auto;min-height:100vh;overflow:auto}
-    header{padding:10px 14px;gap:10px}
-    header h1{font-size:14.5px}
-    header p{font-size:10px}
-    .kpis{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;gap:8px;-webkit-overflow-scrolling:touch}
-    .kpi{min-width:96px;flex:none;padding:6px 10px}
-    main{flex-direction:column;min-height:0}
-    #map{flex:none;height:44vh;min-height:280px}
-    aside{width:100%;height:auto;flex:none;border-left:none;border-top:1px solid var(--border)}
-    .aside-head{position:sticky;top:0;background:var(--panel);z-index:10}
-    .aside-body{overflow:visible;padding:14px}
-    .bar-row .name{width:88px}
-    table{font-size:12.5px}
-  }
+/* ===== REVENUE CHART ===== */
+.chart-wrap{position:relative}
+.branch-chart-box{position:relative;height:170px;width:100%;overflow:hidden}
+.branch-chart-box canvas{display:block}
+.chart-tip{position:absolute;z-index:5;pointer-events:none;background:var(--panel-solid);border:1px solid var(--stroke-hot);border-radius:10px;padding:8px 12px;font-size:11.5px;opacity:0;transition:.15s;box-shadow:0 10px 28px rgba(0,0,0,.5);line-height:1.6}
+.chart-tip.show{opacity:1}
+.chart-tip b{font-family:var(--font-d)}
+
+/* ===== DONUT / HEALTH ===== */
+.health-grid{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.donut-wrap{position:relative;width:170px;height:170px}
+.donut-center{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.donut-center b{font-family:var(--font-d);font-size:27px}
+.donut-center span{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.h-rows{display:grid;gap:12px}
+.h-row{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.h-row i{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.h-row .n{margin-left:auto;font-family:var(--font-d);font-weight:700;font-size:14px}
+.h-bar{flex:1;height:5px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;min-width:40px}
+.h-bar div{height:100%;border-radius:99px;width:0;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)}
+.mini-stats div{text-align:center}
+.mini-stats b{display:block;font-family:var(--font-d);font-size:17px;font-weight:700}
+.mini-stats span{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+
+/* ===== ALERTS ===== */
+.alert{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.alert:last-child{border-bottom:none;padding-bottom:0}
+.a-ico{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.a-ico.crit{background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.35)}
+.a-ico.warn{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3)}
+.alert b{font-size:13px;font-family:var(--font-d)}
+.alert .why{font-size:11.5px;color:var(--muted);margin:3px 0 5px;line-height:1.5}
+.a-action{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);cursor:pointer;background:none;border:none;font-family:var(--font-b);padding:0}
+.a-action:hover{color:var(--orange)}
+
+/* ===== LEADERBOARD ===== */
+.lb-row{display:grid;grid-template-columns:30px 1fr 96px 78px 14px;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.055);transition:.25s;cursor:pointer;width:100%;background:none;border-left:none;border-right:none;border-top:none;text-align:left;font-family:var(--font-b);color:var(--txt)}
+.lb-row:last-child{border-bottom:none}
+.lb-row:hover{background:rgba(255,255,255,.03)}
+.lb-rank{font-family:var(--font-d);font-weight:700;color:var(--faint);font-size:14px}
+.lb-row:nth-child(-n+3) .lb-rank{color:var(--orange)}
+.lb-name b{font-size:13px;font-family:var(--font-d);display:block}
+.lb-name span{font-size:10.5px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+.lb-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+.lb-bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--orange),#ffb347);width:0;transition:width 1.3s cubic-bezier(.2,.8,.2,1)}
+.lb-rev{font-family:var(--font-d);font-weight:700;font-size:13.5px;text-align:right;display:block}
+.lb-delta{text-align:right;font-size:11px;font-weight:700;display:block}
+.lb-dot{width:8px;height:8px;border-radius:50%;justify-self:end}
+.tag-new{font-size:8.5px;font-weight:700;letter-spacing:.12em;color:var(--cyan);border:1px solid rgba(34,211,238,.35);border-radius:99px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+
+/* ===== FEED ===== */
+.feed{display:grid;gap:10px;min-height:260px;align-content:start}
+.f-item{display:flex;gap:12px;align-items:flex-start;padding:11px 13px;border:1px solid rgba(255,255,255,.06);border-radius:13px;background:rgba(255,255,255,.02);animation:slideIn .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+.f-ico{font-size:17px;line-height:1.3}
+.f-item p{font-size:12.5px;line-height:1.45}
+.f-item small{color:var(--faint);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+
+/* ===== BRANCH REPORT ===== */
+.branch-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.branch-head strong{font-family:var(--font-d);font-size:16px;font-weight:700}
+.badge{font-size:9.5px;font-weight:700;padding:4px 10px;border-radius:99px;letter-spacing:.12em;text-transform:uppercase}
+.b-thriving{background:rgba(52,211,153,.13);color:var(--good);border:1px solid rgba(52,211,153,.3)}
+.b-stable{background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.3)}
+.b-watch{background:rgba(251,191,36,.12);color:var(--warn);border:1px solid rgba(251,191,36,.3)}
+.b-critical{background:rgba(251,113,133,.13);color:var(--crit);border:1px solid rgba(251,113,133,.32)}
+.branch-sub{font-size:11.5px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.sub-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:15px;margin-bottom:12px}
+.sub-card h4{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:12px;font-weight:700}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stat .sv{font-family:var(--font-d);font-size:18px;font-weight:700}
+.stat .sl{font-size:10.5px;color:var(--muted);margin-top:2px}
+.pos{color:var(--good)} .neg{color:var(--crit)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+td{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);color:var(--muted)}
+td:last-child{text-align:right;font-weight:600;color:var(--txt);font-family:var(--font-d)}
+tr:last-child td{border-bottom:none}
+.bar-row{display:flex;align-items:center;gap:9px;font-size:11.5px;margin-bottom:9px}
+.bar-row:last-child{margin-bottom:0}
+.bar-row .name{width:118px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1);background:linear-gradient(90deg,var(--orange),#ffb347)}
+.bar-row .val{width:56px;text-align:right;font-weight:600;font-family:var(--font-d)}
+.eng-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px}
+.eng-row:last-child{border-bottom:none;padding-bottom:0}
+.eng-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.eng-name{flex:1;line-height:1.45}
+.eng-meta{display:block;color:var(--faint);font-size:10.5px;margin-top:3px;letter-spacing:.03em}
+.eng-val{font-family:var(--font-d);font-weight:700;font-size:12.5px;white-space:nowrap;margin-top:1px}
+
+/* ===== AI ===== */
+.ai-copy{font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.6;max-width:70ch}
+.ai-actions{display:flex;gap:10px;flex-wrap:wrap}
+#aiOutput{display:none;white-space:pre-wrap;font-size:12.5px;line-height:1.7;color:var(--txt);margin-top:14px;padding:15px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.025)}
+.ai-note{font-size:10.5px;color:var(--faint);margin-top:9px;line-height:1.5}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(26,13,2,.3);border-top-color:#1a0d02;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:7px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--stroke);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--faint);font-size:11.5px;letter-spacing:.06em}
+
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .reveal{opacity:1;transform:none}
+}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:1080px){.layout{grid-template-columns:1fr}#map{height:420px}}
+@media(max-width:680px){
+  .wrap{padding:0 16px 32px}
+  .topbar{margin:0 -16px;padding:12px 16px}
+  .ticker{margin:0 -16px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .lb-row{grid-template-columns:22px 1fr 84px 12px}
+  .lb-delta{display:none}
+  .clock{display:none}
+  .health-grid{grid-template-columns:1fr;justify-items:center}
+  .p-head{flex-wrap:wrap}.p-head .sub{margin-left:0;width:100%;text-align:left}
+  #map{height:340px}
+  .p-body{padding:14px 16px 18px}
+  .map-panel .p-body{padding:14px 0 0}
+  .legend,.map-note{padding-left:16px;padding-right:16px}
+  .bar-row .name{width:96px}
+}
+@media(max-width:460px){.kpis{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<header>
-  <div class="logo">MP</div>
-  <div>
-    <h1>ModPi <span>Restaurant</span> — Franchise Tracking System</h1>
-    <p>Philippines Operations Dashboard · Demo Data · FY 2026</p>
-  </div>
-  <div class="kpis" id="kpis"></div>
-</header>
-
-<main>
-  <div id="map"></div>
-  <aside>
-    <div class="aside-head">
-      <h2 id="panelTitle">🇵🇭 Nationwide Overview</h2>
-      <button class="btn btn-ghost" id="backBtn" style="display:none">← Overview</button>
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo">MP</div>
+    <div class="brand">
+      <h1>ModPi <span>IT Services</span></h1>
+      <p>Franchise Tracking System · Philippines</p>
     </div>
-    <div class="aside-body" id="panelBody"></div>
-  </aside>
-</main>
+    <div class="top-right">
+      <div class="fy-chip" id="periodChip">—</div>
+      <div class="live-chip"><span class="live-dot"></span> LIVE</div>
+      <div class="clock"><small>MANILA · PHT</small><span id="clock">--:--:--</span></div>
+      <button class="btn" id="simBtn">⏸ Pause feed</button>
+      <button class="btn primary" id="topAnalyze">⚡ Analyze business</button>
+    </div>
+  </div>
+
+  <!-- TICKER -->
+  <div class="ticker"><div class="ticker-track" id="ticker"></div></div>
+
+  <!-- HERO -->
+  <section class="hero reveal">
+    <div>
+      <div class="flag"><span class="ph">🇵🇭</span> Nationwide overview · Luzon · Visayas · Mindanao</div>
+      <h2>Twelve offices, <em>one contract book.</em><br>Capacity, delivery, margin.</h2>
+      <p id="heroCopy">Every ModPi delivery office in one place — the contract book, billable capacity, and office profitability behind every live engagement.</p>
+    </div>
+  </section>
+
+  <!-- REGION CHIPS -->
+  <div class="chips reveal" id="chips"></div>
+
+  <!-- KPIs -->
+  <div class="kpis" id="kpis"></div>
+
+  <!-- MAIN GRID -->
+  <div class="layout">
+    <div class="col">
+
+      <!-- MAP -->
+      <div class="panel map-panel">
+        <div class="p-head"><div class="p-tick"></div><h3>Delivery network</h3><span class="sub" id="mapSub"></span></div>
+        <div class="p-body"><div id="map"></div></div>
+        <div class="map-note" id="wheelNote">Click the map to enable scroll zoom · click a pin for the full branch report</div>
+        <div class="legend">
+          <span><i style="background:var(--good)"></i>Thriving <small>net margin ≥15%</small></span>
+          <span><i style="background:var(--cyan)"></i>Stable <small>11–15%</small></span>
+          <span><i style="background:var(--warn)"></i>Watch <small>7–11%</small></span>
+          <span><i style="background:var(--crit)"></i>Critical <small>under 7%</small></span>
+        </div>
+      </div>
+
+      <!-- REVENUE -->
+      <div class="panel reveal">
+        <div class="p-head"><div class="p-tick"></div><h3>Revenue vs plan</h3><span class="sub" id="revSub">₱ millions · monthly</span></div>
+        <div class="p-body chart-wrap">
+          <svg id="revChart" viewBox="0 0 640 250" style="width:100%;height:auto"></svg>
+          <div class="chart-tip" id="chartTip"></div>
+        </div>
+      </div>
+
+      <!-- AI -->
+      <div class="panel reveal">
+        <div class="p-head"><div class="p-tick" style="background:linear-gradient(180deg,var(--cyan),#7c3aed)"></div><h3>AI business analysis</h3><span class="sub" id="aiScope">Whole network</span></div>
+        <div class="p-body">
+          <p class="ai-copy">Send the current trading figures to <b id="modelName"></b> for an executive read: overall health, best and worst offices, trends, and recommended actions. If the model is unreachable, a built-in analysis runs instead.</p>
+          <div class="ai-actions">
+            <button class="btn primary" id="analyzeBtn">⚡ Analyze whole business</button>
+            <button class="btn" id="analyzeBranchBtn" style="display:none">Analyze selected office</button>
+          </div>
+          <div id="aiOutput"></div>
+          <div class="ai-note" id="aiNote"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <!-- OVERVIEW RAIL -->
+      <div id="overviewRail" class="col">
+        <div class="panel reveal">
+          <div class="p-head"><div class="p-tick"></div><h3>Office health</h3><span class="sub" id="healthSub"></span></div>
+          <div class="p-body">
+            <div class="health-grid">
+              <div class="donut-wrap">
+                <svg viewBox="0 0 170 170" width="170" height="170" id="donut"></svg>
+                <div class="donut-center"><b id="marginVal">—</b><span>Net margin</span></div>
+              </div>
+              <div class="h-rows" id="hRows"></div>
+            </div>
+            <div class="mini-stats" id="miniStats"></div>
+          </div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="p-head"><div class="p-tick" style="background:linear-gradient(180deg,var(--crit),var(--warn))"></div><h3>Risk radar</h3><span class="sub" id="riskSub"></span></div>
+          <div class="p-body" id="alerts"></div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="p-head"><div class="p-tick"></div><h3>Office leaderboard</h3><span class="sub" id="lbSub"></span></div>
+          <div class="p-body" id="leaderboard"></div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="p-head"><div class="p-tick" style="background:linear-gradient(180deg,var(--cyan),var(--good))"></div><h3>Operations feed</h3><span class="sub">Simulated stream</span></div>
+          <div class="p-body feed" id="feed"></div>
+        </div>
+      </div>
+
+      <!-- BRANCH RAIL -->
+      <div id="branchRail" style="display:none">
+        <div class="panel">
+          <div class="p-head">
+            <div class="p-tick"></div><h3>Office report</h3>
+            <button class="btn" id="backBtn" style="margin-left:auto;padding:7px 13px">← Overview</button>
+          </div>
+          <div class="p-body" id="branchBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>ModPi IT Services · Franchise Tracking System · Philippines</span>
+    <span id="footNote"></span>
+  </footer>
+</div>
 
 <script>
 /* =========================================================
-   CONFIG — Ollama Cloud API
-   ⚠ Demo only: never ship real API keys in client-side code.
+   ModPi IT Services — Franchise Tracking System
+   Demo build. Figures are generated deterministically and are
+   anchored to the current date, so the dashboard always shows
+   the eight months up to the last completed month.
 ========================================================= */
-/* AI calls go through the portfolio's same-origin proxy — the API key
-   stays server-side on Cloudflare and is never exposed here. */
 const OLLAMA_API_URL = "/api/ollama/chat";
 const OLLAMA_MODEL   = "gemma4:cloud";
 
-/* ================= SAMPLE DATA (demo) ================= */
-const PESO = v => "₱" + v.toLocaleString("en-PH");
-const BRANCHES = [
-  {id:1, name:"ModPi Manila – Ermita",     city:"Manila",          lat:14.5826, lng:120.9787, opened:"2019-03-12", manager:"Carla Reyes",    staff:28, monthly:[2.41,2.35,2.62,2.58,2.71,2.83], expenses:1.92, rating:4.6, customers:18400, topItems:[["ModPi Classic Burger",4210],["Sisig Rice Bowl",3650],["Halo-Halo Supreme",2980],["Crispy Pata Wrap",2310]]},
-  {id:2, name:"ModPi Quezon City – Katipunan", city:"Quezon City", lat:14.6396, lng:121.0748, opened:"2019-11-04", manager:"Miguel Santos",  staff:24, monthly:[2.05,2.11,2.24,2.19,2.38,2.47], expenses:1.71, rating:4.5, customers:16250, topItems:[["Sisig Rice Bowl",3890],["ModPi Classic Burger",3540],["Iced Barako Latte",3120],["Chicken Inasal Plate",2670]]},
-  {id:3, name:"ModPi Makati – Ayala",      city:"Makati",          lat:14.5547, lng:121.0244, opened:"2020-01-20", manager:"Andrea Lim",     staff:31, monthly:[3.12,3.05,3.28,3.41,3.36,3.58], expenses:2.44, rating:4.7, customers:21730, topItems:[["Wagyu ModPi Burger",5120],["Truffle Sisig Pasta",4230],["Iced Barako Latte",3870],["Ube Cheesecake",3010]]},
-  {id:4, name:"ModPi Cebu – IT Park",      city:"Cebu City",       lat:10.3305, lng:123.9054, opened:"2020-08-15", manager:"Josef Tan",      staff:26, monthly:[2.31,2.44,2.39,2.55,2.61,2.74], expenses:1.88, rating:4.6, customers:17880, topItems:[["Lechon Belly Rice",4560],["ModPi Classic Burger",3320],["Dried Mango Shake",2940],["Sisig Rice Bowl",2510]]},
-  {id:5, name:"ModPi Davao – Lanang",      city:"Davao City",      lat:7.1005,  lng:125.6329, opened:"2021-02-10", manager:"Rhea Villanueva",staff:22, monthly:[1.87,1.92,2.04,1.98,2.15,2.26], expenses:1.52, rating:4.4, customers:14520, topItems:[["Durian Cheesecake",3670],["Tuna Panga Plate",3210],["ModPi Classic Burger",2850],["Pomelo Cooler",2140]]},
-  {id:6, name:"ModPi Baguio – Session Rd", city:"Baguio",          lat:16.4119, lng:120.5934, opened:"2021-06-28", manager:"Dominic Cruz",   staff:18, monthly:[1.54,1.61,1.49,1.58,1.72,1.81], expenses:1.29, rating:4.5, customers:11930, topItems:[["Strawberry Taho Latte",3480],["Hot Bulalo Bowl",3150],["ModPi Classic Burger",2440],["Ube Champorado",1980]]},
-  {id:7, name:"ModPi Iloilo – Megaworld",  city:"Iloilo City",     lat:10.7136, lng:122.5511, opened:"2022-04-05", manager:"Katrina Uy",     staff:19, monthly:[1.42,1.47,1.55,1.51,1.63,1.69], expenses:1.24, rating:4.3, customers:10870, topItems:[["La Paz Batchoy Deluxe",3320],["ModPi Classic Burger",2610],["Sisig Rice Bowl",2280],["Mango Turon Sundae",1870]]},
-  {id:8, name:"ModPi CDO – Limketkai",     city:"Cagayan de Oro",  lat:8.4850,  lng:124.6520, opened:"2022-09-19", manager:"Paolo Ramos",    staff:17, monthly:[1.28,1.33,1.29,1.41,1.46,1.52], expenses:1.13, rating:4.2, customers:9640,  topItems:[["Sinuglaw Bowl",2870],["ModPi Classic Burger",2390],["Sisig Rice Bowl",2050],["Iced Barako Latte",1760]]},
-  {id:9, name:"ModPi Bacolod – Lacson",    city:"Bacolod",         lat:10.6765, lng:122.9509, opened:"2023-01-30", manager:"Bianca Gomez",   staff:16, monthly:[1.12,1.18,1.15,1.24,1.31,1.38], expenses:1.02, rating:4.4, customers:8720,  topItems:[["Chicken Inasal Plate",3540],["Napoleones Sundae",2410],["ModPi Classic Burger",2080],["Batchoy Fries",1690]]},
-  {id:10,name:"ModPi Zamboanga – Paseo",   city:"Zamboanga City",  lat:6.9214,  lng:122.0790, opened:"2023-07-12", manager:"Amir Hassan",    staff:15, monthly:[0.94,0.91,0.98,1.03,0.99,1.08], expenses:0.87, rating:4.1, customers:7150,  topItems:[["Curacha Rice Plate",2340],["Satti Skewers",2110],["ModPi Classic Burger",1860],["Knickerbocker Cup",1540]]},
-  {id:11,name:"ModPi Pampanga – Clark",    city:"Angeles City",    lat:15.1855, lng:120.5602, opened:"2024-03-08", manager:"Louie Manalang", staff:20, monthly:[1.61,1.72,1.68,1.81,1.89,2.02], expenses:1.44, rating:4.6, customers:12480, topItems:[["Sisig Rice Bowl",4230],["Kare-Kare Burrito",2980],["ModPi Classic Burger",2560],["Tibok-Tibok Shake",1930]]},
-  {id:12,name:"ModPi Tagaytay – Ridge",    city:"Tagaytay",        lat:14.1153, lng:120.9621, opened:"2024-11-22", manager:"Sofia Alcantara",staff:14, monthly:[1.21,1.35,1.42,1.39,1.55,1.67], expenses:1.11, rating:4.7, customers:9310,  topItems:[["Bulalo Ramen",3780],["Taal Coffee Float",2650],["ModPi Classic Burger",2190],["Buko Pie Sundae",1880]]},
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+const SVGNS='http://www.w3.org/2000/svg';
+const el=(t,a)=>{const n=document.createElementNS(SVGNS,t);for(const k in a)n.setAttribute(k,a[k]);return n;};
+const CLR={thriving:'#34d399',stable:'#22d3ee',watch:'#fbbf24',critical:'#fb7185'};
+const PESO=v=>"₱"+Math.round(v).toLocaleString("en-PH");
+const REGION_LABEL={ncr:"NCR",luzon:"Luzon",visayas:"Visayas",mindanao:"Mindanao"};
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MON_FULL=["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+/* ---------- calendar window: last 8 completed months ---------- */
+const WINDOW=8;
+const nowPH=new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Manila"}));
+const endIdx=nowPH.getFullYear()*12+nowPH.getMonth()-1;      /* last closed month */
+const idxs=Array.from({length:WINDOW},(_,i)=>endIdx-WINDOW+1+i);
+const yOf=i=>Math.floor(i/12), mOf=i=>((i%12)+12)%12;
+const labelOf=i=>MON[mOf(i)]+(mOf(i)===0?" "+String(yOf(i)).slice(2):"");
+const LABELS=idxs.map(labelOf);
+const periodText=(yOf(idxs[0])===yOf(endIdx))
+  ? `${MON[mOf(idxs[0])]}–${MON[mOf(endIdx)]} ${yOf(endIdx)}`
+  : `${MON[mOf(idxs[0])]} ${yOf(idxs[0])} – ${MON[mOf(endIdx)]} ${yOf(endIdx)}`;
+const lastClose=`${MON_FULL[mOf(endIdx)]} ${yOf(endIdx)}`;
+
+/* seasonality: client budget cycles — slow January start, year-end budget flush.
+   Milder than retail because contract revenue is recognised over months.
+   Normalised to a mean of 1. */
+const RAW_SEASON=[0.94,0.96,1.00,0.99,1.01,1.03,1.00,1.00,1.02,1.05,1.08,1.12];
+const SEASON_MEAN=RAW_SEASON.reduce((a,b)=>a+b,0)/12;
+const SEASON=RAW_SEASON.map(v=>v/SEASON_MEAN);
+
+/* deterministic per-branch, per-month noise so figures never jump on reload */
+function seeded(id,idx){
+  let a=(id*73856093)^(idx*19349663);
+  a=Math.imul(a^(a>>>15),1|a);
+  a=a+Math.imul(a^(a>>>7),61|a)^a;
+  return ((a^(a>>>14))>>>0)/4294967296;
+}
+
+/* ================= BRANCHES =================
+   ModPi delivers fixed-term IT contracts: system upgrades, migrations,
+   custom builds and managed-service retainers. Each branch is a regional
+   delivery office with its own consultants and its own contract book.
+
+   base      ₱M revenue recognised in the most recent closed month
+   trend     annual growth       dcost  direct delivery cost as a share of
+                                        revenue (billable payroll + subcontract)
+   opex      ₱M monthly branch overhead (sales, admin, facilities, management)
+   acv       ₱M average annual contract value
+   util      billable utilisation, %     renewal  contract renewal rate, %
+   atRisk    share of the contract book flagged amber or red
+   mix       share of revenue from upgrades / migration / build / managed
+   deals     largest active engagements: client, ₱M value, months left, status */
+const BRANCHES=[
+ {id:1, name:"ModPi – Makati Ayala", short:"Makati Ayala", city:"Makati", region:"ncr", lat:14.5547, lng:121.0244, openedAgo:79, day:20, lead:"Andrea Lim",
+  staff:62, consultants:48, base:6.40, trend:.15, dcost:.580, opex:1.47, acv:4.80, util:82, renewal:94, backlogYears:1.30, atRisk:.07, csat:4.7,
+  mix:[.30,.26,.24,.20],
+  deals:[["Universal bank — core banking upgrade",8.4,14,"green"],["Insurance group — policy platform rebuild",6.1,9,"amber"],["Telco — billing system migration",5.2,17,"green"],["Conglomerate — ERP consolidation",4.7,11,"green"]]},
+ {id:2, name:"ModPi – Cebu IT Park", short:"Cebu IT Park", city:"Cebu City", region:"visayas", lat:10.3305, lng:123.9054, openedAgo:72, day:15, lead:"Josef Tan",
+  staff:44, consultants:35, base:4.20, trend:.16, dcost:.585, opex:1.00, acv:3.40, util:80, renewal:92, backlogYears:1.20, atRisk:.08, csat:4.6,
+  mix:[.24,.22,.34,.20],
+  deals:[["BPO group — contact centre platform",5.6,12,"green"],["Shipping line — logistics portal",4.2,8,"green"],["University network — student system",3.1,15,"amber"],["Retail chain — POS modernisation",2.8,6,"green"]]},
+ {id:3, name:"ModPi – Ortigas Center", short:"Ortigas Center", city:"Pasig", region:"ncr", lat:14.5866, lng:121.0614, openedAgo:81, day:4, lead:"Miguel Santos",
+  staff:40, consultants:31, base:3.85, trend:.13, dcost:.590, opex:0.92, acv:3.10, util:79, renewal:91, backlogYears:1.15, atRisk:.09, csat:4.6,
+  mix:[.32,.24,.20,.24],
+  deals:[["Government agency — records digitisation",6.8,20,"amber"],["Property developer — tenant portal",3.4,10,"green"],["Hospital group — EMR migration",3.0,13,"green"],["Rural bank network — core switch",2.4,7,"green"]]},
+ {id:4, name:"ModPi – Manila Ermita", short:"Manila Ermita", city:"Manila", region:"ncr", lat:14.5826, lng:120.9787, openedAgo:89, day:12, lead:"Carla Reyes",
+  staff:34, consultants:26, base:3.10, trend:.10, dcost:.615, opex:0.78, acv:1.90, util:74, renewal:86, backlogYears:0.95, atRisk:.12, csat:4.5,
+  mix:[.38,.16,.16,.30],
+  deals:[["Water district — billing modernisation",3.6,15,"amber"],["Customs broker — declarations portal",2.7,9,"green"],["School network — LMS rollout",2.2,11,"green"],["Trading firm — inventory upgrade",1.6,4,"green"]]},
+ {id:5, name:"ModPi – Pampanga Clark", short:"Pampanga Clark", city:"Angeles City", region:"luzon", lat:15.1855, lng:120.5602, openedAgo:29, day:8, lead:"Louie Manalang",
+  staff:31, consultants:25, base:2.85, trend:.18, dcost:.600, opex:0.72, acv:2.40, util:81, renewal:89, backlogYears:1.25, atRisk:.08, csat:4.6,
+  mix:[.28,.20,.30,.22],
+  deals:[["Locator manufacturer — MES rollout",4.9,16,"green"],["Freeport authority — permit system",3.2,11,"green"],["Cold chain operator — WMS upgrade",2.6,9,"amber"],["Aviation services — crew scheduling",2.1,5,"green"]]},
+ {id:6, name:"ModPi – Davao Lanang", short:"Davao Lanang", city:"Davao City", region:"mindanao", lat:7.1005, lng:125.6329, openedAgo:66, day:10, lead:"Rhea Villanueva",
+  staff:28, consultants:22, base:2.60, trend:.14, dcost:.605, opex:0.66, acv:2.10, util:78, renewal:90, backlogYears:1.10, atRisk:.10, csat:4.4,
+  mix:[.34,.18,.20,.28],
+  deals:[["Agri exporter — traceability platform",3.8,13,"green"],["LGU — revenue collection system",2.9,18,"amber"],["Port operator — terminal ops upgrade",2.4,8,"green"],["Hospital — clinical records",1.8,6,"green"]]},
+ {id:7, name:"ModPi – Santa Rosa Laguna", short:"Santa Rosa Laguna", city:"Santa Rosa", region:"luzon", lat:14.3121, lng:121.1114, openedAgo:6, day:14, lead:"Sofia Alcantara",
+  staff:22, consultants:18, base:2.30, trend:.28, dcost:.600, opex:0.53, acv:2.60, util:77, renewal:88, backlogYears:1.40, atRisk:.06, csat:4.7,
+  mix:[.22,.30,.32,.16],
+  deals:[["Electronics locator — factory systems",4.4,19,"green"],["Logistics hub — fleet telematics",3.1,14,"green"],["Industrial park — access & CCTV integration",2.3,10,"green"],["Auto supplier — quality tracking",1.9,8,"green"]]},
+ {id:8, name:"ModPi – Iloilo Megaworld", short:"Iloilo Megaworld", city:"Iloilo City", region:"visayas", lat:10.7136, lng:122.5511, openedAgo:52, day:5, lead:"Katrina Uy",
+  staff:23, consultants:18, base:1.95, trend:.12, dcost:.625, opex:0.51, acv:1.60, util:73, renewal:85, backlogYears:0.90, atRisk:.13, csat:4.3,
+  mix:[.36,.18,.18,.28],
+  deals:[["Provincial capitol — records system",2.8,16,"amber"],["Cooperative bank — loan platform",2.1,10,"green"],["Mall operator — tenant billing",1.7,7,"green"],["Fisheries firm — cold chain monitoring",1.3,5,"amber"]]},
+ {id:9, name:"ModPi – Baguio Session", short:"Baguio Session", city:"Baguio", region:"luzon", lat:16.4119, lng:120.5934, openedAgo:62, day:28, lead:"Dominic Cruz",
+  staff:20, consultants:16, base:1.70, trend:.10, dcost:.630, opex:0.45, acv:1.35, util:72, renewal:84, backlogYears:0.85, atRisk:.12, csat:4.4,
+  mix:[.30,.16,.24,.30],
+  deals:[["University — campus network refresh",2.4,12,"green"],["Tourism board — booking platform",1.8,9,"amber"],["Hospital — pharmacy system",1.5,7,"green"],["City government — permit tracking",1.2,14,"green"]]},
+ {id:10,name:"ModPi – CDO Limketkai", short:"CDO Limketkai", city:"Cagayan de Oro", region:"mindanao", lat:8.4850, lng:124.6520, openedAgo:47, day:19, lead:"Paolo Ramos",
+  staff:19, consultants:15, base:1.62, trend:.11, dcost:.640, opex:0.43, acv:1.45, util:71, renewal:83, backlogYears:0.80, atRisk:.15, csat:4.2,
+  mix:[.38,.16,.16,.30],
+  deals:[["Power distributor — outage management",2.9,17,"amber"],["Agri cooperative — member portal",1.9,8,"green"],["LGU — treasury system",1.6,12,"amber"],["Retail group — stock visibility",1.2,6,"green"]]},
+ {id:11,name:"ModPi – Bacolod Lacson", short:"Bacolod Lacson", city:"Bacolod", region:"visayas", lat:10.6765, lng:122.9509, openedAgo:43, day:30, lead:"Bianca Gomez",
+  staff:17, consultants:13, base:1.45, trend:.13, dcost:.645, opex:0.38, acv:1.25, util:70, renewal:81, backlogYears:0.85, atRisk:.14, csat:4.3,
+  mix:[.36,.18,.16,.30],
+  deals:[["Sugar mill group — plant systems",2.6,14,"green"],["Provincial hospital — records upgrade",1.8,11,"amber"],["Water utility — meter data platform",1.4,8,"green"],["Cooperative — teller system",1.1,5,"green"]]},
+ {id:12,name:"ModPi – Zamboanga Paseo", short:"Zamboanga Paseo", city:"Zamboanga City", region:"mindanao", lat:6.9214, lng:122.0790, openedAgo:37, day:12, lead:"Amir Hassan",
+  staff:14, consultants:11, base:1.10, trend:.06, dcost:.665, opex:0.30, acv:1.10, util:64, renewal:76, backlogYears:0.60, atRisk:.22, csat:4.0,
+  mix:[.40,.14,.12,.34],
+  deals:[["Port authority — cargo system",2.2,10,"amber"],["Regional hospital — records digitisation",1.5,13,"amber"],["LGU — business permit system",1.2,7,"red"],["Fishing consortium — catch tracking",0.9,4,"green"]]},
 ];
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun"];
-// monthly figures are in ₱M; expenses = avg monthly expenses in ₱M
 
-const sum = a => a.reduce((x,y)=>x+y,0);
-const branchRevenue = b => sum(b.monthly);                       // ₱M H1 2026
-const branchProfit  = b => branchRevenue(b) - b.expenses*6;
-const growth = b => ((b.monthly[5]-b.monthly[0])/b.monthly[0]*100);
+const SERVICE_LINES=[["System upgrades","#ff7a2f"],["Migration & integration","#ffb347"],["Custom build","#22d3ee"],["Managed services","#7c3aed"]];
+const PLAN_GROWTH=.12;     /* annual growth the board budgeted for */
 
-const TOTAL = {
-  revenue:  sum(BRANCHES.map(branchRevenue)),
-  profit:   sum(BRANCHES.map(branchProfit)),
-  staff:    sum(BRANCHES.map(b=>b.staff)),
-  customers:sum(BRANCHES.map(b=>b.customers)),
-  rating:   sum(BRANCHES.map(b=>b.rating))/BRANCHES.length,
-};
-
-/* ================= HEADER KPIs ================= */
-document.getElementById("kpis").innerHTML = `
-  <div class="kpi"><div class="v">${BRANCHES.length}</div><div class="l">Branches</div></div>
-  <div class="kpi"><div class="v">₱${TOTAL.revenue.toFixed(1)}M</div><div class="l">H1 Revenue</div></div>
-  <div class="kpi"><div class="v">₱${TOTAL.profit.toFixed(1)}M</div><div class="l">H1 Profit</div></div>
-  <div class="kpi"><div class="v">${TOTAL.rating.toFixed(2)} ★</div><div class="l">Avg Rating</div></div>`;
-
-/* ================= MAP ================= */
-const map = L.map("map",{zoomControl:true}).setView([12.5, 121.8], 6);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-  maxZoom:19, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
-
-const pin = L.divIcon({className:"", html:'<div class="marker-pin"><span>MP</span></div>', iconSize:[34,34], iconAnchor:[17,32], popupAnchor:[0,-30]});
-
+/* ---------- generate the delivery history ---------- */
 BRANCHES.forEach(b=>{
-  const m = L.marker([b.lat,b.lng],{icon:pin}).addTo(map);
-  m.bindPopup(`<div class="popup-name">${b.name}</div>H1 Revenue: <b>₱${branchRevenue(b).toFixed(2)}M</b><br>Rating: ${b.rating} ★ · Click marker for full report`);
-  m.on("click",()=>showBranch(b));
-  m.on("mouseover",()=>m.openPopup());
+  b.openIdx=endIdx-b.openedAgo;
+  const d=new Date(yOf(b.openIdx),mOf(b.openIdx),b.day);
+  b.opened=d;
+  b.openedText=d.toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"});
+  b.isNew=b.openedAgo<12;
+  b.monthly=idxs.map(i=>{
+    if(i<b.openIdx) return null;
+    const age=i-b.openIdx;
+    const ramp=age===0?.55:age===1?.78:age===2?.92:1;   /* a new office fills its book gradually */
+    const trend=Math.pow(1+b.trend,(i-endIdx)/12);
+    const noise=.96+.08*seeded(b.id,i);
+    return Math.round(b.base*ramp*SEASON[mOf(i)]*trend*noise*100)/100;
+  });
+  b.openMonths=b.monthly.filter(v=>v!==null).length;
+  b.revenue=b.monthly.reduce((a,v)=>a+(v||0),0);
+  b.grossMargin=1-b.dcost;
+  b.gross=b.revenue*b.grossMargin;
+  b.cost=b.opex*b.openMonths;
+  b.profit=b.gross-b.cost;
+  b.margin=b.profit/b.revenue;
+  b.runRate=b.revenue/b.openMonths*12;                 /* annualised */
+  b.contracts=Math.round(b.runRate/b.acv);
+  b.backlog=b.runRate*b.backlogYears;                  /* signed, not yet recognised */
+  b.atRiskCount=Math.round(b.contracts*b.atRisk);
+  b.revPerConsultant=b.runRate/b.consultants;
+  b.breakEven=b.opex/b.grossMargin;                    /* monthly revenue needed to cover overhead */
+  const vals=b.monthly.map((v,k)=>[v,k]).filter(([v])=>v!==null);
+  const from=vals[Math.min(3,vals.length-2)] ?? vals[0];
+  b.growth=(b.monthly[WINDOW-1]-from[0])/from[0]*100;
+  b.growthFrom=LABELS[from[1]];
+  b.health=b.margin>=.15?"thriving":b.margin>=.11?"stable":b.margin>=.07?"watch":"critical";
 });
 
-/* ================= SIDE PANEL ================= */
-const panelBody  = document.getElementById("panelBody");
-const panelTitle = document.getElementById("panelTitle");
-const backBtn    = document.getElementById("backBtn");
-backBtn.onclick  = showOverview;
-let chart = null;
+const monthTotals=idxs.map((_,k)=>BRANCHES.reduce((a,b)=>a+(b.monthly[k]||0),0));
+const monthProfit=idxs.map((_,k)=>BRANCHES.reduce((a,b)=>{
+  const v=b.monthly[k]; return v===null?a:a+(v*b.grossMargin-b.opex);
+},0));
+/* plan: what each open branch was budgeted to deliver, before trend and noise */
+const PLAN=idxs.map((i)=>BRANCHES.reduce((a,b)=>{
+  if(i<b.openIdx) return a;
+  const age=i-b.openIdx, ramp=age===0?.6:age===1?.8:age===2?.95:1;
+  return a+b.base*ramp*SEASON[mOf(i)]*Math.pow(1+PLAN_GROWTH,(i-endIdx)/12);
+},0)).map(v=>Math.round(v*100)/100);
 
-function destroyChart(){ if(chart){chart.destroy(); chart=null;} }
+const TOTAL={
+  revenue:  monthTotals.reduce((a,b)=>a+b,0),
+  gross:    BRANCHES.reduce((a,b)=>a+b.gross,0),
+  profit:   BRANCHES.reduce((a,b)=>a+b.profit,0),
+  staff:    BRANCHES.reduce((a,b)=>a+b.staff,0),
+  consultants:BRANCHES.reduce((a,b)=>a+b.consultants,0),
+  contracts:BRANCHES.reduce((a,b)=>a+b.contracts,0),
+  backlog:  BRANCHES.reduce((a,b)=>a+b.backlog,0),
+  atRisk:   BRANCHES.reduce((a,b)=>a+b.atRiskCount,0),
+  runRate:  BRANCHES.reduce((a,b)=>a+b.runRate,0),
+};
+TOTAL.marginPct=TOTAL.profit/TOTAL.revenue*100;
+TOTAL.grossPct=TOTAL.gross/TOTAL.revenue*100;
+TOTAL.acv=TOTAL.runRate/TOTAL.contracts;
+/* utilisation, renewal and CSAT are weighted by consultant head count and revenue */
+TOTAL.util=BRANCHES.reduce((a,b)=>a+b.util*b.consultants,0)/TOTAL.consultants;
+TOTAL.renewal=BRANCHES.reduce((a,b)=>a+b.renewal*b.revenue,0)/TOTAL.revenue;
+TOTAL.csat=BRANCHES.reduce((a,b)=>a+b.csat*b.revenue,0)/TOTAL.revenue;
+TOTAL.revPerConsultant=TOTAL.runRate/TOTAL.consultants;
+TOTAL.mix=SERVICE_LINES.map((_,k)=>BRANCHES.reduce((a,b)=>a+b.mix[k]*b.revenue,0)/TOTAL.revenue);
+const netGrowth=(monthTotals[WINDOW-1]-monthTotals[0])/monthTotals[0]*100;
+const aheadOfPlan=monthTotals.filter((v,i)=>v>=PLAN[i]).length;
 
-function healthBadge(b){
-  const margin = branchProfit(b)/branchRevenue(b);
-  if(margin>=0.28) return '<span class="badge b-excellent">EXCELLENT</span>';
-  if(margin>=0.18) return '<span class="badge b-good">GOOD</span>';
-  return '<span class="badge b-attention">NEEDS ATTENTION</span>';
+/* ================= HEADER ================= */
+$("#periodChip").textContent="Through "+MON[mOf(endIdx)]+" "+yOf(endIdx);
+$("#revSub").textContent=`₱ millions recognised · ${periodText}`;
+$("#footNote").textContent=`Simulated data · rolls with the calendar · last close ${lastClose}`;
+$("#heroCopy").textContent=`Every ModPi delivery office in one place — the contract book, billable capacity, and branch profitability behind ${TOTAL.contracts} live engagements. Reporting period ${periodText}.`;
+
+const fmtTime=new Intl.DateTimeFormat("en-PH",{timeZone:"Asia/Manila",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+const fmtShort=new Intl.DateTimeFormat("en-PH",{timeZone:"Asia/Manila",hour:"2-digit",minute:"2-digit",hour12:false});
+$("#clock").textContent=fmtTime.format(new Date());
+setInterval(()=>{$("#clock").textContent=fmtTime.format(new Date());},1000);
+
+/* ================= TICKER ================= */
+$("#ticker").innerHTML=([...BRANCHES].sort((a,b)=>b.revenue-a.revenue).map(b=>{
+  const cls=b.growth>=8?"up":b.growth>=0?"wt":"dn";
+  return `<span>${b.short} <b>₱${b.revenue.toFixed(2)}M</b> <b class="${cls}">${b.growth>=0?"▲":"▼"} ${Math.abs(b.growth).toFixed(1)}%</b></span>`;
+}).join("")
+ +`<span>Recognised revenue <b class="up">₱${TOTAL.revenue.toFixed(1)}M</b></span>`
+ +`<span>Contract backlog <b>₱${TOTAL.backlog.toFixed(1)}M</b></span>`
+ +`<span>Active contracts <b>${TOTAL.contracts}</b></span>`
+ +`<span>Utilisation <b>${TOTAL.util.toFixed(1)}%</b></span>`
+ +`<span>Delivery margin <b>${TOTAL.grossPct.toFixed(1)}%</b></span>`
+ +`<span>Renewal rate <b class="up">${TOTAL.renewal.toFixed(1)}%</b></span>`
+).repeat(2);
+
+/* ================= REGION CHIPS ================= */
+const regionCounts=BRANCHES.reduce((a,b)=>(a[b.region]=(a[b.region]||0)+1,a),{});
+$("#chips").innerHTML=`<button class="chip active" data-region="all">All regions <small>${BRANCHES.length}</small></button>`+
+  Object.keys(REGION_LABEL).map(r=>`<button class="chip" data-region="${r}">${REGION_LABEL[r]} <small>${regionCounts[r]||0}</small></button>`).join("");
+$("#mapSub").textContent=`${BRANCHES.length} offices · all regions`;
+
+/* ================= KPIs ================= */
+const openedCurve=idxs.map(i=>BRANCHES.filter(b=>b.openIdx<=i).length);
+const kpiDefs=[
+ {lbl:"Offices",    to:BRANCHES.length, dec:0, delta:["neutral",`◆ ${Object.keys(regionCounts).length} regions`], pts:openedCurve},
+ {lbl:"Revenue",    to:TOTAL.revenue, dec:2, pre:"₱", suf:"M", delta:["up",`▲ +${netGrowth.toFixed(1)}% over ${WINDOW} mo`], pts:monthTotals},
+ {lbl:"Net profit", to:TOTAL.profit,  dec:2, pre:"₱", suf:"M", delta:["up",`▲ ${TOTAL.marginPct.toFixed(1)}% net margin`], pts:monthProfit},
+ {lbl:"Active contracts", to:TOTAL.contracts, dec:0, delta:[TOTAL.atRisk/TOTAL.contracts>.12?"dn":"neutral",`◆ ${TOTAL.atRisk} at risk`], pts:[...BRANCHES].map(b=>b.contracts).sort((a,b)=>a-b)},
+ {lbl:"Utilisation", to:TOTAL.util, dec:1, suf:"%", delta:[TOTAL.util>=78?"up":"neutral",`◆ ${TOTAL.consultants} consultants`], pts:[...BRANCHES].map(b=>b.util).sort((a,b)=>a-b)},
+ {lbl:"Backlog",    to:TOTAL.backlog, dec:1, pre:"₱", suf:"M", delta:["up",`▲ ${(TOTAL.backlog/TOTAL.runRate*12).toFixed(1)} mo of cover`], pts:monthTotals},
+];
+$("#kpis").innerHTML=kpiDefs.map(k=>`
+  <div class="kpi reveal">
+    <div class="lbl">${k.lbl}</div>
+    <div class="val" data-to="${k.to}" data-dec="${k.dec}" data-pre="${k.pre||""}" data-suf="${k.suf||""}">0</div>
+    <span class="delta ${k.delta[0]}">${k.delta[1]}</span>
+    <svg class="spark" data-pts="${k.pts.map(v=>(+v).toFixed(3)).join(",")}"></svg>
+  </div>`).join("");
+
+function countUp(node){
+  const to=parseFloat(node.dataset.to), dec=+(node.dataset.dec||0), pre=node.dataset.pre||"", suf=node.dataset.suf||"";
+  const t0=performance.now(), dur=1400;
+  (function step(t){
+    const p=Math.min((t-t0)/dur,1), e=1-Math.pow(1-p,4);
+    node.textContent=pre+(to*e).toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g,",")+suf;
+    if(p<1)requestAnimationFrame(step);
+  })(t0);
 }
+$$(".spark").forEach(sv=>{
+  const pts=sv.dataset.pts.split(",").map(Number), w=120,h=34,max=Math.max(...pts),min=Math.min(...pts);
+  const xy=pts.map((v,i)=>[i/(pts.length-1)*w, h-3-((v-min)/(max-min||1))*(h-8)]);
+  sv.setAttribute("viewBox",`0 0 ${w} ${h}`);
+  sv.append(
+    el("polygon",{points:`0,${h} `+xy.map(p=>p.join(",")).join(" ")+` ${w},${h}`,fill:"rgba(255,122,47,.14)"}),
+    el("polyline",{points:xy.map(p=>p.join(",")).join(" "),fill:"none",stroke:"#ff7a2f","stroke-width":1.8,"stroke-linecap":"round",opacity:.9})
+  );
+});
+$$(".kpi .val[data-to]").forEach(countUp);
 
-function showOverview(){
-  destroyChart();
-  backBtn.style.display="none";
-  panelTitle.textContent="🇵🇭 Nationwide Overview";
-  const ranked=[...BRANCHES].sort((a,b)=>branchRevenue(b)-branchRevenue(a));
-  const maxRev=branchRevenue(ranked[0]);
-  panelBody.innerHTML=`
-    <div class="card">
-      <h3>Company Snapshot — H1 2026</h3>
-      <div class="grid2">
-        <div class="stat"><div class="sv">₱${TOTAL.revenue.toFixed(2)}M</div><div class="sl">Total Revenue</div></div>
-        <div class="stat"><div class="sv pos">₱${TOTAL.profit.toFixed(2)}M</div><div class="sl">Net Profit (${(TOTAL.profit/TOTAL.revenue*100).toFixed(1)}% margin)</div></div>
-        <div class="stat"><div class="sv">${TOTAL.customers.toLocaleString()}</div><div class="sl">Customers Served</div></div>
-        <div class="stat"><div class="sv">${TOTAL.staff}</div><div class="sl">Total Employees</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Revenue by Branch (₱M, H1)</h3>
-      ${ranked.map(b=>`
-        <div class="bar-row">
-          <div class="name" title="${b.name}">${b.city}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${(branchRevenue(b)/maxRev*100).toFixed(0)}%"></div></div>
-          <div class="val">₱${branchRevenue(b).toFixed(1)}M</div>
-        </div>`).join("")}
-    </div>
-    <div class="card">
-      <h3>Monthly Revenue Trend — All Branches (₱M)</h3>
-      <canvas id="trendChart" height="170"></canvas>
-    </div>
-    <div class="card">
-      <h3>🤖 AI Business Analysis</h3>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Send the nationwide performance data to <b>${OLLAMA_MODEL}</b> via Ollama Cloud for an executive analysis.</p>
-      <button class="btn btn-primary" id="analyzeBtn">⚡ Analyze Whole Business</button>
-      <div id="aiOutput"></div>
-      <div class="ai-note" id="aiNote"></div>
-    </div>
-    <p style="font-size:10.5px;color:var(--muted);text-align:center">Click any 📍 marker on the map for a branch report. Sample data for demo purposes.</p>`;
-  const totals = MONTHS.map((_,i)=>sum(BRANCHES.map(b=>b.monthly[i])));
-  chart = new Chart(document.getElementById("trendChart"),{
-    type:"line",
-    data:{labels:MONTHS,datasets:[{label:"Revenue ₱M",data:totals,borderColor:"#ff6b35",backgroundColor:"rgba(255,107,53,.15)",fill:true,tension:.35,pointBackgroundColor:"#ffb347"}]},
-    options:{plugins:{legend:{display:false}},scales:{
-      x:{ticks:{color:"#64748b"},grid:{color:"#e2e8f0"}},
-      y:{ticks:{color:"#64748b"},grid:{color:"#e2e8f0"}}}}
+/* ================= MAP ================= */
+const map=L.map("map",{zoomControl:true,scrollWheelZoom:false}).setView([12.4,122.5],5.6);
+/* Esri-hosted street tiles. The openstreetmap.org tile server blocks pages
+   that send no Referer header (e.g. this file opened from disk) and serves
+   "Access blocked" tiles instead; these need no key and no Referer. */
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{
+  maxZoom:19,
+  attribution:'Tiles &copy; <a href="https://www.esri.com/">Esri</a> and its data providers'
+}).addTo(map);
+const WHEEL_OFF="Click the map to enable scroll zoom · click a pin for the full branch report";
+const WHEEL_ON="Scroll zoom on · click a pin for the full branch report";
+$("#map").addEventListener("click",()=>{map.scrollWheelZoom.enable();$("#wheelNote").textContent=WHEEL_ON;});
+$("#map").addEventListener("mouseleave",()=>{map.scrollWheelZoom.disable();$("#wheelNote").textContent=WHEEL_OFF;});
+
+const markers={};
+BRANCHES.forEach(b=>{
+  const icon=L.divIcon({className:"pin-mk",html:`<div class="pin ${b.health}"><i></i></div>`,iconSize:[28,28],iconAnchor:[14,26],popupAnchor:[0,-26]});
+  const m=L.marker([b.lat,b.lng],{icon,title:b.name}).addTo(map);
+  m.bindPopup(
+    `<div class="popup-name">${b.short}</div>`+
+    `<div class="popup-row"><span>Revenue</span><b>₱${b.revenue.toFixed(2)}M</b></div>`+
+    `<div class="popup-row"><span>Net margin</span><b style="color:${CLR[b.health]}">${(b.margin*100).toFixed(1)}%</b></div>`+
+    `<div class="popup-row"><span>Contracts</span><b>${b.contracts}${b.atRiskCount?` · ${b.atRiskCount} at risk`:""}</b></div>`+
+    `<div class="popup-row"><span>Utilisation</span><b>${b.util}%</b></div>`+
+    `<span class="popup-cta">Click pin for full report</span>`);
+  m.on("click",()=>showBranch(b));
+  m.on("mouseover",()=>m.openPopup());
+  markers[b.id]=m;
+});
+function selectMarker(id){
+  Object.entries(markers).forEach(([k,m])=>{const e=m.getElement(); if(e)e.classList.toggle("selected",+k===id);});
+}
+setTimeout(()=>map.invalidateSize(),300);
+addEventListener("resize",()=>map.invalidateSize());
+
+/* ================= REGION FILTER ================= */
+let activeRegion="all";
+$("#chips").addEventListener("click",e=>{
+  const c=e.target.closest(".chip"); if(!c)return;
+  $$(".chip").forEach(x=>x.classList.remove("active")); c.classList.add("active");
+  activeRegion=c.dataset.region;
+  const shown=BRANCHES.filter(b=>activeRegion==="all"||b.region===activeRegion);
+  BRANCHES.forEach(b=>{const e2=markers[b.id].getElement(); if(e2)e2.classList.toggle("dim",activeRegion!=="all"&&b.region!==activeRegion);});
+  if(shown.length)map.flyToBounds(L.latLngBounds(shown.map(b=>[b.lat,b.lng])).pad(.35),{duration:.7,maxZoom:11});
+  $("#mapSub").textContent=`${shown.length} office${shown.length===1?"":"s"} · ${activeRegion==="all"?"all regions":REGION_LABEL[activeRegion]}`;
+  renderLeaderboard(activeRegion);
+});
+
+/* ================= REVENUE VS PLAN ================= */
+(function(){
+  const svg=$("#revChart"), L0=52,R=618,T=18,B=214;
+  const all=monthTotals.concat(PLAN);
+  const lo=Math.floor(Math.min(...all)*.94), hi=Math.ceil(Math.max(...all)*1.04);
+  const X=i=>L0+i/(WINDOW-1)*(R-L0), Y=v=>B-(v-lo)/(hi-lo)*(B-T);
+  const defs=el("defs",{});
+  defs.innerHTML=`<linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a2f" stop-opacity=".38"/><stop offset="1" stop-color="#ff7a2f" stop-opacity="0"/></linearGradient>`;
+  svg.append(defs);
+  const step=(hi-lo)/4;
+  for(let g=0;g<=4;g++){
+    const v=lo+step*g;
+    svg.append(el("line",{x1:L0,x2:R,y1:Y(v),y2:Y(v),stroke:"rgba(255,255,255,.06)","stroke-dasharray":"3 5"}));
+    const t=el("text",{x:L0-9,y:Y(v)+3,fill:"#5b6579","font-size":9.5,"text-anchor":"end"});
+    t.textContent="₱"+v.toFixed(0)+"M"; svg.append(t);
+  }
+  svg.append(
+    el("polygon",{points:`${X(0)},${B} `+monthTotals.map((v,i)=>`${X(i)},${Y(v)}`).join(" ")+` ${X(WINDOW-1)},${B}`,fill:"url(#ag)"}),
+    el("polyline",{points:PLAN.map((v,i)=>`${X(i)},${Y(v)}`).join(" "),fill:"none",stroke:"#22d3ee","stroke-width":1.6,"stroke-dasharray":"6 6",opacity:.85}),
+    el("polyline",{points:monthTotals.map((v,i)=>`${X(i)},${Y(v)}`).join(" "),fill:"none",stroke:"#ff7a2f","stroke-width":2.6,"stroke-linejoin":"round","stroke-linecap":"round"}));
+  const lg=el("text",{x:R,y:T+2,fill:"#5b6579","font-size":9.5,"text-anchor":"end"});
+  lg.textContent="— recognised    ---- plan"; svg.append(lg);
+  const ct=$("#chartTip");
+  monthTotals.forEach((v,i)=>{
+    const t=el("text",{x:X(i),y:B+18,fill:"#5b6579","font-size":10,"text-anchor":"middle","font-weight":600});
+    t.textContent=LABELS[i]; svg.append(t);
+    const dot=el("circle",{cx:X(i),cy:Y(v),r:3.6,fill:"#0b1120",stroke:"#ff7a2f","stroke-width":2});
+    const hit=el("circle",{cx:X(i),cy:Y(v),r:14,fill:"transparent"});
+    hit.addEventListener("mouseenter",()=>{
+      const d=v-PLAN[i], up=d>=0;
+      ct.innerHTML=`<b>${MON_FULL[mOf(idxs[i])]} ${yOf(idxs[i])}</b><br>Recognised <b style="color:#ff7a2f">₱${v.toFixed(2)}M</b> · plan ₱${PLAN[i].toFixed(2)}M<br>`+
+        `<span style="color:${up?"#34d399":"#fb7185"};font-weight:700">${up?"▲ +":"▼ −"}₱${Math.abs(d).toFixed(2)}M vs plan</span>`;
+      const r=svg.getBoundingClientRect(), sx=r.width/640;
+      ct.style.left=Math.min(X(i)*sx+12,r.width-200)+"px";
+      ct.style.top=(Y(v)*r.height/250-10)+"px";
+      ct.classList.add("show"); dot.setAttribute("r",5.6);
+    });
+    hit.addEventListener("mouseleave",()=>{ct.classList.remove("show");dot.setAttribute("r",3.6);});
+    svg.append(dot,hit);
   });
-  document.getElementById("analyzeBtn").onclick=analyzeBusiness;
+})();
+
+/* ================= HEALTH DONUT ================= */
+(function(){
+  const order=["thriving","stable","watch","critical"];
+  const names={thriving:"Thriving",stable:"Stable",watch:"Watch",critical:"Critical"};
+  const counts=order.map(k=>[names[k],BRANCHES.filter(b=>b.health===k).length,CLR[k]]).filter(c=>c[1]>0);
+  const total=BRANCHES.length, r=62, C=2*Math.PI*r, svg=$("#donut"); let acc=0;
+  svg.append(el("circle",{cx:85,cy:85,r,fill:"none",stroke:"rgba(255,255,255,.06)","stroke-width":14}));
+  counts.forEach(([n,v,c])=>{
+    const len=v/total*C;
+    const circ=el("circle",{cx:85,cy:85,r,fill:"none",stroke:c,"stroke-width":14,"stroke-linecap":"round","stroke-dasharray":`0 ${C}`,"stroke-dashoffset":-acc,transform:"rotate(-90 85 85)"});
+    svg.append(circ);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>circ.setAttribute("stroke-dasharray",`${Math.max(len-3,1)} ${C-len+3}`)));
+    acc+=len;
+  });
+  $("#marginVal").textContent=TOTAL.marginPct.toFixed(1)+"%";
+  $("#healthSub").textContent=`${BRANCHES.length} offices · ${periodText}`;
+  $("#hRows").innerHTML=counts.map(([n,v,c])=>
+    `<div class="h-row"><i style="background:${c}"></i>${n}<div class="h-bar"><div data-w="${v/total*100}" style="background:${c}"></div></div><span class="n">${v}</span></div>`).join("");
+  $("#miniStats").innerHTML=
+    `<div><b>${TOTAL.consultants}</b><span>Consultants</span></div>`+
+    `<div><b>${TOTAL.renewal.toFixed(0)}%</b><span>Renewal rate</span></div>`+
+    `<div><b>${TOTAL.grossPct.toFixed(1)}%</b><span>Delivery margin</span></div>`;
+})();
+
+/* ================= RISK RADAR ================= */
+(function(){
+  const used=new Set(), out=[];
+  const thin=[...BRANCHES].sort((a,b)=>a.margin-b.margin)[0]; used.add(thin.id);
+  out.push(["crit","🚨",thin.short,
+    `Net margin ${(thin.margin*100).toFixed(1)}% — the weakest in the network and ${(TOTAL.marginPct-thin.margin*100).toFixed(1)} points under the ${TOTAL.marginPct.toFixed(1)}% company figure. It needs ₱${thin.breakEven.toFixed(2)}M a month just to cover overhead.`,
+    "Rate review · rebalance the book",thin]);
+  const bench=[...BRANCHES].sort((a,b)=>a.util-b.util).find(b=>!used.has(b.id)); used.add(bench.id);
+  out.push(["warn","⚠️",bench.short,
+    `Billable utilisation ${bench.util}% against ${TOTAL.util.toFixed(1)}% network-wide. Closing that ${(TOTAL.util-bench.util).toFixed(1)}-point gap is worth about ₱${(bench.revenue/bench.util*(TOTAL.util-bench.util)).toFixed(2)}M of billable capacity over the period.`,
+    "Fill the bench · pull work forward",bench]);
+  const risky=[...BRANCHES].sort((a,b)=>b.atRisk-a.atRisk).find(b=>!used.has(b.id));
+  out.push(["warn","⚠️",risky.short,
+    `${risky.atRiskCount} of ${risky.contracts} contracts flagged amber or red, with renewal running at ${risky.renewal}% and only ${risky.backlogYears.toFixed(2)} years of backlog cover.`,
+    "Delivery review · renewal push",risky]);
+  $("#riskSub").textContent=`${out.length} open items`;
+  $("#alerts").innerHTML=out.map(a=>
+    `<div class="alert"><div class="a-ico ${a[0]}">${a[1]}</div><div><b>${a[2]}</b><div class="why">${a[3]}</div>
+     <button class="a-action" data-branch="${a[5].id}">▸ ${a[4]}</button></div></div>`).join("");
+})();
+
+/* ================= LEADERBOARD ================= */
+function renderLeaderboard(region="all"){
+  const rows=[...BRANCHES].filter(b=>region==="all"||b.region===region).sort((a,b)=>b.revenue-a.revenue);
+  const max=rows.length?rows[0].revenue:1;
+  $("#leaderboard").innerHTML=rows.length?rows.map((b,i)=>`
+    <button class="lb-row" data-branch="${b.id}">
+      <span class="lb-rank">${String(i+1).padStart(2,"0")}</span>
+      <span class="lb-name"><b>${b.short}${b.isNew?'<span class="tag-new">NEW</span>':""}</b><span>${REGION_LABEL[b.region]} · ${b.contracts} contracts</span></span>
+      <span class="lb-bar"><span data-w="${b.revenue/max*100}"></span></span>
+      <span><span class="lb-rev">₱${b.revenue.toFixed(2)}M</span><span class="lb-delta" style="color:${b.growth>=0?"var(--good)":"var(--crit)"}">${b.growth>=0?"▲":"▼"} ${Math.abs(b.growth).toFixed(1)}%</span></span>
+      <span class="lb-dot" style="background:${CLR[b.health]};box-shadow:0 0 8px ${CLR[b.health]}"></span>
+    </button>`).join(""):'<p style="color:var(--faint);padding:12px 0">No offices in this region.</p>';
+  $("#lbSub").textContent=`${rows.length} office${rows.length===1?"":"s"} · revenue`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>$$("#leaderboard .lb-bar span").forEach(d=>d.style.width=d.dataset.w+"%")));
 }
+renderLeaderboard();
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-branch]"); if(!t)return;
+  const b=BRANCHES.find(x=>x.id===+t.dataset.branch); if(b)showBranch(b);
+});
+
+/* ================= FEED ================= */
+const rank=[...BRANCHES].sort((a,b)=>b.revenue-a.revenue);
+const fastest=[...BRANCHES].sort((a,b)=>b.growth-a.growth)[0];
+const thinnest=[...BRANCHES].sort((a,b)=>a.margin-b.margin)[0];
+const benchWorst=[...BRANCHES].sort((a,b)=>a.util-b.util)[0];
+const bestUtil=[...BRANCHES].sort((a,b)=>b.util-a.util)[0];
+const biggestDeal=BRANCHES.flatMap(b=>b.deals.map(d=>({b,d}))).sort((x,y)=>y.d[1]-x.d[1])[0];
+const feedPool=[
+ ["📋",`<b>${rank[0].short}</b> leads on recognised revenue at ₱${rank[0].revenue.toFixed(2)}M for ${periodText}.`],
+ ["✍️",`<b>${biggestDeal.b.short}</b> is running the network's largest engagement — ${biggestDeal.d[0]} at ₱${biggestDeal.d[1].toFixed(1)}M.`],
+ ["📈",`<b>${fastest.short}</b> is up ${fastest.growth.toFixed(1)}% since ${fastest.growthFrom} — fastest in the network.`],
+ ["🧮",`Contract backlog stands at ₱${TOTAL.backlog.toFixed(1)}M — ${(TOTAL.backlog/TOTAL.runRate*12).toFixed(1)} months of cover at the current run rate.`],
+ ["👷",`<b>${bestUtil.short}</b> is running ${bestUtil.util}% billable utilisation, highest of the ${BRANCHES.length} offices.`],
+ ["🪑",`<b>${benchWorst.short}</b> is at ${benchWorst.util}% utilisation — bench cost is eating the branch margin.`],
+ ["🚀",`Go-live confirmed: ${rank[1].deals[0][0]} at <b>${rank[1].short}</b>.`],
+ ["⚠️",`${TOTAL.atRisk} of ${TOTAL.contracts} active contracts are flagged amber or red across the network.`],
+ ["🔁",`Renewal rate holding at ${TOTAL.renewal.toFixed(1)}% weighted by revenue.`],
+ ["🏢",`${TOTAL.staff} employees on the roster, ${TOTAL.consultants} of them billable consultants.`],
+ ["💼",`Managed-service retainers are ${(TOTAL.mix[3]*100).toFixed(0)}% of network revenue — the most predictable line in the book.`],
+ ["📊",`Revenue per consultant running at ₱${TOTAL.revPerConsultant.toFixed(2)}M a year.`],
+];
+let feedOn=true, feedTimer=null;
+function pushFeed(ico,html){
+  const f=$("#feed"), d=document.createElement("div"); d.className="f-item";
+  d.innerHTML=`<span class="f-ico">${ico}</span><div><p>${html}</p><small>${fmtShort.format(new Date())} PHT</small></div>`;
+  f.prepend(d); while(f.children.length>6)f.lastChild.remove();
+}
+feedPool.slice(0,5).forEach(p=>pushFeed(p[0],p[1]));
+function scheduleFeed(){feedTimer=setInterval(()=>{const p=feedPool[Math.floor(Math.random()*feedPool.length)];pushFeed(p[0],p[1]);},4200);}
+scheduleFeed();
+$("#simBtn").addEventListener("click",()=>{
+  feedOn=!feedOn;
+  if(feedOn){scheduleFeed();$("#simBtn").textContent="⏸ Pause feed";}
+  else{clearInterval(feedTimer);$("#simBtn").textContent="▶ Resume feed";}
+});
+
+/* ================= BRANCH REPORT ================= */
+Chart.defaults.color="#8b96ad";
+Chart.defaults.font.family="Inter, sans-serif";
+const STATUS={green:["var(--good)","On track"],amber:["var(--warn)","At risk"],red:["var(--crit)","Escalated"]};
+let branchChart=null, selected=null;
+function destroyChart(){if(branchChart){branchChart.destroy();branchChart=null;}}
 
 function showBranch(b){
   destroyChart();
-  backBtn.style.display="inline-block";
-  panelTitle.textContent="Branch Business Report";
-  const rev=branchRevenue(b), prof=branchProfit(b), g=growth(b);
-  const maxItem=b.topItems[0][1];
-  panelBody.innerHTML=`
-    <div class="branch-title"><strong style="font-size:15px">${b.name}</strong>${healthBadge(b)}</div>
-    <div class="sub">📍 ${b.city} · Manager: ${b.manager} · Opened ${b.opened}</div>
-    <div class="card">
-      <h3>Financials — H1 2026</h3>
-      <div class="grid2">
-        <div class="stat"><div class="sv">₱${rev.toFixed(2)}M</div><div class="sl">Revenue</div></div>
-        <div class="stat"><div class="sv ${prof>=0?'pos':'neg'}">₱${prof.toFixed(2)}M</div><div class="sl">Net Profit</div></div>
-        <div class="stat"><div class="sv">₱${(b.expenses*6).toFixed(2)}M</div><div class="sl">Expenses</div></div>
-        <div class="stat"><div class="sv ${g>=0?'pos':'neg'}">${g>=0?'+':''}${g.toFixed(1)}%</div><div class="sl">Growth Jan→Jun</div></div>
+  selected=b; selectMarker(b.id);
+  $("#overviewRail").style.display="none";
+  $("#branchRail").style.display="block";
+  $("#analyzeBranchBtn").style.display="inline-block";
+  $("#analyzeBranchBtn").textContent="Analyze "+b.short;
+  $("#aiScope").textContent=b.short;
+
+  const label={thriving:"Thriving",stable:"Stable",watch:"Watch",critical:"Critical"}[b.health];
+
+  $("#branchBody").innerHTML=`
+    <div class="branch-head"><strong>${b.short}</strong><span class="badge b-${b.health}">${label}</span>${b.isNew?'<span class="tag-new">NEW OFFICE</span>':""}</div>
+    <div class="branch-sub">📍 ${b.city} · ${REGION_LABEL[b.region]}<br>Delivery lead ${b.lead} · opened ${b.openedText} · ${b.openMonths} month${b.openMonths===1?"":"s"} in this period</div>
+
+    <div class="sub-card">
+      <h4>Profit &amp; loss — ${periodText}</h4>
+      <div class="stat-grid">
+        <div class="stat"><div class="sv">₱${b.revenue.toFixed(2)}M</div><div class="sl">Revenue recognised</div></div>
+        <div class="stat"><div class="sv">₱${b.gross.toFixed(2)}M</div><div class="sl">Delivery margin (${(b.grossMargin*100).toFixed(1)}%)</div></div>
+        <div class="stat"><div class="sv">₱${b.cost.toFixed(2)}M</div><div class="sl">Branch overhead</div></div>
+        <div class="stat"><div class="sv ${b.profit>=0?"pos":"neg"}">₱${b.profit.toFixed(2)}M</div><div class="sl">Net profit (${(b.margin*100).toFixed(1)}%)</div></div>
       </div>
     </div>
-    <div class="card">
-      <h3>Monthly Revenue (₱M)</h3>
-      <canvas id="branchChart" height="160"></canvas>
+
+    <div class="sub-card">
+      <h4>Monthly revenue recognised (₱M)</h4>
+      <div class="branch-chart-box"><canvas id="branchChart"></canvas></div>
     </div>
-    <div class="card">
-      <h3>Operations</h3>
+
+    <div class="sub-card">
+      <h4>Revenue by service line</h4>
+      ${SERVICE_LINES.map(([n,c],k)=>`
+        <div class="bar-row">
+          <div class="name" title="${n}">${n}</div>
+          <div class="bar-track"><div class="bar-fill" data-w="${(b.mix[k]*100).toFixed(0)}" style="background:${c}"></div></div>
+          <div class="val">${(b.mix[k]*100).toFixed(0)}%</div>
+        </div>`).join("")}
+    </div>
+
+    <div class="sub-card">
+      <h4>Contract book</h4>
       <table>
-        <tr><td>Customers served (H1)</td><td>${b.customers.toLocaleString()}</td></tr>
-        <tr><td>Avg ticket size</td><td>${PESO(Math.round(rev*1e6/b.customers))}</td></tr>
-        <tr><td>Staff count</td><td>${b.staff}</td></tr>
-        <tr><td>Customer rating</td><td>${b.rating} ★</td></tr>
-        <tr><td>Profit margin</td><td>${(prof/rev*100).toFixed(1)}%</td></tr>
+        <tr><td>Active contracts</td><td>${b.contracts}</td></tr>
+        <tr><td>Flagged amber or red</td><td>${b.atRiskCount}</td></tr>
+        <tr><td>Average contract value</td><td>₱${b.acv.toFixed(2)}M / yr</td></tr>
+        <tr><td>Backlog signed</td><td>₱${b.backlog.toFixed(2)}M</td></tr>
+        <tr><td>Renewal rate</td><td>${b.renewal}%</td></tr>
+        <tr><td>Billable utilisation</td><td>${b.util}%</td></tr>
+        <tr><td>Consultants (of staff)</td><td>${b.consultants} of ${b.staff}</td></tr>
+        <tr><td>Revenue per consultant</td><td>₱${b.revPerConsultant.toFixed(2)}M / yr</td></tr>
+        <tr><td>Monthly break-even</td><td>₱${b.breakEven.toFixed(2)}M</td></tr>
+        <tr><td>Client satisfaction</td><td>${b.csat.toFixed(1)} ★</td></tr>
+        <tr><td>Growth since ${b.growthFrom}</td><td>${b.growth>=0?"+":""}${b.growth.toFixed(1)}%</td></tr>
+        <tr><td>Share of network revenue</td><td>${(b.revenue/TOTAL.revenue*100).toFixed(1)}%</td></tr>
       </table>
     </div>
-    <div class="card">
-      <h3>Top Selling Items (units, H1)</h3>
-      ${b.topItems.map(([n,v])=>`
-        <div class="bar-row">
-          <div class="name" title="${n}">${n.length>16?n.slice(0,15)+"…":n}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${(v/maxItem*100).toFixed(0)}%"></div></div>
-          <div class="val">${v.toLocaleString()}</div>
+
+    <div class="sub-card" style="margin-bottom:0">
+      <h4>Largest active engagements</h4>
+      ${b.deals.map(([client,val,months,st])=>`
+        <div class="eng-row">
+          <span class="eng-dot" style="background:${STATUS[st][0]}"></span>
+          <span class="eng-name">${client}<span class="eng-meta">${STATUS[st][1]} · ${months} month${months===1?"":"s"} remaining</span></span>
+          <span class="eng-val">₱${val.toFixed(1)}M</span>
         </div>`).join("")}
     </div>`;
-  map.flyTo([b.lat,b.lng], 12, {duration:.8});
-  chart = new Chart(document.getElementById("branchChart"),{
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>$$("#branchBody .bar-fill").forEach(d=>d.style.width=d.dataset.w+"%")));
+
+  branchChart=new Chart($("#branchChart"),{
     type:"bar",
-    data:{labels:MONTHS,datasets:[{data:b.monthly,backgroundColor:"rgba(255,107,53,.7)",borderColor:"#ffb347",borderWidth:1,borderRadius:5}]},
-    options:{plugins:{legend:{display:false}},scales:{
-      x:{ticks:{color:"#64748b"},grid:{display:false}},
-      y:{ticks:{color:"#64748b"},grid:{color:"#e2e8f0"}}}}
+    data:{labels:LABELS,datasets:[{data:b.monthly,backgroundColor:"rgba(255,122,47,.65)",hoverBackgroundColor:"rgba(255,179,71,.9)",borderColor:"#ff7a2f",borderWidth:1,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:"#0d1526",borderColor:"rgba(255,122,47,.45)",borderWidth:1,
+        titleFont:{family:"Space Grotesk"},callbacks:{label:c=>c.parsed.y===null?"Not yet open":"₱"+c.parsed.y.toFixed(2)+"M"}}},
+      scales:{x:{ticks:{color:"#8b96ad"},grid:{display:false},border:{color:"rgba(255,255,255,.1)"}},
+              y:{ticks:{color:"#8b96ad"},grid:{color:"rgba(255,255,255,.06)"},border:{display:false}}}}
   });
+
+  map.flyTo([b.lat,b.lng],12,{duration:.8});
+  markers[b.id].openPopup();
 }
 
-/* ================= OLLAMA AI ANALYSIS ================= */
-function businessSummaryPrompt(){
-  const lines = BRANCHES.map(b=>
-    `- ${b.name} (${b.city}): H1 revenue ₱${branchRevenue(b).toFixed(2)}M, profit ₱${branchProfit(b).toFixed(2)}M, growth ${growth(b).toFixed(1)}%, rating ${b.rating}★, ${b.customers.toLocaleString()} customers, ${b.staff} staff`
+function showOverview(){
+  destroyChart(); selected=null; selectMarker(null);
+  $("#branchRail").style.display="none";
+  $("#overviewRail").style.display="grid";
+  $("#analyzeBranchBtn").style.display="none";
+  $("#aiScope").textContent="Whole network";
+  const shown=BRANCHES.filter(b=>activeRegion==="all"||b.region===activeRegion);
+  map.flyToBounds(L.latLngBounds(shown.map(b=>[b.lat,b.lng])).pad(.35),{duration:.7,maxZoom:11});
+}
+$("#backBtn").addEventListener("click",showOverview);
+
+/* ================= AI ANALYSIS ================= */
+$("#modelName").textContent=OLLAMA_MODEL;
+
+function networkPrompt(){
+  const lines=BRANCHES.map(b=>
+   `- ${b.short} (${b.city}, ${REGION_LABEL[b.region]}): revenue ₱${b.revenue.toFixed(2)}M, delivery margin ${(b.grossMargin*100).toFixed(1)}%, net profit ₱${b.profit.toFixed(2)}M (${(b.margin*100).toFixed(1)}%), growth ${b.growth.toFixed(1)}%, ${b.contracts} active contracts (${b.atRiskCount} at risk) averaging ₱${b.acv.toFixed(2)}M, backlog ₱${b.backlog.toFixed(2)}M, utilisation ${b.util}%, renewal ${b.renewal}%, ${b.consultants} consultants of ${b.staff} staff, CSAT ${b.csat.toFixed(1)}★`
   ).join("\n");
-  return `You are a business analyst for ModPi Restaurant, a fast-casual franchise chain in the Philippines. Analyze this H1 2026 performance data and give a concise executive analysis (max ~300 words): overall health, best/worst performers, notable trends, and 3 actionable recommendations.
+  return `You are a professional-services analyst for ModPi, an IT services firm in the Philippines with ${BRANCHES.length} regional delivery offices. ModPi sells fixed-term contracts to upgrade, migrate, build and manage client systems. Analyse the reporting period ${periodText} and give a concise executive analysis (max ~300 words): overall health, best and worst offices, notable trends in utilisation and the contract book, and 3 actionable recommendations.
 
-Company totals: revenue ₱${TOTAL.revenue.toFixed(2)}M, net profit ₱${TOTAL.profit.toFixed(2)}M (${(TOTAL.profit/TOTAL.revenue*100).toFixed(1)}% margin), ${TOTAL.customers.toLocaleString()} customers, ${TOTAL.staff} employees, avg rating ${TOTAL.rating.toFixed(2)}★.
+Network totals: revenue recognised ₱${TOTAL.revenue.toFixed(2)}M, delivery margin ₱${TOTAL.gross.toFixed(2)}M (${TOTAL.grossPct.toFixed(1)}%), net profit ₱${TOTAL.profit.toFixed(2)}M (${TOTAL.marginPct.toFixed(1)}%), ${TOTAL.contracts} active contracts of which ${TOTAL.atRisk} are flagged, backlog ₱${TOTAL.backlog.toFixed(2)}M (${(TOTAL.backlog/TOTAL.runRate*12).toFixed(1)} months of cover), billable utilisation ${TOTAL.util.toFixed(1)}%, renewal rate ${TOTAL.renewal.toFixed(1)}%, ${TOTAL.staff} employees including ${TOTAL.consultants} consultants, revenue per consultant ₱${TOTAL.revPerConsultant.toFixed(2)}M a year, CSAT ${TOTAL.csat.toFixed(2)}★.
+Service mix: ${SERVICE_LINES.map(([n],k)=>n+" "+(TOTAL.mix[k]*100).toFixed(0)+"%").join(", ")}.
+Monthly revenue ${LABELS.join(", ")} (₱M): ${monthTotals.map(v=>v.toFixed(2)).join(", ")}, against a plan of ${PLAN.map(v=>v.toFixed(2)).join(", ")}. Revenue beat plan in ${aheadOfPlan} of ${WINDOW} months.
 
-Branches:
+Offices:
 ${lines}`;
 }
 
-async function analyzeBusiness(){
-  const btn=document.getElementById("analyzeBtn"), out=document.getElementById("aiOutput"), note=document.getElementById("aiNote");
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Analyzing with '+OLLAMA_MODEL+'…';
+function branchPrompt(b){
+  return `You are a professional-services analyst for ModPi, an IT services firm in the Philippines selling fixed-term contracts to upgrade, migrate, build and manage client systems. Give a concise office review (max ~220 words) for one delivery office: current standing, what is working, what is at risk, and 3 specific actions for the delivery lead.
+
+Office: ${b.short} in ${b.city} (${REGION_LABEL[b.region]}), opened ${b.openedText}, led by ${b.lead} with ${b.consultants} billable consultants out of ${b.staff} staff.
+Period ${periodText}: revenue ₱${b.revenue.toFixed(2)}M, delivery margin ${(b.grossMargin*100).toFixed(1)}%, branch overhead ₱${b.cost.toFixed(2)}M, net profit ₱${b.profit.toFixed(2)}M (${(b.margin*100).toFixed(1)}%), growth ${b.growth.toFixed(1)}% since ${b.growthFrom}. Monthly break-even is ₱${b.breakEven.toFixed(2)}M.
+Contract book: ${b.contracts} active contracts averaging ₱${b.acv.toFixed(2)}M a year, ${b.atRiskCount} flagged amber or red, backlog ₱${b.backlog.toFixed(2)}M, renewal ${b.renewal}%, utilisation ${b.util}%, revenue per consultant ₱${b.revPerConsultant.toFixed(2)}M a year, CSAT ${b.csat}★.
+Service mix: ${SERVICE_LINES.map(([n],k)=>n+" "+(b.mix[k]*100).toFixed(0)+"%").join(", ")}.
+Monthly revenue (₱M): ${b.monthly.map(v=>v===null?"not open":v.toFixed(2)).join(", ")}.
+Largest engagements: ${b.deals.map(([c,v,m,s])=>`${c} ₱${v.toFixed(1)}M, ${m} months left, ${STATUS[s][1].toLowerCase()}`).join("; ")}.
+Network context: company net margin ${TOTAL.marginPct.toFixed(1)}%, utilisation ${TOTAL.util.toFixed(1)}%, renewal ${TOTAL.renewal.toFixed(1)}%. This office is ${(b.revenue/TOTAL.revenue*100).toFixed(1)}% of network revenue.`;
+}
+
+async function runAnalysis(prompt,fallback,btn,busy,idle){
+  const out=$("#aiOutput"), note=$("#aiNote");
+  btn.disabled=true; btn.innerHTML=`<span class="spinner"></span>${busy}`;
   out.style.display="block"; out.textContent=""; note.textContent="";
   try{
-    const res=await fetch(OLLAMA_API_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:OLLAMA_MODEL,stream:false,messages:[{role:"user",content:businessSummaryPrompt()}]})
-    });
+    const res=await fetch(OLLAMA_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:OLLAMA_MODEL,stream:false,messages:[{role:"user",content:prompt}]})});
     if(!res.ok) throw new Error("API responded "+res.status);
     const data=await res.json();
     const text=data?.message?.content;
-    if(!text) throw new Error("Empty response");
+    if(!text) throw new Error("empty response");
     out.textContent=text.trim();
-    note.textContent="Generated by "+OLLAMA_MODEL+" via Ollama Cloud.";
+    note.textContent="Generated by "+OLLAMA_MODEL+".";
   }catch(err){
-    out.textContent=fallbackAnalysis();
-    note.textContent="⚠ Ollama API unreachable ("+err.message+") — showing built-in demo analysis instead.";
+    out.textContent=fallback();
+    note.textContent="The model is unreachable ("+err.message+"). Showing the built-in analysis instead.";
   }finally{
-    btn.disabled=false; btn.innerHTML="⚡ Analyze Whole Business";
+    btn.disabled=false; btn.innerHTML=idle;
   }
 }
 
-/* Local fallback so the portfolio demo always works */
-function fallbackAnalysis(){
-  const ranked=[...BRANCHES].sort((a,b)=>branchRevenue(b)-branchRevenue(a));
-  const best=ranked[0], worst=ranked[ranked.length-1];
-  const fastest=[...BRANCHES].sort((a,b)=>growth(b)-growth(a))[0];
-  return `EXECUTIVE ANALYSIS — ModPi Restaurant PH (H1 2026)
+function fallbackNetwork(){
+  const best=rank[0], worst=rank[rank.length-1];
+  const weak=[...BRANCHES].sort((a,b)=>a.margin-b.margin).filter(x=>x.id!==benchWorst.id).slice(0,2);
+  const cover=(TOTAL.backlog/TOTAL.runRate*12).toFixed(1);
+  const underPressure=worst.id===thinnest.id
+    ? `${thinnest.short} at ${(thinnest.margin*100).toFixed(1)}% net margin on ${thinnest.util}% utilisation — it is also the smallest office, at ₱${thinnest.revenue.toFixed(2)}M`
+    : `${thinnest.short} at ${(thinnest.margin*100).toFixed(1)}% net margin on ${thinnest.util}% utilisation; ${worst.short} is the smallest office at ₱${worst.revenue.toFixed(2)}M`;
+  return `EXECUTIVE ANALYSIS — ModPi IT Services PH (${periodText})
 
-Overall Health: STRONG. The network of ${BRANCHES.length} branches generated ₱${TOTAL.revenue.toFixed(2)}M in revenue with ₱${TOTAL.profit.toFixed(2)}M net profit (${(TOTAL.profit/TOTAL.revenue*100).toFixed(1)}% margin) while serving ${TOTAL.customers.toLocaleString()} customers at a ${TOTAL.rating.toFixed(2)}★ average rating.
+Overall health: sound. ${BRANCHES.length} offices recognised ₱${TOTAL.revenue.toFixed(2)}M at a ${TOTAL.grossPct.toFixed(1)}% delivery margin, leaving ₱${TOTAL.profit.toFixed(2)}M net (${TOTAL.marginPct.toFixed(1)}%). ${TOTAL.contracts} contracts are live, ${TOTAL.atRisk} of them flagged, and the ₱${TOTAL.backlog.toFixed(2)}M backlog gives ${cover} months of cover. Revenue beat plan in ${aheadOfPlan} of ${WINDOW} months; ${lastClose} closed at ₱${monthTotals[WINDOW-1].toFixed(2)}M.
 
-Top Performer: ${best.name} leads with ₱${branchRevenue(best).toFixed(2)}M revenue and a premium menu mix driving higher ticket sizes.
+Top performer: ${best.short} at ₱${best.revenue.toFixed(2)}M and ${(best.margin*100).toFixed(1)}% net margin, running ${best.contracts} contracts at ${best.util}% utilisation — ${(best.revenue/TOTAL.revenue*100).toFixed(1)}% of the network.
 
-Fastest Growing: ${fastest.name} at +${growth(fastest).toFixed(1)}% Jan→Jun, showing strong momentum in a newer market.
+Fastest growing: ${fastest.short}, ${fastest.growth>=0?"+":""}${fastest.growth.toFixed(1)}% since ${fastest.growthFrom}${fastest.isNew?" and still filling its first contract book":""}.
 
-Underperformer: ${worst.name} trails at ₱${branchRevenue(worst).toFixed(2)}M with the thinnest margins — regional pricing and menu localization are working (Curacha, Satti) but volume remains low.
+Under pressure: ${underPressure}.
+
+Capacity: utilisation averages ${TOTAL.util.toFixed(1)}%, but ${benchWorst.short} runs at ${benchWorst.util}% against ${bestUtil.util}% at ${bestUtil.short}. Bench cost, not demand, is what separates the top and bottom of this table.
 
 Recommendations:
-1. Replicate the Makati premium-item strategy (Wagyu line, truffle items) in Cebu and Pampanga where ticket sizes support upselling.
-2. Launch targeted delivery-app promotions for Zamboanga and CDO to lift customer volume ~15% before considering cost cuts.
-3. Fast-track a second Tagaytay-style tourist-corridor branch; its 4.7★ rating and +38% growth profile indicates the leisure-market format outperforms.`;
+1. Move work or people between ${bestUtil.short} and ${benchWorst.short}; every point of utilisation at ${benchWorst.short} is worth roughly ₱${(benchWorst.revenue/benchWorst.util).toFixed(2)}M a period at current rates.
+2. Put ${weak[0].short} and ${weak[1].short} on a rate and scope review — both sit below the ${TOTAL.marginPct.toFixed(1)}% company margin, and discounting on renewals is the usual cause.
+3. Managed services are ${(TOTAL.mix[3]*100).toFixed(0)}% of the mix and the only recurring line; growing it protects revenue between project awards and lifts the ${TOTAL.renewal.toFixed(1)}% renewal rate.`;
 }
 
-/* ================= INIT ================= */
-showOverview();
+function fallbackBranch(b){
+  const pos=rank.findIndex(x=>x.id===b.id)+1;
+  const vs=b.margin*100-TOTAL.marginPct;
+  const uvs=b.util-TOTAL.util;
+  const weakest=b.monthly.reduce((lo,v,i)=>(v!==null&&(lo===null||v<b.monthly[lo]))?i:lo,null);
+  const flagged=b.deals.filter(d=>d[3]!=="green");
+  return `OFFICE REVIEW — ${b.short} (${periodText})
+
+Standing: rank ${pos} of ${BRANCHES.length} by revenue at ₱${b.revenue.toFixed(2)}M, with a ${(b.margin*100).toFixed(1)}% net margin — ${Math.abs(vs).toFixed(1)} points ${vs>=0?"above":"below"} the ${TOTAL.marginPct.toFixed(1)}% company figure. Growth is ${b.growth>=0?"+":""}${b.growth.toFixed(1)}% since ${b.growthFrom}.
+
+Working: ${b.contracts} live contracts averaging ₱${b.acv.toFixed(2)}M a year, with ₱${b.backlog.toFixed(2)}M of signed backlog and renewal at ${b.renewal}%. ${b.consultants} consultants generate ₱${b.revPerConsultant.toFixed(2)}M each a year at ${b.util}% utilisation, ${Math.abs(uvs).toFixed(1)} points ${uvs>=0?"above":"below"} the network. CSAT sits at ${b.csat.toFixed(1)}★.
+
+At risk: delivery cost absorbs ${(b.dcost*100).toFixed(0)}% of revenue and overhead runs ₱${b.opex.toFixed(2)}M a month, so the office needs ₱${b.breakEven.toFixed(2)}M of monthly revenue to break even.${flagged.length?` ${flagged.length} engagement${flagged.length===1?" is":"s are"} off track, including ${flagged[0][0]} at ₱${flagged[0][1].toFixed(1)}M.`:" No engagements are currently off track."}
+
+Actions for ${b.lead}:
+1. ${flagged.length?`Recover ${flagged[0][0]} — ${flagged[0][2]} months remain and it is ${(flagged[0][1]/b.deals.reduce((a,d)=>a+d[1],0)*100).toFixed(0)}% of the top-four contract value.`:`Convert backlog earlier; ₱${b.backlog.toFixed(2)}M is signed but unrecognised.`}
+2. ${b.util<TOTAL.util?`Lift utilisation from ${b.util}% toward the ${TOTAL.util.toFixed(1)}% network figure before adding head count.`:`Protect the ${b.util}% utilisation — the office is close to capacity and will need hiring ahead of the next award.`}
+3. Grow managed services beyond ${(b.mix[3]*100).toFixed(0)}% of the mix to steady revenue between project awards.`;
+}
+
+$("#analyzeBtn").addEventListener("click",()=>
+  runAnalysis(networkPrompt(),fallbackNetwork,$("#analyzeBtn"),"Analyzing the network…","⚡ Analyze whole business"));
+$("#analyzeBranchBtn").addEventListener("click",()=>{
+  if(!selected)return;
+  runAnalysis(branchPrompt(selected),()=>fallbackBranch(selected),$("#analyzeBranchBtn"),"Analyzing "+selected.short+"…","Analyze "+selected.short);
+});
+$("#topAnalyze").addEventListener("click",()=>{
+  $("#analyzeBtn").scrollIntoView({behavior:"smooth",block:"center"});
+  $("#analyzeBtn").click();
+});
+
+/* ================= REVEAL ================= */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){
+    e.target.classList.add("in");
+    e.target.querySelectorAll?.(".h-bar div").forEach(d=>d.style.width=d.dataset.w+"%");
+    io.unobserve(e.target);
+  }
+}),{threshold:.15});
+$$(".reveal").forEach(n=>io.observe(n));
 </script>
 </body>
 </html>

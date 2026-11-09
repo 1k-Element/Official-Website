@@ -1,0 +1,1728 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Neural Network Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an aquarium wall — level strip on top, tank as the hero, a lab bench panel showing one fish's live brain. Single deliberate deep-water theme. */
+:root {
+  --abyss: #061820;
+  --water: #0b2a35;
+  --water-hi: #134553;
+  --panel: #0a222c;
+  --ink: #dbe8ec;
+  --ink-dim: #8aa7b1;
+  --rule: rgba(180, 214, 224, 0.14);
+  --fish: #f4b27a;
+  --fish-hot: #ffe2ad;
+  --shark: #a3b8c1;
+  --neg: #8f9fff;
+  --caught: #e98b7c;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--abyss); color: var(--ink); }
+body { font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 32px; display: grid; gap: 16px; }
+
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px; }
+.titleblock { display: grid; gap: 4px; min-width: 0; flex: 1 1 420px; }
+.headbtns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg .btn[data-side="pred"][aria-pressed="true"] { color: var(--ink); border-color: var(--shark); background: #23404b; }
+h1 em.pred { color: var(--shark); }
+em.botc, .botc { font-style: normal; color: var(--neg); }
+.you { color: var(--fish); }
+.arena { position: relative; width: 100%; aspect-ratio: 880 / 560; max-width: 100%; border-radius: 14px; overflow: hidden; background: #0f2f3a; box-shadow: inset 0 0 0 1px var(--rule); }
+.arena canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#gbrain { width: 100%; height: 360px; display: block; }
+#gevo { width: 100%; height: 90px; display: block; }
+.keys { font-size: 13px; color: var(--ink-dim); display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+kbd { font-family: var(--f-mono); font-size: 12px; color: var(--ink); background: var(--water-hi); border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; }
+.keys kbd + kbd { margin-left: -1px; }
+.touchpad { display: none; justify-content: space-between; align-items: center; gap: 12px; user-select: none; -webkit-user-select: none; touch-action: none; }
+.dpad { display: grid; grid-template-columns: repeat(4, 52px); gap: 6px; }
+.dpad .btn, .firebtn { justify-content: center; height: 48px; font-size: 16px; }
+.firebtn { min-width: 96px; }
+@media (pointer: coarse) { .touchpad { display: flex; } }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 3.4vw, 38px); letter-spacing: -0.02em; margin: 0; line-height: 1.05; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--fish); }
+.lede { margin: 0; color: var(--ink-dim); max-width: 60ch; font-size: 14px; }
+
+.levels { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.lvl { appearance: none; text-align: left; cursor: pointer; background: var(--panel); color: var(--ink); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px 11px; display: grid; gap: 2px; font: inherit; transition: border-color .15s, background .15s; min-width: 0; }
+.lvl:hover { border-color: rgba(244, 178, 122, .45); }
+.lvl:focus-visible { outline: 2px solid var(--fish); outline-offset: 2px; }
+.lvl[aria-pressed="true"] { background: var(--water-hi); border-color: var(--fish); }
+.lvl .n { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+.lvl .nm { font-family: var(--f-display); font-weight: 700; font-size: 17px; line-height: 1.15; }
+.lvl .tg { font-family: var(--f-mono); font-size: 12px; color: var(--fish); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.tankcol { display: grid; gap: 10px; min-width: 0; }
+.tank { position: relative; width: 100%; aspect-ratio: 960 / 600; max-width: 100%; border-radius: 14px; overflow: hidden; background: var(--water); box-shadow: inset 0 0 0 1px var(--rule); }
+.tank canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+.tankwrap { position: relative; min-width: 0; }
+
+.hud { position: absolute; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between; gap: 10px; pointer-events: none; font-family: var(--f-mono); font-size: 12px; color: var(--ink-dim); }
+.hud b { color: var(--ink); font-weight: 500; }
+.hud .pill { background: rgba(4, 16, 22, .6); padding: 4px 9px; border-radius: 99px; }
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(4, 16, 22, .55); }
+.overlay .box { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 20px; width: min(320px, 86%); display: grid; gap: 8px; text-align: center; }
+.overlay .big { font-family: var(--f-display); font-weight: 700; font-size: 20px; }
+.bar { height: 6px; border-radius: 3px; background: var(--water-hi); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--fish); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { appearance: none; font: 500 13px var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: rgba(219, 232, 236, .35); }
+.btn:focus-visible { outline: 2px solid var(--fish); outline-offset: 2px; }
+.btn[aria-pressed="true"] { background: var(--water-hi); border-color: var(--fish); color: var(--fish-hot); }
+.btn.primary { background: var(--fish); color: #2a1406; border-color: var(--fish); }
+.btn:disabled { opacity: .45; cursor: default; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.seg .btn { border: 0; border-radius: 0; }
+.seg .btn + .btn { border-left: 1px solid var(--rule); }
+.spacer { flex: 1; }
+.hint { font-size: 12px; color: var(--ink-dim); }
+
+aside { background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; padding: 16px; display: grid; gap: 16px; min-width: 0; }
+.sec { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-dim); display: flex; justify-content: space-between; gap: 8px; }
+.eyebrow b { color: var(--ink); font-weight: 500; letter-spacing: .04em; text-transform: none; }
+#brain { width: 100%; height: 300px; display: block; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stat { display: grid; gap: 0; }
+.stat .v { font-family: var(--f-display); font-weight: 700; font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 14px; color: var(--ink-dim); font-weight: 500; }
+.stat .k { font-size: 12px; color: var(--ink-dim); }
+.recent { font-family: var(--f-mono); font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+#evo { width: 100%; height: 90px; display: block; }
+.note { font-size: 12.5px; color: var(--ink-dim); margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink-dim); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+.credit { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 0 24px; display: flex; justify-content: flex-end; }
+.credit a { font-family: var(--f-mono); font-size: 13px; color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--rule); padding-bottom: 1px; }
+.credit a:hover { color: var(--ink); border-bottom-color: var(--fish); }
+.credit a:focus-visible { outline: 2px solid var(--fish); outline-offset: 3px; border-radius: 2px; }
+.credit .mark { color: var(--fish); font-weight: 500; }
+@media (max-width: 520px) { .credit { padding-inline: 16px; justify-content: center; } }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+@media (max-width: 980px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .levels { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .wrap { padding-inline: 16px; }
+  .levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hud { font-size: 11px; top: 8px; left: 8px; right: 8px; }
+}
+</style>
+
+<div class="wrap" id="screenFish">
+  <header>
+    <div class="titleblock">
+      <h1>Neural Network <em>Simulator</em></h1>
+      <p class="lede" id="fishLede">24 fish, one predator. Every fish steers with a small neural network. Each level hands the networks one more sense, and evolution works out what to do with it.</p>
+    </div>
+    <div class="headbtns">
+      <div class="seg" role="group" aria-label="Whose brain">
+        <button class="btn" type="button" data-side="fish" aria-pressed="true">Fish's side</button>
+        <button class="btn" type="button" data-side="pred" aria-pressed="false">Predator's side</button>
+      </div>
+      <button class="btn primary" id="toGame" type="button">Game Bot →</button>
+    </div>
+  </header>
+
+  <nav class="levels" id="levels" aria-label="Levels"></nav>
+
+  <div class="stage">
+    <div class="tankcol">
+      <div class="tankwrap">
+      <div class="tank" id="tank">
+        <canvas id="sea" aria-label="Tank simulation: fish fleeing a predator"></canvas>
+        <div class="hud">
+          <span class="pill" id="hudL">Level 1 · Blind</span>
+          <span class="pill"><b id="hudSurv">24</b> alive · <span id="hudClock">0:00</span></span>
+        </div>
+        <div class="overlay" id="trainOv" hidden>
+          <div class="box">
+            <div class="big">Evolving</div>
+            <div class="hint" id="trainTxt">Generation 0 of 100</div>
+            <div class="bar"><i id="trainBar"></i></div>
+            <div class="hint">Each generation: three rounds against the predator, the longest survivors breed, their children mutate.</div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="pauseBtn" type="button" aria-pressed="false">Pause</button>
+        <div class="seg" role="group" aria-label="Speed">
+          <button class="btn" type="button" data-speed="1" aria-pressed="true">1×</button>
+          <button class="btn" type="button" data-speed="2" aria-pressed="false">2×</button>
+          <button class="btn" type="button" data-speed="4" aria-pressed="false">4×</button>
+        </div>
+        <button class="btn" id="roundBtn" type="button">New round</button>
+        <span class="spacer"></span>
+        <span class="hint" id="fishHint">Click a fish to watch its brain · keys 1–6 or ← → to change level</span>
+      </div>
+    </div>
+
+    <aside>
+      <div class="sec">
+        <div class="eyebrow"><span>This round</span><b id="roundNo">Round 1</b></div>
+        <div class="stats">
+          <div class="stat"><div class="v" id="sSurv">24<small>/24</small></div><div class="k">survivors</div></div>
+          <div class="stat"><div class="v" id="sLunge">0</div><div class="k">shark lunges</div></div>
+          <div class="stat"><div class="v" id="sMiss">0</div><div class="k" id="sMissK">lunges dodged</div></div>
+        </div>
+        <div class="recent" id="recent">Time to eat every fish on this level: no finished rounds yet</div>
+      </div>
+      <hr>
+      <div class="sec">
+        <div class="eyebrow"><span>Brain of</span><b id="brainWho">fish #0</b></div>
+        <canvas id="brain"></canvas>
+        <div class="legend"><span><i style="background:var(--fish)"></i>pushes up</span><span><i style="background:var(--neg)"></i>pushes down</span><span>brightness = signal now</span></div>
+      </div>
+      <hr>
+      <div class="sec">
+        <div class="eyebrow"><span>Evolution record</span><b id="evoGen">no training</b></div>
+        <canvas id="evo"></canvas>
+        <p class="note" id="evoNote"></p>
+        <div class="controls">
+          <button class="btn" id="retrainBtn" type="button">Evolve this level again, live</button>
+          <button class="btn" id="resetBtn" type="button" hidden>Restore original brains</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+
+<div class="wrap" id="screenGame" hidden>
+  <header>
+    <div class="titleblock">
+      <h1>Game <em class="botc">Bot</em></h1>
+      <p class="lede">Your tank against a bot in a maze. Bullets bounce off walls, back at whoever fired them too. The bot drives with an evolved neural network, and each level gives it one more sense.</p>
+    </div>
+    <button class="btn" id="toFish" type="button">← Neural Network Simulator</button>
+  </header>
+
+  <nav class="levels" id="glevels" aria-label="Bot levels"></nav>
+
+  <div class="stage">
+    <div class="tankcol">
+      <div class="arena" id="arena">
+        <canvas id="gcv" aria-label="Maze tank battle"></canvas>
+        <div class="hud">
+          <span class="pill" id="gHudL">Bot level 1 · Blind</span>
+          <span class="pill"><span class="you">You</span> <b id="gYou">0</b> – <b id="gBot">0</b> <span class="botc">Bot</span></span>
+        </div>
+        <div class="overlay" id="gOv">
+          <div class="box">
+            <div class="big" id="gOvT">Ready</div>
+            <div class="hint" id="gOvS">You are the orange tank. Arrows drive, Space fires.</div>
+            <button class="btn primary" id="gStart" type="button">Start · Space</button>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <span class="keys"><kbd>↑</kbd><kbd>↓</kbd> drive <kbd>←</kbd><kbd>→</kbd> turn <kbd>Space</kbd> fire</span>
+        <span class="spacer"></span>
+        <button class="btn" id="gSenses" type="button" aria-pressed="true">Bot senses shown</button>
+        <button class="btn" id="gNew" type="button">New maze</button>
+      </div>
+      <div class="touchpad" id="touchpad">
+        <div class="dpad">
+          <button class="btn" type="button" data-k="ArrowUp" aria-label="Forward">▲</button>
+          <button class="btn" type="button" data-k="ArrowLeft" aria-label="Turn left">◀</button>
+          <button class="btn" type="button" data-k="ArrowDown" aria-label="Reverse">▼</button>
+          <button class="btn" type="button" data-k="ArrowRight" aria-label="Turn right">▶</button>
+        </div>
+        <button class="btn primary firebtn" type="button" data-k=" ">Fire</button>
+      </div>
+    </div>
+
+    <aside>
+      <div class="sec">
+        <div class="eyebrow"><span>This round</span><b id="gRound">Round 1</b></div>
+        <div class="stats">
+          <div class="stat"><div class="v" id="gTime">0:00</div><div class="k">time</div></div>
+          <div class="stat"><div class="v" id="gYouShots">0</div><div class="k">your shots</div></div>
+          <div class="stat"><div class="v" id="gBotShots">0</div><div class="k">bot shots</div></div>
+        </div>
+        <p class="note" id="gKnows"></p>
+      </div>
+      <hr>
+      <div class="sec">
+        <div class="eyebrow"><span>Brain of</span><b>the bot</b></div>
+        <canvas id="gbrain"></canvas>
+        <div class="legend"><span><i style="background:var(--fish)"></i>pushes up</span><span><i style="background:var(--neg)"></i>pushes down</span><span>brightness = signal now</span></div>
+      </div>
+      <hr>
+      <div class="sec">
+        <div class="eyebrow"><span>Evolution record</span><b id="gEvoGen">no training</b></div>
+        <canvas id="gevo"></canvas>
+        <p class="note" id="gEvoNote"></p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer class="credit">
+  <a href="https://modpitech.com" target="_blank" rel="noopener">built by <span class="mark">√1M</span></a>
+</footer>
+
+<script>
+window.SCREEN = 'fish';
+// ---- Shoal Brain simulation core (shared by Node tests and the page) ----
+const SIM = (() => {
+  const W = 960, H = 600;
+  const P = {
+    nFish: 24, nHidden: 6,
+    fishCruise: 1.25, fishBurst: 2.6, fishTurn: 0.12,
+    stamDrain: 0.012, stamRegen: 0.004,
+    predCruise: 2.1, predTurn: 0.06,
+    lungeMin: 70, lungeMax: 140, lungeAngle: 0.35, lungeSpeed: 5.6, lungeTicks: 28, lungeTurn: 0.005,
+    coolTicks: 45, coolSpeed: 1.0, eatTicks: 12,
+    catchR: 13, sense: 300, wallSense: 90,
+    roundTicks: 2100,
+  };
+
+  const LEVELS = [
+    { name: 'Blind',      inputs: ['bias'] },
+    { name: 'Proximity',  inputs: ['bias', 'distance'] },
+    { name: 'Direction',  inputs: ['bias', 'distance', 'dir x', 'dir y'] },
+    { name: 'Intent',     inputs: ['bias', 'distance', 'dir x', 'dir y', 'closing'] },
+    { name: 'Walls',      inputs: ['bias', 'distance', 'dir x', 'dir y', 'closing', 'wall x', 'wall y'] },
+    { name: 'Full sense', inputs: ['bias', 'distance', 'dir x', 'dir y', 'closing', 'wall x', 'wall y', 'aim x', 'aim y'] },
+  ];
+
+  function rng(seed) {
+    let a = seed >>> 0;
+    const r = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    r.gauss = () => { let u = 0, v = 0; while (!u) u = r(); v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    return r;
+  }
+
+  const genomeSize = nIn => nIn * P.nHidden + P.nHidden * 2 + nIn * 2;
+  function randomGenome(nIn, R, scale) {
+    const g = new Float32Array(genomeSize(nIn));
+    for (let i = 0; i < g.length; i++) g[i] = R.gauss() * scale;
+    return g;
+  }
+
+  // forward pass; fills act = {inp, hid, out}
+  function think(g, inp, act) {
+    const nIn = inp.length, nH = P.nHidden;
+    for (let h = 0; h < nH; h++) {
+      let s = 0;
+      for (let i = 0; i < nIn; i++) s += inp[i] * g[i * nH + h];
+      act.hid[h] = Math.tanh(s);
+    }
+    const o = nIn * nH;
+    for (let k = 0; k < 2; k++) {
+      let s = 0;
+      for (let h = 0; h < nH; h++) s += act.hid[h] * g[o + h * 2 + k];
+      const o2 = o + nH * 2;
+      for (let i = 0; i < nIn; i++) s += inp[i] * g[o2 + i * 2 + k];
+      act.out[k] = Math.tanh(s);
+    }
+  }
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const wrapAng = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+
+  function makeWorld(level, genomes, seed) {
+    const R = rng(seed);
+    const nIn = LEVELS[level].inputs.length;
+    const fish = genomes.map((g, i) => {
+      // spawn away from predator start (left-center region)
+      let x, y;
+      do { x = 40 + R() * (W - 80); y = 40 + R() * (H - 80); } while (Math.hypot(x - 120, y - H / 2) < 260);
+      return {
+        id: i, g, x, y, h: R() * Math.PI * 2, v: P.fishCruise, stam: 1,
+        alive: true, t: 0, act: { inp: new Float32Array(nIn), hid: new Float32Array(P.nHidden), out: new Float32Array(2) },
+        vx: 0, vy: 0, burst: 0,
+      };
+    });
+    const pred = { x: 120, y: H / 2, h: 0, v: P.predCruise, mode: 'chase', mt: 0, target: -1, retarget: 0, vx: 0, vy: 0, lungeAt: 80 };
+    return { level, nIn, fish, pred, R, tick: 0, caught: 0, done: false, events: [] };
+  }
+
+  function sense(w, f) {
+    const p = w.pred, inp = f.act.inp, L = w.level;
+    const ch = Math.cos(f.h), sh = Math.sin(f.h);
+    const local = (x, y, k) => { inp[k] = x * ch + y * sh; inp[k + 1] = -x * sh + y * ch; };
+    inp[0] = 1;
+    if (L < 1) return;
+    const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy) || 1e-6;
+    const vis = d < P.sense ? 1 : 0;
+    inp[1] = vis * (1 - d / P.sense);
+    if (L < 2) return;
+    const ux = dx / d, uy = dy / d;
+    local(ux * vis, uy * vis, 2);
+    if (L < 3) return;
+    const closing = ((p.vx - f.vx) * ux + (p.vy - f.vy) * uy) / P.lungeSpeed;
+    inp[4] = vis * clamp(closing, -1, 1);
+    if (L < 4) return;
+    const ws = P.wallSense;
+    const wx = Math.max(0, 1 - f.x / ws) - Math.max(0, 1 - (W - f.x) / ws);
+    const wy = Math.max(0, 1 - f.y / ws) - Math.max(0, 1 - (H - f.y) / ws);
+    local(wx, wy, 5);
+    if (L < 5) return;
+    const ax = Math.cos(p.h), ay = Math.sin(p.h);
+    const along = ux * ax + uy * ay;
+    let lx = ux - along * ax, ly = uy - along * ay;
+    const lm = Math.hypot(lx, ly);
+    if (lm > 1e-6) { lx /= lm; ly /= lm; } else { lx = -ay; ly = ax; }
+    local(lx * vis, ly * vis, 7);
+  }
+
+  // ---------- predator's side: the shark gets the brain ----------
+  const PRED_LEVELS = [
+    { name: 'Blind',      tag: '[bias]',             inputs: ['bias'] },
+    { name: 'Scent',      tag: '[scent]',            inputs: ['bias', 'scent'] },
+    { name: 'Direction',  tag: '[dir x, dir y]',     inputs: ['bias', 'scent', 'dir x', 'dir y'] },
+    { name: 'Lead',       tag: '[swim x, swim y]',   inputs: ['bias', 'scent', 'dir x', 'dir y', 'swim x', 'swim y'] },
+    { name: 'Walls',      tag: '[wall]',             inputs: ['bias', 'scent', 'dir x', 'dir y', 'swim x', 'swim y', 'wall x', 'wall y'] },
+    { name: 'Full sense', tag: '[school x, school y]', inputs: ['bias', 'scent', 'dir x', 'dir y', 'swim x', 'swim y', 'wall x', 'wall y', 'school x', 'school y'] },
+  ];
+  const PH = 8, PO = 3, PRED_SENSE = 400, PRED_WALL = 110;
+  const predGenomeSize = nIn => nIn * PH + PH * PO + nIn * PO;
+  function predRandom(nIn, R, s) { const g = new Float32Array(predGenomeSize(nIn)); for (let i = 0; i < g.length; i++) g[i] = R.gauss() * s; return g; }
+  function predThink(g, act) {
+    const inp = act.inp, nIn = inp.length;
+    for (let h = 0; h < PH; h++) { let s = 0; for (let i = 0; i < nIn; i++) s += inp[i] * g[i * PH + h]; act.hid[h] = Math.tanh(s); }
+    const o = nIn * PH, o2 = o + PH * PO;
+    for (let k = 0; k < PO; k++) {
+      let s = 0;
+      for (let h = 0; h < PH; h++) s += act.hid[h] * g[o + h * PO + k];
+      for (let i = 0; i < nIn; i++) s += inp[i] * g[o2 + i * PO + k];
+      act.out[k] = Math.tanh(s);
+    }
+  }
+  function predGrow(g, nInOld, nIn) {
+    if (nInOld === nIn) return g;
+    const out = new Float32Array(predGenomeSize(nIn));
+    for (let i = 0; i < nInOld; i++) for (let h = 0; h < PH; h++) out[i * PH + h] = g[i * PH + h];
+    const oO = nInOld * PH, oN = nIn * PH;
+    for (let j = 0; j < PH * PO; j++) out[oN + j] = g[oO + j];
+    for (let j = 0; j < nInOld * PO; j++) out[oN + PH * PO + j] = g[oO + PH * PO + j];
+    return out;
+  }
+  function makePredBrain(g, L) {
+    const nIn = PRED_LEVELS[L].inputs.length;
+    return { g, L, act: { inp: new Float32Array(nIn), hid: new Float32Array(PH), out: new Float32Array(PO) }, dbg: {} };
+  }
+  function predSense(w, b) {
+    const p = w.pred, inp = b.act.inp, L = b.L, ch = Math.cos(p.h), sh = Math.sin(p.h);
+    const local = (x, y, k) => { inp[k] = x * ch + y * sh; inp[k + 1] = -x * sh + y * ch; };
+    inp[0] = 1; b.dbg = {};
+    if (L < 1) return;
+    let near = null, nd = 1e9;
+    for (const f of w.fish) if (f.alive) { const d = Math.hypot(f.x - p.x, f.y - p.y); if (d < nd) { nd = d; near = f; } }
+    const vis = near && nd < PRED_SENSE ? 1 : 0;
+    inp[1] = vis ? 1 - nd / PRED_SENSE : 0;
+    b.dbg.near = vis ? near : null;
+    if (L < 2) return;
+    if (vis) local((near.x - p.x) / (nd || 1), (near.y - p.y) / (nd || 1), 2); else { inp[2] = 0; inp[3] = 0; }
+    if (L < 3) return;
+    if (vis) local(near.vx / P.fishBurst, near.vy / P.fishBurst, 4); else { inp[4] = 0; inp[5] = 0; }
+    if (L < 4) return;
+    const ws = PRED_WALL;
+    const wx = Math.max(0, 1 - p.x / ws) - Math.max(0, 1 - (W - p.x) / ws);
+    const wy = Math.max(0, 1 - p.y / ws) - Math.max(0, 1 - (H - p.y) / ws);
+    local(wx, wy, 6);
+    if (L < 5) return;
+    // the whole school, anywhere in the tank: nearer fish count more
+    let sx = 0, sy = 0;
+    for (const f of w.fish) {
+      if (!f.alive) continue;
+      const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy);
+      if (d < 1) continue;
+      const k = 1 / (1 + d / 150); sx += dx / d * k; sy += dy / d * k;
+    }
+    const m = Math.hypot(sx, sy);
+    if (m > 1e-6) { local(sx / m, sy / m, 8); b.dbg.school = [sx / m, sy / m, 1]; } else { inp[8] = 0; inp[9] = 0; }
+  }
+  function stepPredBrain(w) {
+    const R = w.R, p = w.pred, b = w.predBrain;
+    predSense(w, b); predThink(b.g, b.act);
+    const turn = b.act.out[0], thrust = b.act.out[1], lunge = b.act.out[2];
+    let turnLim = P.predTurn, speed = P.predCruise * (0.65 + 0.35 * thrust);
+    if (p.mode === 'lunge') { turnLim = P.lungeTurn; speed = P.lungeSpeed; if (--p.mt <= 0) { p.mode = 'cool'; p.mt = P.coolTicks; w.events.push({ type: 'miss', x: p.x, y: p.y, t: w.tick }); } }
+    else if (p.mode === 'cool' || p.mode === 'eat') { speed = p.mode === 'eat' ? 0.5 : P.coolSpeed; if (--p.mt <= 0) p.mode = 'chase'; }
+    if (p.mode !== 'eat') p.h = wrapAng(p.h + clamp(turn, -1, 1) * turnLim + (R() - 0.5) * 0.02);
+    if (p.mode === 'chase' && lunge > 0.5) { p.mode = 'lunge'; p.mt = P.lungeTicks; w.events.push({ type: 'lunge', t: w.tick }); }
+    p.v += (speed - p.v) * (p.mode === 'lunge' ? 0.5 : 0.12);
+    p.vx = Math.cos(p.h) * p.v; p.vy = Math.sin(p.h) * p.v;
+    const nx = p.x + p.vx, ny = p.y + p.vy;
+    p.x = clamp(nx, 10, W - 10); p.y = clamp(ny, 10, H - 10);
+    if (p.x !== nx || p.y !== ny) p.v *= 0.6; // the shark scrapes walls too
+  }
+
+  function step(w) {
+    if (w.done) return;
+    const R = w.R, p = w.pred;
+    // ---- fish ----
+    for (const f of w.fish) {
+      if (!f.alive) continue;
+      sense(w, f);
+      if (f.policy) f.policy(f.act.inp, f.act.out); else think(f.g, f.act.inp, f.act);
+      const turn = f.act.out[0], thrust = f.act.out[1];
+      f.h = wrapAng(f.h + turn * P.fishTurn + (R() - 0.5) * 0.06);
+      let target, burst = 0;
+      if (thrust > 0 && f.stam > 0.02) { burst = thrust; target = P.fishCruise + (P.fishBurst - P.fishCruise) * thrust; }
+      else target = P.fishCruise * (1 + 0.45 * Math.min(thrust, 0));
+      f.burst = burst;
+      f.stam = clamp(f.stam - burst * P.stamDrain + (1 - burst) * P.stamRegen, 0, 1);
+      f.v += (target - f.v) * 0.2;
+      f.vx = Math.cos(f.h) * f.v; f.vy = Math.sin(f.h) * f.v;
+      const nx = f.x + f.vx, ny = f.y + f.vy;
+      f.x = clamp(nx, 6, W - 6); f.y = clamp(ny, 6, H - 6);
+      if (f.x !== nx || f.y !== ny) f.v *= 0.55; // scraping a wall kills momentum
+      f.t++;
+    }
+    // ---- predator ----
+    if (w.predBrain) stepPredBrain(w);
+    else {
+    if (p.retarget-- <= 0 || p.target < 0 || !w.fish[p.target].alive) {
+      let best = -1, bd = 1e9;
+      for (const f of w.fish) {
+        if (!f.alive) continue;
+        const dx = f.x - p.x, dy = f.y - p.y;
+        const ang = Math.abs(wrapAng(Math.atan2(dy, dx) - p.h));
+        const score = Math.hypot(dx, dy) * (1 + 0.6 * ang / Math.PI);
+        if (score < bd) { bd = score; best = f.id; }
+      }
+      p.target = best; p.retarget = 24;
+    }
+    const tf = p.target >= 0 ? w.fish[p.target] : null;
+    let turnLim = P.predTurn, speed = P.predCruise;
+    if (p.mode === 'lunge') { turnLim = P.lungeTurn; speed = P.lungeSpeed; if (--p.mt <= 0) { p.mode = 'cool'; p.mt = P.coolTicks; w.events.push({ type: 'miss', x: p.x, y: p.y, t: w.tick }); } }
+    else if (p.mode === 'cool' || p.mode === 'eat') { speed = p.mode === 'eat' ? 0.5 : P.coolSpeed; if (--p.mt <= 0) { p.mode = 'chase'; p.lungeAt = P.lungeMin + R() * (P.lungeMax - P.lungeMin); } }
+    if (tf) {
+      const dx = tf.x - p.x, dy = tf.y - p.y, d = Math.hypot(dx, dy);
+      const diff = wrapAng(Math.atan2(dy, dx) - p.h);
+      if (p.mode !== 'eat') p.h = wrapAng(p.h + clamp(diff, -turnLim, turnLim));
+      if (p.mode === 'chase' && d < p.lungeAt && Math.abs(diff) < P.lungeAngle) {
+        p.mode = 'lunge'; p.mt = P.lungeTicks; w.events.push({ type: 'lunge', t: w.tick });
+      }
+    }
+    p.v += (speed - p.v) * (p.mode === 'lunge' ? 0.5 : 0.12);
+    p.vx = Math.cos(p.h) * p.v; p.vy = Math.sin(p.h) * p.v;
+    p.x = clamp(p.x + p.vx, 10, W - 10); p.y = clamp(p.y + p.vy, 10, H - 10);
+    }
+    // catch
+    const mx = p.x + Math.cos(p.h) * 16, my = p.y + Math.sin(p.h) * 16;
+    if (p.mode !== 'eat') for (const f of w.fish) {
+      if (f.alive && Math.hypot(f.x - mx, f.y - my) < P.catchR) {
+        f.alive = false; w.caught++; w.events.push({ type: 'catch', id: f.id, x: f.x, y: f.y, t: w.tick });
+        p.mode = 'eat'; p.mt = P.eatTicks; p.retarget = 0;
+        break;
+      }
+    }
+    w.tick++;
+    if ((!w.endless && w.tick >= P.roundTicks) || w.caught >= w.fish.length) w.done = true;
+  }
+
+  function fitness(w) {
+    return w.fish.map(f => f.t + (f.alive ? 400 : 0));
+  }
+
+  function nextGen(genomes, fit, R) {
+    const n = genomes.length;
+    const idx = [...genomes.keys()].sort((a, b) => fit[b] - fit[a]);
+    const out = [];
+    const elite = 6;
+    for (let i = 0; i < elite; i++) out.push(genomes[idx[i]]);
+    const pick = () => { let b = idx[Math.floor(R() * n * 0.5)]; for (let k = 0; k < 2; k++) { const c = idx[Math.floor(R() * n * 0.5)]; if (fit[c] > fit[b]) b = c; } return genomes[b]; };
+    while (out.length < n) {
+      const a = pick(), b = pick();
+      const c = new Float32Array(a.length);
+      const cross = R() < 0.5;
+      for (let i = 0; i < c.length; i++) {
+        c[i] = cross && R() < 0.5 ? b[i] : a[i];
+        if (R() < 0.12) c[i] += R.gauss() * 0.35;
+        if (R() < 0.01) c[i] = R.gauss();
+      }
+      out.push(c);
+    }
+    return out;
+  }
+
+  // carry a genome to a level with more inputs: old weights kept, new input weights start at zero
+  function growGenome(g, nInOld, nIn) {
+    if (nInOld === nIn) return g;
+    const nH = P.nHidden, out = new Float32Array(genomeSize(nIn));
+    for (let i = 0; i < nInOld; i++) for (let h = 0; h < nH; h++) out[i * nH + h] = g[i * nH + h];
+    const oOld = nInOld * nH, oNew = nIn * nH;
+    for (let j = 0; j < nH * 2; j++) out[oNew + j] = g[oOld + j];
+    for (let j = 0; j < nInOld * 2; j++) out[oNew + nH * 2 + j] = g[oOld + nH * 2 + j];
+    return out;
+  }
+
+  // fish brains fixed (fishLevel), the shark's brain is the one being tested
+  function predRound(fishLevel, fishPop, g, L, seed, ticks) {
+    const w = makeWorld(fishLevel, fishPop, seed);
+    w.predBrain = makePredBrain(g, L);
+    const T = ticks || P.roundTicks; let fit = 0;
+    while (!w.done && w.tick < T) { const c = w.caught; step(w); if (w.caught > c) fit += 1 + 0.5 * (T - w.tick) / T; }
+    if (w.done) fit += 10 + 20 * (T - w.tick) / T; // clearing the whole tank is what counts
+    return { caught: w.caught, fit, w };
+  }
+
+  function runRound(level, genomes, seed) {
+    const w = makeWorld(level, genomes, seed);
+    while (!w.done) step(w);
+    return w;
+  }
+
+  return { W, H, P, LEVELS, rng, genomeSize, randomGenome, think, growGenome, makeWorld, PRED_LEVELS, predGenomeSize, predRandom, predThink, predGrow, makePredBrain, predSense, predRound, step, fitness, nextGen, runRound };
+})();
+
+
+const DATA = {"showcase":[60006,60021,60030,60001,60011,60001],"levels":[{"gen":0,"score":2.92,"curve":[],"pop":[[-0.007,0.075,-0.097,-0.282,0.045,0.2,-0.235,-0.215,-0.238,0.211,-0.072,0.126,-0.099,-0.082,0.07,0.116,0.044,-0.039,0.024,-0.004],[0.08,-0.114,-0.075,0.069,0.292,-0.135,0.011,-0.161,-0.056,0.251,0.391,0.149,0.124,0.167,0.033,0.094,-0.372,0.062,0.092,0.082],[-0.14,-0.194,-0.011,-0.065,-0.048,-0.316,-0.145,0.066,-0.144,0.045,0.149,0.11,-0.092,-0.205,0.212,0.062,0.033,-0.046,-0.043,0.204],[0.027,-0.165,0.062,0.006,-0.122,-0.001,-0.143,0.132,0.103,0.026,-0.163,-0.093,-0.119,0.122,0.189,-0.106,-0.058,-0.193,0.107,0.188],[0.025,0.092,-0.024,0.077,-0.106,-0.005,-0.173,0.004,-0.191,0.021,-0.156,-0.134,0.015,0.022,-0.085,0.362,0.075,0.013,0.009,0.131],[-0.17,0.329,-0.129,-0.153,0.041,-0.004,0.001,-0.158,0.178,-0.06,-0.179,-0.022,0.019,0.041,-0.264,0.168,-0.016,-0.062,-0.178,0.07],[-0.129,0.019,0.099,0.057,-0.187,0.03,-0.137,-0.1,-0.119,0.108,-0.07,0.025,0.111,0.246,0.143,-0.19,0.041,-0.011,-0.048,0.075],[0.022,-0.016,-0.289,0.048,-0.247,0.054,0.018,-0.272,0.254,0.049,0.17,-0.072,-0.082,0.264,0.055,-0.049,-0.292,-0.035,0.074,0.038],[0.02,-0.102,-0.066,0.006,0.128,-0.058,-0.015,-0.127,-0.04,0.106,0.119,0.079,-0.013,-0.135,0.27,-0.335,0.083,-0.027,-0.061,0.048],[0.139,0.02,-0.047,0.021,0.098,0.042,0.192,0.068,-0.136,0.132,0.044,0.059,0.071,-0.147,-0.06,0.128,0.061,-0.006,-0.095,-0.043],[-0.156,0.145,0.054,0.014,0.124,0.07,0.141,0.056,-0.134,-0.098,0.047,0.314,-0.034,-0.01,-0.018,-0.279,-0.071,0.211,0.008,-0.004],[-0.014,-0.199,-0.025,0.013,-0.129,-0.101,0.459,-0.005,-0.034,-0.072,-0.097,-0.134,-0.041,0.152,0.014,0.176,0.295,0.221,0.216,0.071],[-0.022,0.218,0.038,0.013,0.044,-0.128,-0.192,-0.087,0.186,0.064,0.173,-0.09,-0.173,-0.33,-0.198,0.027,-0.165,0.121,0.124,-0.072],[0,0.016,-0.118,0.086,0.25,0.028,-0.179,0.146,-0.246,0.085,0.076,0.162,0.061,-0.328,-0.01,0.178,0.223,-0.086,0.073,0.012],[-0.201,0.025,0.076,0.127,0.044,0.084,0.009,-0.285,-0.126,-0.222,-0.091,0.323,0.132,0.029,0.212,-0.067,0.259,-0.074,-0.047,-0.211],[-0.405,-0.229,-0.11,0.069,0.061,-0.117,-0.159,0.012,-0.05,-0.173,0.083,-0.098,0.163,-0.137,0.079,-0.084,0.196,0.214,-0.218,0.081],[0.23,-0.099,-0.022,-0.128,-0.09,-0.084,-0.142,0.068,0.071,0.077,0.135,-0.107,0.256,-0.008,0.06,-0.046,0.028,-0.178,-0.051,-0.125],[0.122,-0.01,-0.059,-0.021,-0.078,-0.081,0.012,-0.324,-0.086,-0.171,0.038,-0.157,0.058,0.108,-0.182,-0.012,0.171,0.351,0.035,0.008],[-0.103,0.05,0.112,-0.037,-0.02,0.298,-0.055,-0.042,0.072,-0.042,0.169,-0.044,0.129,0.118,-0.085,-0.001,0.275,0.175,-0.084,-0.064],[0.107,-0.043,0.15,0.057,-0.019,0.051,0.24,-0.104,0.178,0.034,0.049,0.165,0.023,-0.036,0.452,0.176,0.124,-0.098,0.237,0.182],[0.019,-0.227,0.067,-0.057,-0.03,-0.17,-0.003,0.017,-0.077,0.057,-0.185,-0.12,0.005,-0.158,0.009,-0.047,0.279,0.03,-0.036,0.092],[0.218,0.058,-0.365,0.024,-0.069,0.159,-0.069,0.027,-0.239,-0.012,-0.27,-0.182,0.029,0.214,-0.076,-0.094,0.04,0.256,-0.281,0.211],[-0.082,-0.016,-0.132,0.1,-0.232,-0.167,0.185,-0.298,0.118,-0.012,-0.175,-0.032,0.074,-0.04,0.085,-0.255,0.001,-0.109,0.078,-0.017],[-0.356,0.161,0.057,0.138,-0.074,0.152,-0.129,-0.048,0.228,0.142,0.183,-0.175,0.219,0.037,-0.009,-0.295,0.16,0.083,0.142,0.061]]},{"gen":120,"score":9,"curve":[2.7,5,2.7,1.3,3,3.7,4.3,3,7,2,8.3,4.7,3,6.3,12,6,2.7,5,3.7,8.3,7,4,7.7,3,4.7,3.7,10.7,6,4.3,6,6.7,9.7,3.3,6,2.3,5,8.3,5.7,8.3,4.3,7,6,6.3,8,6,9,10.3,5.7,6.3,8,4.7,7.3,4.3,4.3,7,5.7,4.7,10.7,6,5.3,5.3,11,8.7,4.3,1.3,4,4,8.7,6.7,6.3,10.7,7,14.3,6.3,10,6.3,9,7,4.3,5.3,10.3,8.3,3,4,8.3,4.7,11.7,6.7,4.3,8,2,7,4.7,5.3,6.3,4.7,8.7,4.7,8.3,10.3,3.7,3.7,5,2.3,5.7,6,4,7,6,3.3,9,15,3.7,2,13.3,5,7,8,7,8.3],"pop":[[1.069,0.029,0.854,1.445,-0.654,0.459,1.724,1.354,1.465,-0.304,1.286,-0.279,0.374,0.63,-0.942,1.004,-0.669,0.223,-0.119,-0.111,-0.729,2.721,0.423,0.525,-0.846,2.046,-0.073,1.444],[0.338,0.008,0.854,1.445,-0.315,0.006,2.002,0.579,1.027,-0.717,1.141,0.472,0.807,0.63,-0.237,0.103,-0.669,0.315,0.12,0.21,-0.729,2.721,0.423,-0.422,-0.647,2.521,-0.607,0.892],[1.48,0.029,0.854,1.833,-0.468,1.321,1.724,1.367,1.339,-0.304,0.785,0.264,0.697,0.537,-0.851,0.746,-0.669,-0.289,-0.14,0.21,-1.151,2.721,0.423,0.525,-0.846,1.773,-0.484,1.5],[0.338,0.008,0.854,0.796,-0.954,0.459,2.002,0.654,1.35,-0.717,1.141,0.472,0.374,-0.253,-0.237,1.004,-0.669,0.315,-0.119,0.21,-0.473,2.721,0.423,0.571,-0.862,2.485,-0.142,1.444],[0.206,0.029,0.9,1.012,-0.954,0.459,1.796,1.194,2.093,-0.304,1.286,0.472,0.374,-0.103,-0.237,1.004,-0.669,0.315,-0.119,0.21,-0.729,2.721,0.423,0.571,-0.862,2.485,-0.073,1.444],[1.48,0.029,0.6,1.833,-0.619,0.459,1.724,1.367,1.339,-0.304,0.785,0.264,0.697,0.537,-0.851,0.389,-0.669,-0.289,-0.063,0.21,-0.737,2.721,0.423,0.525,-0.846,1.773,-0.373,1.343],[1.284,0.008,0.854,1.445,-0.315,0.006,2.002,0.654,1.027,-0.672,1.141,0.472,0.697,0.63,-0.237,0.094,-0.669,0.315,0.12,0.21,-1.442,2.721,0.423,-0.255,-0.647,2.453,-0.607,0.892],[0.338,0.008,0.854,1.445,-0.005,0.432,2.002,1.287,1.027,-0.717,1.264,0.472,0.807,0.63,-0.237,0.103,-0.669,0.315,0.12,0.21,-0.729,2.721,0.423,-0.142,-0.647,2.561,-0.607,0.892],[0.206,0.029,0.854,1.445,-0.468,0.459,1.724,1.2,1.339,-0.304,0.785,0.264,0.374,0.537,-0.237,0.746,-0.669,-0.289,-0.14,-0.111,-0.729,2.721,-0.232,0.571,-0.846,2.577,-0.073,1.444],[0.404,0.008,0.854,0.796,-0.185,0.459,0.426,0.654,1.35,-0.717,1.141,0.472,0.374,-0.253,-0.237,1.004,-0.669,0.315,-0.083,0.21,-0.473,2.721,0.426,0.571,-0.862,2.485,-0.142,1.444],[1.357,0.029,0.9,1.012,-0.468,0.459,1.724,1.367,0.453,-0.304,0.785,0.264,0.374,-0.103,-0.237,0.746,-0.669,-0.289,-0.119,0.21,-0.729,2.721,0.423,0.571,-0.862,2.485,-0.484,1.343],[1.48,0.029,0.6,1.833,-0.619,0.033,1.724,1.367,1.339,-0.248,0.785,0.264,0.697,0.537,-0.851,0.389,-0.669,-0.289,-0.063,0.21,-0.737,2.721,0.423,0.525,-0.846,1.773,-0.136,1.343],[0.206,0.029,0.9,1.012,-0.954,0.459,1.796,1.095,2.093,-0.304,1.286,0.472,0.806,0.74,-0.237,1.32,-0.311,0.315,-0.119,-0.08,-0.729,-2.616,0.423,0.571,-0.862,1.818,-0.073,1.444],[1.48,0.029,0.6,1.833,-0.755,0.459,1.724,1.367,1.498,-0.304,0.785,0.264,0.653,0.537,-0.851,0.687,-0.669,-0.548,0.746,0.21,-0.737,2.721,0.423,0.525,-0.846,1.773,-0.373,1.343],[1.069,0.029,0.854,1.445,-0.654,0.459,1.724,1.354,1.465,-0.304,1.286,-0.279,0.374,0.63,-0.942,1.004,-0.669,0.223,-0.119,-0.111,-0.203,2.721,0.423,0.525,-0.846,2.046,-0.073,1.444],[1.069,0.029,0.854,1.445,-0.654,0.459,1.724,1.354,1.465,-0.304,0.912,0.064,0.472,0.63,-0.942,1.004,-0.669,0.223,-0.119,-0.111,-0.923,2.721,0.423,0.525,-0.846,2.046,-0.073,1.444],[1.48,0.029,0.614,1.833,-0.315,1.321,-0.643,1.607,1.339,-0.397,1.141,0.264,0.697,0.537,-0.851,0.595,-0.669,0.315,-0.14,0.21,-1.151,2.721,0.423,-0.422,-0.338,1.773,-0.607,0.892],[1.48,0.029,0.6,1.833,-0.468,1.321,1.724,1.367,1.339,-0.304,0.785,0.264,0.697,0.537,-0.851,0.321,-0.669,-0.289,-0.14,0.21,-0.629,2.721,0.423,0.525,-1.744,1.773,-0.373,1.5],[1.069,0.029,0.854,1.445,-0.231,0.006,1.724,0.636,1.171,-0.679,1.141,-0.279,0.374,0.63,-0.942,1.004,-0.669,0.223,0.12,-0.111,-0.729,2.477,0.423,0.525,-0.647,2.521,-0.073,0.892],[0.944,0.507,0.854,0.796,-0.954,0.459,2.002,0.654,1.35,-0.717,1.141,0.472,0.374,-0.253,-0.237,1.004,-0.669,0.315,-0.119,0.21,-0.473,2.82,0.423,0.384,-0.862,2.485,-0.142,1.584],[0.338,0.008,0.854,1.445,-0.373,0.006,2.002,0.904,1.294,-0.717,1.141,0.472,0.807,0.63,-0.237,0.103,-0.669,0.462,0.12,0.21,-0.729,2.721,0.423,0.198,-0.647,2.427,-0.607,0.892],[0.338,0.008,0.854,1.445,-0.315,0.006,2.002,0.579,1.027,-0.717,1.141,0.472,0.807,0.63,-0.237,0.103,-1.478,0.315,-0.509,0.21,-0.729,2.721,0.354,-0.422,-0.647,2.839,-0.607,0.892],[1.48,0.029,0.854,1.833,-0.468,1.877,1.724,1.145,1.339,-0.304,0.921,0.264,0.697,0.537,-0.851,0.746,-0.669,-0.289,-0.14,0.21,-1.151,2.721,-0.086,1.385,-0.846,1.773,-0.71,1.5],[1.48,0.029,0.6,1.833,-0.619,0.459,1.687,1.367,1.339,-0.304,0.785,0.264,0.697,0.537,-0.851,0.715,-0.669,-0.289,-0.063,0.21,-0.737,2.721,0.423,0.258,-0.846,1.773,-0.373,1.343]]},{"gen":75,"score":15.08,"curve":[6.3,13,5.7,4.3,5.7,9.3,4.7,7.7,11.7,5.3,3.7,9.3,7.7,7.3,13.7,12,6.7,12,7.7,9,12.7,10,13,7,12.7,5.7,7.7,13.3,14.3,8.7,15.7,12,10,10.7,16.3,15.3,12.7,12.7,10,18,19.7,11.3,11,12.7,18,6.7,17.7,15.3,12.3,16.3,15,4.3,18.3,8.3,11.3,15.7,12,10,14.3,13,12.7,8,7.7,8.3,9.7,6.3,11.7,8.7,10,10.3,9.3,12.7,9.3,9.7,14],"pop":[[-0.945,0.028,1.017,1.087,-0.959,0.457,1.68,2.642,-1.411,-0.113,-1.673,0.636,1.444,0.912,-0.856,-1.364,1.66,-0.162,0.772,0.73,-0.525,-0.019,-0.907,0.212,2.125,-1.252,-0.762,-0.537,-0.486,-0.404,-0.668,0.71,-1.279,-0.176,0.694,0.694,0.079,1.986,-0.406,0.107,0.238,2.949,0.238,0.327],[-0.184,-0.654,0.78,0.812,-0.959,0.457,1.304,2.894,-0.651,-0.113,-2.579,0.525,0.713,0.687,1.377,-1.025,0.621,-0.386,0.86,0.827,-1.191,-0.049,-0.631,0.405,2.122,0.089,-0.01,-0.283,0.417,0.086,-1.674,0.668,-1.279,-0.254,0.463,0.795,-0.342,0.704,-0.406,0.449,0.107,2.245,0.238,0.066],[-0.945,-0.169,0.81,1.087,-0.959,0.72,1.803,1.906,-1.411,-0.795,0.386,0.636,-0.416,0.912,-0.856,-1.293,1.66,-0.162,0.772,0.73,-1.191,-0.137,-0.631,0.212,2.22,-1.252,-0.762,-0.537,-0.486,-0.404,-1.387,0.71,-1.279,0.341,0.428,-0.175,0.079,0.386,-0.206,0.107,0.107,2.949,0.238,0.389],[-0.945,-0.169,1.017,0.44,-0.959,0.457,1.491,2.908,-0.855,-0.795,-2.3,0.443,-0.416,0.687,1.377,-1.435,1.66,-0.386,0.772,0.616,-1.167,-0.137,-0.631,0.064,2.122,-0.805,-0.543,-0.618,0.417,-0.864,-0.602,0.71,-1.614,-0.176,0.205,0.694,0.079,0.583,0.004,0.107,0.107,2.949,0.205,0.066],[-0.184,-0.169,0.507,1.087,-0.959,0.457,1.656,2.908,-0.855,-0.113,-1.7,0.443,0.713,1.076,0.726,-1.435,1.66,-0.386,0.772,0.827,-1.167,-0.137,-0.631,0.064,1.83,-0.031,-0.344,-1.171,0.417,-0.864,-0.602,0.668,-1.279,-0.176,0.205,0.694,0.079,0.704,-0.337,0.107,0.107,2.949,0.205,0.066],[-0.945,-0.169,0.507,1.087,-0.959,0.457,1.656,2.642,-1.411,-0.113,-1.7,0.443,1.444,1.076,0.876,-1.435,1.66,-0.386,0.772,0.827,-0.525,-0.137,-0.631,0.064,2.125,-0.451,-0.344,-1.171,-0.486,-0.53,-0.602,0.668,-1.279,0.048,0.694,0.694,0.079,0.704,-0.406,0.107,0.238,2.901,0.061,0.327],[-0.945,0.028,1.017,1.087,-0.959,0.457,1.68,2.642,-1.411,-0.113,-1.673,0.636,1.444,0.912,-0.856,-1.73,1.66,-0.162,0.772,0.73,-0.339,-0.019,-1.478,0.71,2.125,-1.252,-0.762,-0.537,-0.486,-0.404,-0.668,0.71,-1.279,-0.176,0.694,0.694,0.079,1.986,-0.406,0.107,0.238,2.949,0.957,0.327],[-0.945,0.028,0.507,1.087,-0.959,0.457,2.076,2.642,-1.411,-0.113,-2.03,0.443,1.444,0.912,0.876,-1.435,1.66,-0.162,1.144,0.73,-0.339,-0.137,-0.662,0.212,2.125,-1.252,-0.344,-0.537,0.884,-0.228,-0.602,0.668,-1.279,0.048,-0.105,0.694,0.079,0.704,-0.406,0.107,0.747,2.901,0.061,0.327],[-0.945,0.028,1.017,1.087,-0.959,0.72,1.803,1.906,-1.411,-1.345,-1.673,0.636,-0.416,0.912,-0.856,-1.293,1.66,-0.162,0.772,0.73,-0.525,-0.324,-0.631,-0.005,2.22,-1.252,-0.762,0.027,0.417,0.094,-1.387,0.71,-1.279,0.114,0.694,-0.175,0.079,0.386,-0.206,0.107,0.238,2.949,0.238,0.066],[-0.945,-0.169,1.017,0.44,-0.959,0.457,1.491,2.908,-0.855,-0.795,-2.208,0.266,-0.416,0.687,1.377,-1.435,1.66,-0.386,0.772,0.616,-1.632,-0.137,-0.631,0.064,2.122,-0.805,-0.543,-0.618,0.417,-0.864,-0.602,0.71,-1.614,-0.176,0.205,0.694,0.079,0.583,0.004,0.107,0.107,2.949,0.205,0.066],[-0.184,-0.654,0.78,1.087,-0.959,0.233,1.656,2.894,-0.651,-0.113,-2.579,0.525,1.444,0.687,1.377,-1.025,0.621,-0.386,0.86,0.73,0.686,-0.019,-0.907,0.405,1.3,-0.805,-0.01,-0.283,-0.486,-0.109,-1.674,0.668,-1.279,-0.254,0.205,0.694,0.079,1.538,0.004,0.107,0.321,2.949,0.205,0.066],[-0.945,0.028,1.017,1.087,-0.959,0.457,1.68,2.642,-1.411,-0.113,-1.673,0.636,1.444,0.912,-0.856,-1.364,1.66,-0.162,0.772,0.73,-0.525,-0.019,-0.907,0.212,2.125,-1.252,-0.762,-0.537,-0.486,-0.404,-0.668,0.443,-1.279,0.303,0.694,0.694,0.079,1.986,-0.228,0.107,0.238,2.785,0.238,0.327],[-0.945,-0.654,0.78,0.812,-0.959,0.245,1.304,2.642,-1.411,-0.795,-1.673,0.525,-0.416,0.687,-0.497,-1.364,1.66,-0.162,0.86,0.827,-0.525,-0.049,-0.631,0.484,2.122,0.089,-0.01,0.027,0.417,0.086,-1.674,0.71,-1.279,0.114,-0.047,0.795,-0.342,1.986,0.004,0.107,0.238,2.291,0.238,-0.049],[-0.184,-0.654,0.78,0.812,-1.028,0.661,1.803,-1.454,-0.651,-0.795,0.386,0.636,0.713,0.912,-1.189,-1.293,1.66,-0.162,0.86,0.73,-1.191,-0.137,-0.631,0.405,2.122,0.089,-0.01,-0.537,0.417,-0.404,-1.387,0.71,-1.279,-0.254,0.428,-0.175,0.079,0.386,-0.206,0.107,-0.443,2.245,0.238,0.066],[-0.945,-0.169,1.017,0.579,-0.81,0.245,1.491,2.908,-1.411,-0.795,-2.3,0.443,-0.416,0.912,-0.497,-1.364,1.412,-0.386,0.772,0.73,1.215,-0.324,-0.631,0.064,2.739,-0.805,-0.543,-0.618,0.205,-1.148,-0.668,0.71,-1.279,-0.176,0.205,0.694,0.571,2.127,0.004,0.107,0.238,2.949,0.205,0.066],[-0.945,-0.169,1.017,0.579,-0.959,0.245,1.656,2.642,-0.855,-0.795,-2.3,0.587,-0.416,0.748,1.377,-1.286,1.66,-0.162,0.86,0.616,-1.543,-0.019,-0.988,0.064,1.68,-0.805,-0.955,0.027,0.417,-0.109,-0.668,0.71,-1.279,-0.176,0.205,-0.095,0.079,1.538,0.004,0.107,0.34,2.949,0.205,0.066],[-0.945,-0.169,0.867,0.44,-0.959,0.457,1.491,2.908,-0.855,-0.795,-2.3,0.443,1.179,0.687,1.377,-1.435,1.66,-0.386,0.772,0.616,-1.167,-0.137,-0.631,-0.287,2.122,-0.805,-0.543,-0.618,0.417,-0.864,-0.602,0.689,-1.614,0.615,0.205,0.694,0.079,0.583,0.004,0.107,0.107,2.949,0.205,0.066],[-0.945,0.028,0.817,1.087,-0.959,0.457,1.68,1.906,-1.411,-0.113,0.386,0.636,-0.416,0.912,-0.856,-1.364,1.66,-0.162,0.772,0.73,-1.191,-0.137,-0.907,0.212,2.125,-1.469,-0.762,-0.537,-0.486,-0.404,-1.387,0.71,-1.279,-0.176,0.428,-0.175,0.079,1.986,-0.206,0.107,0.107,2.949,0.238,-0.351],[-0.945,0.444,0.78,0.952,-0.959,0.457,1.304,2.894,-0.886,-0.113,-2.579,0.636,0.713,0.818,-0.968,-1.025,1.66,-0.386,-1.673,0.73,-1.191,-0.019,-0.907,0.405,2.122,0.089,-0.01,-0.537,-0.486,-0.404,-0.668,0.71,-1.279,-0.254,0.463,0.694,0.356,1.986,-0.406,0.204,0.238,2.949,0.238,0.066],[-0.461,-0.654,0.87,0.429,-0.959,0.457,1.304,2.894,-0.651,-0.113,-2.579,0.525,0.713,0.687,1.377,-1.025,0.621,-0.386,0.894,0.827,-1.191,-0.049,-0.631,0.405,2.122,0.089,-0.01,-0.283,0.417,0.086,-1.674,0.668,-1.279,-0.254,0.463,0.795,-0.342,0.704,-0.406,0.449,0.107,2.245,0.238,0.066],[-0.184,-0.169,0.507,1.087,-0.959,0.457,1.656,2.908,-0.855,0.121,-1.7,0.443,0.713,1.076,0.726,-1.435,1.66,-0.386,-0.258,0.827,-1.167,-0.137,-0.631,0.064,1.83,-0.031,-0.344,-1.59,0.417,-0.864,-0.602,0.668,-1.279,-0.176,0.205,0.694,0.079,0.704,-0.337,0.107,0.107,2.531,0.205,0.066],[-0.945,-0.169,0.81,1.087,-0.959,1.064,1.803,1.906,-1.411,-0.588,0.386,0.636,-0.416,0.491,-0.856,-1.293,1.66,-0.162,0.772,0.73,-1.191,-0.137,-0.631,0.212,2.22,-1.252,-0.762,-0.537,-0.486,-0.404,-1.387,0.71,-1.279,0.341,0.428,-0.462,0.072,0.386,-0.206,0.107,0.107,2.949,0.238,0.389],[-0.945,-0.169,0.81,1.087,-0.959,0.72,1.803,2.642,-0.942,-1.112,0.386,0.636,-0.416,0.912,-0.856,-1.293,1.66,0.153,1.039,0.73,-0.525,-0.121,-0.907,0.212,2.22,-1.252,-0.762,-0.537,-0.486,-0.404,-0.668,0.71,-1.279,0.341,0.428,0.694,0.079,0.131,-0.406,0.107,0.107,2.949,0.238,0.327],[-0.945,-0.654,0.78,1.355,-0.899,0.457,1.656,3.129,-0.651,-0.113,-2.579,0.525,1.444,1.076,1.282,-0.956,1.66,-0.386,0.86,0.885,-0.525,-0.137,-0.631,0.064,2.125,-0.451,-0.344,-1.171,-0.486,0.086,-1.739,0.668,-1.376,0.048,0.463,0.61,-0.763,0.704,-0.406,0.449,0.238,2.245,0.238,0.298]]},{"gen":70,"score":17.75,"curve":[13,18.7,14.7,13,12.7,13.3,5.7,13,9,8.7,9.3,10,12.7,8,8.3,9.3,15,8,9.7,8,12,11,8.7,11.3,10.3,8.3,7,12,11,10,6,15,7.7,8.7,11.3,9.3,11,8,12.3,8,9.3,6.3,13,10,10,13.7,9.7,15.7,6,7.3,10.7,15,7,8,14.7,10.3,8,12.7,13.7,7.7,14.3,10,8.7,13.7,11,17.3,11.3,13,17.7,16.7],"pop":[[-1.317,-0.145,-0.304,0.645,-0.872,-2.046,1.438,3.061,-1.565,0.718,-1.987,1.197,0.243,-0.064,2.043,-0.029,3.162,0.96,0.806,1.404,0.027,-0.764,0.087,-1.24,-0.483,-0.075,0.12,0.374,-0.615,0.107,1.222,-0.517,1.111,-1.201,0.969,-0.737,-2.524,-0.687,-1.321,-1.073,1.518,0.336,0.28,-0.318,1.308,1.694,1.373,2.305,0.794,-0.76,1.784,0.216],[-1.372,-0.145,-0.477,0.645,-0.872,-1.272,1.866,3.061,-1.548,0.437,-2.37,1.197,0.243,0.393,2.043,-0.029,3.162,0.96,1.08,-0.306,0.027,-0.764,0.087,-0.753,-0.039,-0.075,0.12,0.374,-0.334,0.107,2.306,-0.517,1.13,-1.201,0.969,-0.737,-2.524,-0.687,-1.321,-1.073,0.898,0.336,0.28,1.566,1.308,1.694,1.373,2.305,0.794,-0.637,1.921,0.143],[-1.317,-0.145,-0.304,0.645,-0.872,-1.329,1.866,3.061,-1.548,0.437,-2.22,1.197,0.626,0.393,2.043,0.011,3.162,0.96,1.08,1.987,0.027,-0.764,0.087,-0.753,-0.483,-0.495,0.597,0.374,-0.471,0.107,1.761,-0.517,1.13,-1.201,1.339,0.069,-2.524,-0.687,-1.321,-1.073,1.225,-1.428,0.28,1.566,1.308,1.982,1.373,2.305,0.794,-0.664,1.921,0.216],[0.077,0.623,-0.304,0.645,-1.087,-2.046,0.733,2.648,-1.565,0.437,-2.22,1.197,0.243,0.393,2.043,0.196,3.162,0.96,0.733,1.73,0.027,-0.356,0.087,-0.753,-0.023,-1.466,-0.215,0.374,-0.481,-0.196,2.049,0.089,1.111,-1.201,0.969,-0.318,-2.524,-0.687,-1.321,-1.116,1.225,-1.849,0.28,1.367,1.308,1.771,1.245,2.305,0.794,-0.76,1.921,0.216],[-1.453,0.623,-0.304,0.645,-1.15,-2.046,1.438,2.648,-1.863,0.858,-2.22,0.654,0.243,0.393,1.923,-0.029,3.239,0.96,0.915,1.404,0.027,-0.764,0.087,-0.753,-0.483,-1.466,0.291,0.401,-0.481,-1.095,0.446,0.089,1.694,0.328,0.969,-0.518,-2.524,-0.764,-1.321,-1.073,1.088,0.336,-0.16,-0.123,1.308,2.014,1.373,2.979,0.7,-1.078,1.921,0.021],[-1.317,-0.145,-0.304,0.645,-0.872,-2.046,1.438,3.061,-1.565,0.718,-1.987,1.197,0.243,-0.064,2.043,-0.029,3.162,1.471,0.806,1.404,0.027,-0.764,-0.132,-1.24,-0.483,-0.075,0.12,0.19,0.128,0.107,0.933,-0.517,1.111,-1.201,-0.775,-0.737,-2.514,-0.64,-1.321,-1.073,1.518,0.336,0.28,-0.318,1.308,1.694,1.373,2.305,1.097,-0.76,1.784,0.216],[-1.317,-0.145,-0.502,0.645,-0.872,-1.172,1.438,3.061,-1.565,0.718,-1.987,1.197,0.243,-0.064,2.043,-0.029,3.162,2.146,0.806,1.404,0.027,-0.764,-0.132,-1.24,-0.483,-0.075,0.12,-0.649,0.128,0.107,0.933,-0.517,1.111,-1.201,-0.775,-0.314,-1.786,-0.64,-1.321,-1.073,1.518,0.336,0.28,-0.318,1.308,1.694,1.373,2.305,0.216,-0.76,1.784,0.216],[0.077,0.623,-0.304,0.645,-1.087,-2.046,0.733,2.648,-1.565,0.437,-2.22,1.197,0.243,0.393,2.043,0.196,3.162,0.96,0.912,1.73,-0.072,-0.356,0.087,-0.175,-0.023,-1.466,-0.215,0.374,-0.481,-0.578,2.049,-0.273,1.111,-1.201,0.969,-0.318,-1.976,-0.687,-1.321,-1.116,1.225,-1.849,0.28,1.367,1.308,1.771,1.245,2.305,0.794,-0.76,1.921,0.216],[-1.317,-0.294,-0.304,0.645,-1.32,-2.046,1.438,3.061,-1.565,0.718,-1.987,1.197,0.312,0.4,2.043,-0.029,3.162,1.471,0.806,1.404,0.027,-0.764,-0.65,-1.24,-0.483,-0.075,0.12,0.19,0.128,0.107,0.933,-0.517,1.111,-1.201,-0.775,-0.668,-2.514,-0.64,-1.321,-1.073,1.518,0.336,0.28,-0.318,1.308,1.263,1.373,2.305,1.097,-0.76,2.247,0.216],[-1.317,-0.145,-0.954,0.645,-0.872,-2.046,1.857,2.648,-1.734,0.437,-2.22,0.948,0.626,0.393,-1.338,0.133,3.115,0.96,0.827,1.987,0.449,-0.764,0.087,-0.753,-0.497,-0.075,-0.946,1.013,-0.481,-0.142,1.82,-0.517,1.13,-1.292,1.155,-0.098,-2.6,-0.743,-1.015,-1.096,1.121,0.336,0.28,1.367,1.308,1.694,1.393,2.305,1.11,-0.76,1.921,0.216],[-1.372,-0.145,-0.649,0.645,-0.872,-1.272,1.866,3.061,-1.548,0.437,-2.37,1.197,0.243,0.393,2.043,-0.029,3.162,0.96,1.08,-0.306,0.027,-0.764,0.087,-0.151,-0.039,-0.075,-0.202,0.374,-0.334,0.107,2.719,-0.17,1.13,-1.201,0.969,-0.737,-2.524,-0.687,-1.321,-1.073,0.898,0.336,0.28,1.566,1.308,1.694,1.373,1.76,0.794,-0.637,1.921,0.143],[0.077,0.623,-0.304,0.645,-1.087,-1.898,0.733,2.648,-1.565,0.437,-2.22,1.197,0.243,0.393,2.043,0.196,3.162,0.96,0.733,1.73,0.027,-0.356,0.087,-0.753,-0.023,-1.466,-0.215,0.374,-0.481,-0.196,2.049,0.089,0.467,-1.201,0.969,-0.05,-2.524,-0.687,-1.154,-1.116,1.225,-1.849,0.28,1.367,1.308,1.771,1.245,2.395,0.794,-0.76,1.921,0.216],[-1.608,0.623,-0.304,-0.115,-1.15,-2.046,1.642,2.648,-2.184,0.858,-2.22,0.654,0.243,0.004,2.043,-0.029,3.239,0.96,0.915,1.404,0.027,-0.764,0.077,-0.753,-0.483,-0.495,0.291,0.374,-0.471,-1.095,1.761,-0.517,1.694,-1.201,0.969,-0.518,-2.524,-0.687,-1.321,-1.073,1.225,-0.02,-0.16,0.303,1.308,1.694,1.373,2.516,0.27,-0.778,1.921,0.021],[-1.709,-0.134,-0.304,0.645,-0.924,-2.046,1.438,3.061,-1.565,0.437,-1.987,1.197,0.243,-0.064,2.043,-0.029,3.162,0.96,0.806,1.404,0.027,-0.704,-0.132,-0.753,-0.483,-0.075,1.008,-0.118,0.128,0.107,0.933,-0.517,1.111,-1.201,0.969,-0.737,-2.524,-0.64,-1.321,-1.073,1.225,-1.428,0.925,-0.318,1.308,1.694,1.373,2.305,0.794,-0.76,1.784,0.216],[-1.317,-0.145,0.271,0.645,-0.872,-2.046,1.438,3.061,-1.557,0.718,-1.894,1.197,0.084,-0.064,2.043,-0.029,3.162,0.96,0.806,1.404,0.027,-1.634,0.087,-1.24,-0.743,-0.478,0.12,0.374,-0.615,-0.125,1.222,-0.517,1.111,-1.823,1.339,-0.737,-2.524,-0.687,-1.321,-1.045,1.518,0.336,0.28,-0.318,1.308,1.694,1.373,2.305,0.794,-0.76,1.784,0.216],[0.077,0.623,-0.304,0.645,-1.087,-2.046,0.733,2.648,-1.565,0.437,-2.22,1.197,0.243,0.393,2.043,0.196,3.162,0.96,0.733,1.73,0.027,-0.356,0.087,-0.753,-0.023,-1.466,-0.215,0.374,-0.481,-0.196,2.049,0.089,1.111,-1.201,0.969,-0.558,-2.524,-0.687,-1.321,-1.116,1.225,-1.849,0.28,1.367,1.308,1.771,1.245,2.305,0.794,-0.76,1.921,0.216],[0.077,0.623,-0.064,0.645,-1.087,-2.046,0.733,2.648,-1.565,0.437,-2.22,1.197,0.231,0.393,2.319,0.196,3.162,0.96,0.733,1.73,0.027,-0.356,0.087,-0.753,0.41,-1.466,-0.215,0.374,-0.481,-0.196,2.049,0.089,1.111,-1.201,0.969,-0.318,-2.524,-0.687,-1.321,-1.116,1.225,-1.806,0.28,1.367,1.308,1.771,1.245,2.305,0.794,-0.76,1.921,0.216],[0.077,0.623,-0.304,0.645,-1.087,-2.046,0.733,2.648,-1.565,0.437,-2.22,1.193,0.459,0.393,2.043,0.196,3.162,1.092,0.733,1.73,0.027,-0.356,0.087,-0.753,-0.023,-1.466,-0.728,0.374,-0.481,-0.295,2.049,0.089,1.111,-1.201,1.169,-0.318,-2.524,-0.687,-1.321,-1.116,1.225,-1.849,0.28,1.367,1.308,1.771,1.245,2.305,0.794,-0.76,1.921,0.216],[-1.317,-0.145,-0.304,0.645,-1.087,-2.046,1.642,3.061,-2.184,0.437,-2.22,1.197,0.243,0.393,2.043,0.011,3.162,0.96,1.08,1.987,0.027,-0.764,0.087,-1.262,-0.483,-0.495,0.12,0.374,-0.471,0.107,1.761,-0.672,1.13,-1.201,0.969,0.069,-2.524,-0.687,-1.321,-1.073,1.225,-1.432,0.28,1.566,1.308,1.982,1.373,1.92,0.794,-0.778,1.91,0.216],[-1.875,-0.145,-0.477,0.645,-0.872,-1.272,1.866,3.061,-1.548,0.437,-2.37,1.091,0.243,0.393,2.541,-0.029,3.162,0.96,1.08,-0.306,0.027,-0.764,0.087,-0.753,-0.039,-0.075,0.788,0.374,-0.334,0.107,2.306,-0.517,1.13,-1.201,0.969,-0.737,-2.524,-0.687,-1.853,-1.073,0.898,0.336,0.28,1.566,1.308,1.694,1.373,2.305,0.794,-0.696,1.921,0.143],[-1.317,0.651,0.949,0.645,-0.872,-2.046,1.438,3.061,-1.548,0.437,-2.493,1.197,0.243,-0.064,2.043,-0.029,3.162,0.96,0.806,-0.306,-0.021,-0.955,0.087,-1.24,-0.039,-0.027,0.12,0.374,-0.615,0.107,2.306,-0.517,1.13,-1.201,0.969,-0.737,-2.524,-0.687,-1.321,-1.073,0.898,0.336,0.28,-0.318,1.308,1.694,1.373,2.305,0.794,-0.76,1.784,0.16],[0.077,0.623,-0.721,0.645,-0.643,-1.906,0.733,3.119,-0.999,0.437,-2.22,1.197,0.243,0.393,2.043,0.196,3.162,0.96,0.733,1.73,0.027,-0.356,0.087,-0.753,-0.023,-1.466,-0.215,0.149,-0.481,-0.196,2.049,0.089,1.199,-1.201,0.969,-0.318,-2.524,-0.687,-1.321,-1.116,1.225,-1.849,0.28,0.824,1.308,1.771,1.245,1.7,0.794,-0.76,1.872,0.216],[-1.453,0.623,-0.304,0.645,-1.15,-2.046,1.438,2.648,-1.863,0.858,-2.22,0.654,0.243,0.393,1.923,-0.029,3.239,0.96,0.915,1.404,0.027,-0.764,0.087,-0.753,-0.483,-1.466,0.291,0.401,-0.481,-1.095,-0.28,0.089,1.694,0.328,0.969,-0.518,-2.524,-0.764,-1.955,-1.073,1.088,0.336,-0.16,-0.123,1.308,1.967,1.373,2.979,0.7,-1.078,1.921,0.021],[-1.317,-0.145,-0.304,0.645,-1.087,-2.046,1.438,3.061,-1.979,0.718,-2.385,1.197,0.243,0.393,2.043,-0.029,2.923,0.96,0.806,1.404,0.027,-0.281,-0.132,-1.24,-0.023,-1.466,0.12,0.19,0.128,0.125,0.933,-0.517,1.111,-1.201,-0.775,-0.737,-2.596,-0.712,-1.321,-1.116,1.518,-1.849,0.28,-0.318,1.308,1.694,1.373,2.305,0.794,-0.76,1.921,-0.008]]},{"gen":75,"score":20,"curve":[19.3,12.3,14,12,16,13.7,12.7,12.7,10.3,12.7,11.7,14.7,15.7,15.7,13.3,15.3,12,10.3,15,10.7,13,19.7,12.3,15,14.3,11.3,18.7,10,14,14,12.3,16.3,17,17.7,15.7,14,11.3,18.7,18,19,20.7,17.3,17.7,19,18.7,15.7,20.7,18.3,17.3,17.7,18.7,19,17.3,16.7,15.7,18,19,17.3,18.7,21.3,21,20,18,16.3,14,14.7,20.7,18.3,17.3,18.3,17,13.7,20.3,22,18.7],"pop":[[-1.873,0.133,-1.429,0.036,-0.981,-0.702,1.441,-0.101,-1.355,0.06,-1.283,0.533,0.217,-0.282,0.389,-1.528,3.768,0.934,0.981,-0.502,0.147,-0.877,-0.029,-0.013,1.121,-0.313,0.881,0.973,-0.763,0.085,0.219,0.25,-0.275,-1.229,-1.66,0.895,-0.263,0.026,-0.409,-1.397,-1.147,-0.776,2.378,0.943,0.827,-2.687,0.863,-0.807,-3.06,0.315,-1.042,-2.222,1.125,-0.083,0.186,1.206,1.425,0.561,-0.334,0.995,0.662,2.704,1.759,0.717,0.202,2.029,1.194,-0.612],[-1.873,0.133,-1.429,0.036,-1.242,-0.911,1.441,-0.101,-1.355,0.06,-1.283,0.533,0.217,-0.211,0.389,-1.528,3.768,0.934,0.981,-0.502,0.147,-0.877,-0.029,-0.013,1.121,-0.313,0.881,0.973,-0.763,0.085,0.219,0.25,-0.275,-1.229,-1.66,0.895,-0.263,0.026,-0.409,-1.397,-1.147,-0.547,2.378,0.943,0.827,-2.687,0.863,-0.807,-3.034,0.315,-1.042,-2.222,1.125,0.198,0.186,1.206,1.425,0.561,-0.334,0.995,0.662,2.555,1.759,0.717,0.202,1.454,1.194,-0.612],[-0.922,-0.384,-2.739,1.148,-1.375,-0.343,1.833,-0.054,-1.378,0.391,-1.837,-0.01,0.528,1.057,0.494,-1.802,3.903,2.073,1.415,-1.385,0.704,-0.41,-0.029,-0.5,1.373,-0.554,0.597,0.486,-0.674,0.037,-0.149,0.161,0.732,-0.005,-0.635,1.198,-0.06,-0.034,0.06,-1.596,-1.55,-0.273,2.364,2.299,0.072,-1.646,0.965,-0.746,-2.959,0.47,-0.054,-2.58,0.884,0.48,-0.398,0.832,2.041,1.547,0.328,1.511,0.327,1.979,1.116,0.824,0.276,1.213,1.33,-0.199],[-1.681,-0.384,-2.739,0.753,-1.375,-0.625,2.111,-0.054,-1.312,-0.038,-1.837,-0.01,0.528,1.057,0.494,-1.464,3.403,1.889,1.415,-1.385,0.446,-0.417,-0.029,-0.037,1.373,-0.554,0.665,0.486,-0.608,1.781,-0.149,0.473,0.696,-0.005,-0.635,1.198,-0.06,-0.034,-0.352,-1.596,-1.55,-1.133,2.916,1.971,0.072,-1.738,0.37,-0.422,-2.959,0.47,0.132,-2.359,0.884,1.001,-0.606,1.108,1.531,0.934,0.328,1.511,-0.363,1.979,1.116,0.824,0.276,0.286,1.33,-0.235],[-1.814,-0.384,-2.739,0.753,-1.375,-0.22,1.833,-0.054,-1.489,-0.278,-1.475,-0.01,0.528,1.057,0.494,-1.802,3.903,1.889,1.415,-1.385,0.354,-0.41,0.217,-0.407,1.881,-0.631,0.469,0.486,-0.674,1.193,-0.149,0.161,0.519,-0.005,-0.635,1.198,-0.06,0.666,-0.133,-1.586,-2.254,-1.133,2.684,1.971,0.072,-1.738,0.37,-1.004,-2.959,0.47,-0.054,-2.359,0.884,0.821,-0.606,1.108,2.041,1.029,0.328,2.535,0.731,1.979,1.025,0.824,0.276,0.224,1.393,0.073],[-1.873,0.133,-1.429,0.036,-0.981,-0.911,1.535,-0.082,-1.355,0.06,-1.283,0.533,0.209,-0.326,0.389,-1.528,3.903,0.934,0.9,-0.124,0.147,-0.877,-0.029,-0.013,1.121,-0.313,0.807,0.973,-0.763,0.085,-0.438,-0.25,-0.275,-1.229,-0.062,0.382,-0.263,0.026,-0.409,-1.397,-1.147,-0.769,2.378,0.382,0.827,-1.738,0.863,-1.256,-3.034,0.315,-0.931,-2.222,1.125,0.198,0.186,1.206,1.425,0.561,-0.334,0.995,0.662,2.704,1.759,0.717,-0.782,1.454,1.194,-0.492],[-1.519,-0.384,-3.528,0.753,-1.375,-0.384,1.705,-0.054,-1.312,0.407,-1.398,-0.01,0.687,1.057,0.494,-1.802,3.403,1.889,1.415,-1.385,0.354,-0.417,-0.103,-0.5,1.881,-0.631,0.469,0.486,-0.674,1.193,0.259,0.161,0.732,-0.005,-1.035,0.885,-0.265,0.562,0.06,-1.586,-2.326,-1.286,2.684,2.299,0.072,-1.738,0.37,-1.004,-2.693,0.47,0.132,-2.341,0.884,0.923,-0.606,1.008,1.286,1,0.328,1.511,0.327,1.979,1.116,0.883,0.276,0.224,1.33,-0.199],[-1.814,-0.384,-2.739,0.753,-1.375,-0.384,1.705,0.486,-1.312,0.407,-1.475,-0.01,0.528,1.057,0.711,-1.802,3.403,2.222,1.415,-1.637,0.354,-0.417,-0.029,-0.5,1.881,-0.631,0.821,0.486,-0.651,1.193,-0.149,0.161,-1.248,-0.005,-1.035,1.403,-0.06,0.716,0.06,-1.586,-2.254,-1.286,2.684,2.299,0.072,-1.738,0.37,-1.004,-2.959,0.47,-0.339,-2.341,0.884,0.923,-0.606,1.074,2.041,1.029,0.328,1.511,0.851,1.979,1.116,0.824,0.276,0.224,1.33,-0.199],[-0.922,-0.384,-2.739,1.168,-1.155,0.694,1.833,-0.054,-1.378,0.391,-2.073,-0.01,0.496,1.057,0.494,-1.802,3.903,2.073,1.415,-1.128,0.704,-0.41,-0.029,-0.5,1.232,-0.554,0.597,0.486,-0.674,0.037,-0.149,0.161,0.732,-0.005,-1.264,1.198,-0.06,-0.034,0.06,-1.596,-2.222,-0.273,2.364,2.299,0.164,-1.206,0.965,-0.746,-2.959,0.845,-0.054,-2.58,0.884,0.48,-0.398,0.832,2.041,1.547,0.328,1.511,0.327,1.979,1.116,0.824,0.276,1.026,1.33,-0.199],[-1.841,0.064,-1.429,0.401,-0.981,-0.702,1.535,-0.059,-1.355,0.113,-1.283,1.03,-0.139,-0.511,0.389,-2.329,3.903,0.934,0.9,-0.124,0.774,-0.877,-0.029,-0.141,1.247,-0.313,0.483,0.973,-0.763,0.46,-0.438,-0.25,-0.275,-1.229,0.698,0.895,-0.06,-0.458,-0.409,-1.397,-1.147,-0.62,2.378,1.586,0.827,-1.738,0.863,-0.746,-3.06,0.551,-1.078,-2.359,1.125,-0.083,-0.269,1.55,1.425,0.561,-0.341,1.439,0.662,2.704,1.759,0.102,-0.319,1.573,1.127,-0.612],[-1.873,0.265,-2.739,0.036,-1.242,-0.911,1.441,-0.101,-1.489,-0.278,-1.475,-0.01,0.217,1.057,0.389,-1.528,3.768,1.889,1.415,-0.502,0.354,-0.41,-0.029,-0.407,1.236,-0.631,0.881,0.486,-0.763,1.193,0.219,0.161,-0.275,-1.229,-0.635,0.898,-0.263,0.228,-0.954,-1.397,-1.147,-1.072,2.684,1.971,0.072,-1.738,0.863,-1.004,-3.034,0.47,-1.042,-2.359,1.291,0.821,-0.606,0.783,2.041,1.029,0.328,0.843,0.662,3.179,1.025,0.824,0.202,1.454,1.194,-0.612],[-0.922,-0.384,-2.739,0.834,-1.375,-0.343,1.833,0.178,-1.489,-0.278,-1.837,-0.51,0.528,1.057,0.494,-1.464,3.903,2.073,1.415,-1.385,0.704,-0.41,0.217,0.455,1.373,-0.928,0.597,0.486,-0.674,-0.191,-0.149,0.161,0.732,0.119,-0.635,1.375,-0.308,0.147,0.06,-1.596,-1.55,-0.273,2.364,2.299,0.072,-1.646,0.965,-0.746,-3.679,0.47,0.059,-2.424,0.884,0.775,-1.127,1.108,-2.841,0.697,0.328,1.511,1.293,1.979,1.394,0.824,0.276,0.286,1.33,-0.199],[-2.101,0.133,-1.429,0.036,-0.981,-0.702,1.441,-0.101,-1.355,0.06,-1.283,0.659,0.217,-0.211,0.389,-1.528,3.768,0.934,0.981,-0.502,0.147,-0.877,-0.029,-0.013,1.121,-0.313,0.709,0.981,-0.763,0.085,0.219,0.25,-0.275,-1.229,-1.66,0.895,-0.263,0.026,-0.082,-1.397,-1.147,-0.547,2.416,0.943,0.827,-2.687,1.59,-0.807,-3.034,0.315,-1.022,-2.222,1.125,-0.083,0.186,1.206,1.425,0.561,-0.334,0.995,0.662,2.555,1.759,0.717,0.202,1.454,1.194,-0.612],[-0.922,0.064,-1.429,0.401,-0.981,-0.702,1.833,-0.054,-1.378,0.113,-1.837,1.03,-0.139,-0.511,0.494,-2.329,3.868,0.934,0.9,-0.124,0.774,-0.877,-0.029,-0.5,1.373,-0.313,0.597,0.486,-0.763,0.46,-0.538,-0.25,-0.275,-1.229,-0.062,0.895,-0.06,-0.034,-0.409,-1.397,-1.55,-0.62,2.364,1.586,0.827,-1.646,1.326,-0.746,-3.06,0.47,-1.078,-2.359,1.125,0.48,-0.398,1.55,1.425,1.547,0.328,1.511,0.662,2.704,1.116,0.824,0.276,0.999,1.127,-0.199],[-0.922,-0.384,-2.739,1.148,-1.375,-0.343,1.833,-0.054,-1.378,0.391,-1.837,-0.01,0.528,0.794,0.494,-1.802,3.903,2.073,1.415,-1.385,0.704,-0.41,-0.029,-0.5,0.939,-0.554,0.597,0.486,-0.674,0.037,-0.149,0.161,0.732,-0.005,-0.813,0.127,-0.06,-0.034,0.06,-1.596,-1.55,-0.273,2.364,2.299,0.072,-1.646,0.965,-0.746,-2.959,1.024,-0.054,-2.58,0.884,0.48,-0.398,0.832,2.041,1.547,0.328,1.511,-0.189,1.979,1.116,0.824,0.276,1.213,1.33,-0.199],[-1.519,-0.139,-3.661,0.753,-1.375,-0.384,1.705,-0.054,-1.312,0.407,-1.475,-0.01,0.528,1.057,0.494,-1.802,3.403,1.889,1.415,-1.385,0.354,-0.417,-0.029,-0.5,1.881,-0.631,0.469,0.486,-0.795,1.193,-0.149,0.161,0.732,-0.005,-1.035,0.885,0.363,0.562,0.344,-1.586,-2.326,-1.286,2.684,2.299,0.072,-1.738,0.37,-1.004,-2.959,0.47,0.132,-2.341,0.884,0.923,-0.606,1.008,1.286,1,0.328,1.511,0.327,1.979,1.116,1.004,0.276,0.224,1.33,-0.199],[-1.873,0.133,-1.429,0.036,-0.981,-0.911,1.535,-0.082,-1.355,0.252,-1.283,0.533,0.209,-0.326,0.389,-1.528,3.903,0.934,0.9,-0.124,-0.152,-0.969,-0.029,0.09,1.121,-0.639,0.807,0.973,-0.763,0.085,-0.438,-0.25,-0.275,-1.229,-0.062,0.382,-0.263,0.026,-0.409,-1.397,-1.147,-0.92,2.458,0.256,0.827,-1.738,0.863,-1.165,-3.034,0.984,-0.931,-2.222,1.125,0.198,0.186,1.206,1.583,1.372,-0.334,0.995,0.847,2.704,1.759,0.717,-0.782,1.454,1.194,-0.492],[-1.724,-0.384,-2.739,0.753,-1.426,-0.384,1.705,0.486,-1.312,0.407,-1.475,-0.01,0.528,1.057,0.711,-1.802,3.403,2.222,1.415,-1.637,0.354,-0.417,-1.08,-0.5,1.881,-0.631,0.821,0.486,-0.651,1.193,-0.149,0.161,-1.248,-0.005,-1.035,1.403,0.437,0.716,0.06,-1.586,-2.254,-1.468,2.684,2.299,0.072,-1.738,0.37,-1.004,-2.959,0.47,-0.025,-2.264,0.884,1.024,-0.606,1.074,2.041,1.029,0.328,1.511,0.327,2.114,0.862,0.824,0.115,0.224,1.33,-0.199],[-1.681,-0.107,-2.739,0.753,-1.375,-0.625,2.111,-0.368,-1.312,-0.208,-1.837,-0.01,0.528,1.057,0.494,-1.464,3.403,1.889,1.415,-1.385,0.446,-0.417,-0.029,-0.037,1.373,-1.103,0.665,0.486,-0.608,1.781,-0.149,0.473,0.696,-0.005,-0.635,1.198,-0.06,-0.034,-0.352,-1.596,-1.905,-1.133,2.916,1.971,0.072,-1.738,0.37,-0.422,-2.959,0.47,0.132,-2.359,0.884,1.001,-0.606,1.108,1.531,0.934,0.81,1.511,-0.363,1.979,1.116,0.824,0.276,0.336,1.33,-0.235],[-1.873,0.133,-1.429,0.036,-0.981,-0.702,2.111,-0.054,-1.278,-0.038,-1.283,0.659,0.528,-0.282,0.494,-1.464,3.403,0.934,0.981,-1.385,0.147,-0.417,-0.029,-0.037,1.121,-0.554,0.709,-0.061,-0.763,1.781,-0.149,0.25,-0.275,0.451,-0.635,0.895,-0.263,0.026,-0.352,-1.397,-1.55,-1.133,2.916,1.971,0.827,-1.738,0.665,-0.422,-2.959,0.315,-1.042,-2.365,0.884,1.001,-0.606,1.687,1.425,0.934,0.328,0.995,0.662,1.979,1.759,0.824,0.276,0.635,1.194,-0.612],[-1.814,-0.384,-2.739,0.753,-1.375,-0.22,1.669,-0.054,-1.489,-0.278,-1.149,-0.01,0.618,1.057,0.486,-1.802,3.903,1.889,1.415,-1.385,0.354,-0.251,0.217,-0.407,1.881,-0.631,0.469,0.486,-0.674,1.193,-0.149,0.161,0.519,-0.005,-0.635,1.198,-0.06,0.666,-0.133,-1.586,-2.254,-1.133,2.684,2.318,0.072,-1.749,0.37,-1.004,-2.959,0.47,-0.054,-2.99,0.884,0.821,-0.606,1.108,2.041,1.029,0.328,2.535,0.731,1.979,1.144,0.824,0.276,0.224,1.393,0.073],[-1.814,-0.384,-1.429,0.753,-0.981,-0.702,1.833,-0.054,-1.489,-0.278,-1.475,0.659,0.217,1.057,0.494,-1.592,3.903,0.934,1.415,-0.502,0.354,-0.089,0.217,-0.447,1.828,-0.415,0.709,0.486,-0.58,0.085,-0.149,0.078,0.519,-0.613,-0.635,2.04,-0.263,0.666,-0.651,-1.397,-1.965,-1.133,2.378,0.943,0.072,-1.738,0.37,-0.807,-3.06,0.47,-0.666,-2.359,1.125,0.821,0.186,1.206,1.425,1.029,-0.334,0.995,0.731,1.979,1.025,0.717,0.276,2.029,1.194,0.073],[0.28,-0.384,-2.739,1.148,-1.375,-0.343,1.833,-0.054,-1.378,0.391,-1.837,-0.01,0.528,1.057,0.494,-1.802,3.903,2.111,1.415,-1.364,0.704,-0.799,-0.029,-0.5,1.373,-0.554,0.597,0.486,-0.674,0.037,-0.149,0.161,0.171,0.019,-0.635,1.198,-0.06,-0.034,0.06,-1.596,-1.55,-0.273,2.364,2.348,0.072,-1.646,0.965,-0.746,-2.959,0.47,-0.054,-2.58,0.884,0.51,-0.398,0.832,2.041,1.739,0.328,1.511,0.327,2.528,1.116,0.824,0.276,1.213,1.33,-0.199],[-1.873,0.133,-1.429,0.036,-0.981,-0.911,1.535,-0.082,-1.355,0.06,-1.189,0.533,0.209,-0.869,0.389,-1.528,3.903,0.79,0.9,-0.124,0.147,-0.877,-0.029,-0.013,1.121,-0.313,0.807,0.973,-0.763,0.085,-0.438,-0.25,-0.275,-1.326,-0.98,0.382,-0.263,0.026,-0.409,-0.731,-1.147,-0.769,2.378,0.382,0.827,-1.738,0.863,-1.256,-3.034,0.315,-0.931,-2.222,1.125,0.198,0.186,1.521,1.425,0.561,-0.334,0.995,0.662,2.704,1.759,0.717,-0.782,1.454,1.194,-0.492]]},{"gen":245,"score":23.83,"curve":[16,22.3,17.3,17,23,20.3,19.7,19.3,15,15,18,18.3,20,17.3,18.7,21.3,17,20.7,18.7,15,21,11.3,18.3,16.7,17.3,18.7,21.7,18.7,19.7,18.3,16.7,17.7,18.3,15,17.3,20,17,18,20.3,20,15.3,14,15.3,17.3,16.7,17,16.7,21.3,21.7,21.3,22.3,21.3,21,19.3,18.3,21.3,21,22,19.7,24,16,17.7,19.3,20,20.3,21.3,23.3,20,20.7,18.7,20.7,22,23.3,16,22,20.7,23.3,21.7,21.3,21.3,23.3,21.7,14.3,21.3,22,16.7,22.7,17,20.7,19.3,20.3,19.3,19.3,18.7,18.3,17.3,17.7,21,21.7,17,19,19.3,16,21,19.3,17.3,18.7,19.7,14,18.3,19.7,23.3,19,19.7,20.7,18.3,20.3,17.3,18,21,14.7,15.7,20.7,18,19.3,19.3,21,20.7,20.7,21.3,22.3,19.7,18.7,19,18.7,18.3,20,20.3,20,22.3,21.3,21,22.7,17.7,22.7,21.7,20,18.3,19,20.7,22,17.7,20,17.7,20.3,20,18,20.3,18.3,21,15.3,20,17,19.3,21,20.7,18,22,19.3,22.7,18,19,20.7,20.7,18.3,20,22.3,20.3,21,18.3,23.3,23,23.3,18,22.7,17.7,23.3,22.3,19.7,21.7,20.3,21,23.3,22,23,21.7,22,19.3,18,19.7,19.7,23,22.7,20,22,23.3,19.7,22.3,17.7,20,19,23.3,23.7,23.7,22.3,21.3,21.3,23,21.7,20.3,22.7,17.3,24,22,21,23.3,23.7,23.7,24,24,23,20.7,22.3,24,23,23,22.3,21.7,21.3,23,23.7,23,23.3,23,22],"pop":[[-1.841,-1.813,1.032,2.411,0.301,0.482,1.402,-0.658,-2.243,-1.437,-2.666,0.603,1.025,-2.586,-0.221,-1.302,2.409,0.789,1.791,0.273,1.532,-0.885,-0.601,1.373,1.382,0.785,0.043,1.072,-2.126,1.949,-0.442,-2.475,-0.096,0.932,-1.767,1.677,0.098,0.422,-1.318,-2.314,-1.848,1.066,-0.663,-0.8,-1.607,0.477,-1.011,0.075,2.276,-0.125,-0.496,0.084,0.844,-0.877,4.333,0.828,1.127,-0.847,-1.095,-0.544,-1.914,0.153,-1.096,-2.29,0.53,0.705,-0.119,0.303,-1.027,1.361,-0.706,-1.343,-1.183,3.045,-0.009,0.069,-2.321,0.892,0.687,-0.512,4.148,0.102,0.876,0.511],[-1.824,-1.669,-1.669,2.411,0.1,0.738,1.402,-0.658,-2.243,-1.388,-2.75,0.375,1.025,-2.079,-0.221,-1.302,2.409,0.789,2.081,0.273,1.532,-0.885,-0.252,1.373,1.382,0.883,0.018,1.072,-1.928,1.124,-0.261,-2.67,0.443,0.002,-1.908,1.299,0.161,1.291,-0.721,-2.658,-1.441,0.395,0.043,-0.265,-1.953,0.587,-0.891,0.075,1.932,-0.714,-0.496,0.084,0.631,-0.877,4.895,0.828,1.43,-0.847,0.466,-1.338,-2.036,-0.135,-1.096,-2.222,1.419,0.741,0.302,0.356,-1.282,1.979,-0.167,-1.343,-1.183,3.045,-0.009,0.069,-2.321,0.892,0.771,-0.666,4.148,0.102,0.876,0.511],[-1.752,-1.669,-1.669,2.678,0.1,0.407,1.402,-0.108,-2.243,-2.126,-2.849,0.375,1.025,-2.552,-0.221,-1.302,2.409,0.789,2.081,0.727,0.526,-0.885,-0.812,1.15,1.382,0.857,0.018,1.072,-2.126,1.949,-0.442,-2.475,0.608,1.08,-1.482,1.299,0.161,1.101,-1.318,-2.658,-1.912,0.395,-0.307,0.133,-1.953,0.587,-1.011,0.075,1.812,-0.125,-0.496,0.084,0.683,-0.877,4.871,0.902,1.36,-0.847,-1.095,-0.544,-2.036,0.153,-1.096,-2.222,0.53,0.705,0.236,0.356,-1.282,1.361,-0.706,-1.019,-1.183,3.045,-0.009,-0.041,-2.321,0.892,0.687,-0.512,4.148,0.102,0.876,0.488],[-1.841,-2.119,1.032,2.678,0.301,0.482,1.402,-0.658,-2.243,-2.126,-2.849,0.603,1.025,-2.552,-0.485,-1.302,2.409,0.789,1.482,0.727,0.526,-0.885,-0.601,1.15,1.382,0.857,0.043,1.072,-2.126,1.949,-0.442,-2.475,0.608,1.08,-1.767,1.677,0.098,1.101,-1.318,-2.314,-1.848,1.066,-0.307,-0.748,-1.953,0.587,-1.011,0.075,2.276,-0.125,-0.496,0.491,0.184,-0.877,4.871,0.828,1.36,-0.847,-0.539,-0.544,-2.036,-0.08,-1.096,-2.222,0.53,0.705,0.236,0.303,-1.027,1.361,-0.47,-1.019,-1.183,3.045,-0.009,-0.041,-2.321,0.892,0.687,-0.492,3.409,0.102,0.876,0.488],[-1.841,-2.119,1.032,2.678,0.301,0.482,1.141,-0.658,-2.243,-2.126,-3.091,0.603,0.746,-2.552,-0.485,0.085,2.409,0.94,1.482,0.727,0.526,-0.885,-0.601,1.15,1.382,0.857,0.108,1.072,-2.126,1.949,-0.442,-2.475,0.608,1.08,-1.767,1.677,0.098,1.465,-1.318,-2.028,-1.848,1.066,-0.307,-0.748,-2.31,0.229,-1.011,0.075,2.276,-0.125,-0.496,0.491,0.184,-0.488,4.871,0.828,1.36,-0.847,-0.539,-0.544,-2.036,-0.08,-1.096,-2.222,0.462,0.705,0.236,0.303,-1.027,1.361,-0.47,-1.019,-1.183,3.045,-0.009,-0.041,-2.321,0.892,0.687,-0.492,3.409,0.102,0.876,0.488],[-1.486,-2.119,1.032,1.991,-0.034,0.482,1.402,-0.658,-2.243,-2.126,-3.197,0.603,0.68,-2.552,-1.215,-1.302,2.711,0.789,1.482,0.727,1.532,-0.885,-0.601,1.15,1.382,0.785,0.108,1.072,-1.578,1.573,-0.442,-2.475,0.608,1.08,-1.767,1.677,-0.05,1.465,-1.318,-2.314,-1.848,1.066,-0.663,-0.748,-1.693,0.587,-1.011,0.075,2.276,-0.125,-0.496,0.491,0.184,-0.877,4.871,0.828,1.36,-0.847,-0.539,-0.544,-2.036,-0.08,-1.332,-2.216,0.615,0.705,0.236,0.303,-1.027,1.361,-0.184,-1.019,-0.889,2.392,-0.009,-0.513,-1.8,0.892,0.687,-0.492,3.409,0.102,0.556,0.488],[-1.489,-1.669,1.032,1.991,0.301,0.407,1.402,-0.123,-2.566,-2.126,-3.466,0.375,0.746,-2.552,-0.485,-1.614,2.711,1.108,1.482,0.727,0.526,-0.885,-0.812,1.15,1.033,0.785,0.018,1.072,-1.915,1.949,0.031,-2.475,0.608,1.504,-1.767,1.677,0.161,1.101,-1.318,-2.658,-1.848,1.066,-0.663,0.133,-1.693,0.587,-1.011,0.073,0.843,-0.506,-0.496,0.084,0.184,0.021,4.871,0.902,1.77,-0.847,-0.395,-0.544,-2.036,-0.08,-1.155,-2.64,0.462,0.705,0.671,0.303,-1.027,1.361,-0.161,-1.053,-1.183,3.045,-0.009,-0.041,-2.376,0.892,0.687,-0.492,4.148,0.102,0.876,0.488],[-1.824,-1.669,-1.669,2.411,0.1,0.738,1.393,-0.658,-2.243,-1.388,-2.75,0.375,1.025,-2.079,-0.221,-1.302,2.409,0.789,2.081,0.273,1.532,-0.885,-0.391,1.373,0.667,0.883,0.018,1.072,-1.928,1.124,-0.261,-2.67,0.443,0.002,-1.908,1.299,0.161,1.288,-0.721,-2.658,-1.441,0.783,0.043,-1.459,-1.953,0.458,-1.521,0.075,1.932,-0.897,-0.496,0.084,0.631,-0.877,4.895,0.828,1.43,-0.936,0.466,-1.338,-2.036,-0.135,-0.925,-2.331,1.419,0.984,0.302,0.356,-1.282,1.979,-0.167,-1.849,-1.183,3.045,-0.009,0.119,-2.321,0.892,0.771,-0.666,4.148,0.102,0.922,0.511],[-1.841,-2.119,1.032,2.678,0.301,0.482,1.402,-0.658,-1.947,-2.126,-2.849,0.562,1.242,-2.552,-0.485,-1.302,2.409,0.789,1.482,0.727,0.526,-1.682,-0.601,1.15,1.382,-0.897,0.043,1.072,-2.126,1.282,-0.442,-2.475,0.059,0.755,-1.767,1.677,0.098,1.101,-1.318,-2.314,-1.848,1.066,-0.307,-0.748,-1.953,0.587,-1.011,0.075,2.276,-0.125,-0.913,0.491,0.184,-0.877,5.663,0.828,1.36,-0.847,-0.539,-0.544,-2.036,-0.08,-1.096,-2.222,0.53,0.705,0.236,0.303,-1.027,1.361,-0.47,-1.019,-1.183,3.045,-0.009,-0.041,-2.321,0.892,0.687,-0.492,4.16,0.102,1.572,0.488],[-1.991,-2.119,1.032,2.678,0.463,0.492,1.402,-0.658,-2.032,-2.126,-2.849,0.603,1.025,-2.729,-0.485,-1.302,2.409,0.517,1.482,0.727,0.685,-0.885,-0.601,1.474,1.382,0.857,0.043,1.069,-2.126,1.949,-0.442,-2.475,0.608,1.08,-1.767,1.677,0.098,1.43,-1.318,-2.314,-1.848,1.066,-0.307,-0.748,-1.767,0.587,-1.011,0.075,2.276,-0.125,-0.496,0.491,0.184,-0.877,4.871,0.404,0.951,-0.847,-0.539,-0.544,-2.036,1.056,-1.096,-2.222,0.53,0.705,0.236,0.303,-1.027,1.361,-0.47,-1.019,-1.183,2.566,-0.082,-0.041,-3.017,0.892,0.687,-0.169,3.409,-0.174,0.876,0.488],[-1.841,-2.119,1.032,2.678,0.301,0.482,1.402,-0.658,-2.243,-2.126,-2.849,0.806,1.025,-2.552,-0.485,-1.302,2.409,0.789,1.482,1.147,0.526,-0.885,-0.601,1.094,1.382,0.857,0.043,1.072,-2.126,1.949,-0.442,-2.475,0.608,1.08,-1.767,1.677,0.061,1.101,-1.318,-2.314,-1.848,1.066,0.082,-0.748,-1.953,0.587,-1.011,0.075,1.561,-0.125,-0.496,0.491,0.184,-0.877,4.871,0.828,1.36,-0.847,-0.539,-0.544,-2.045,-0.08,-0.862,-2.222,0.53,0.961,0.236,0.999,-1.027,1.81,-0.988,-1.019,-1.183,2.409,0.179,-0.041,-2.321,0.892,0.801,-0.492,3.409,0.102,0.876,0.488],[-1.824,-2.119,-1.669,2.678,0.164,0.738,1.402,-0.611,-2.243,-1.388,-2.849,0.375,1.025,-2.079,-0.221,-1.302,2.409,0.769,1.482,0.727,0.526,-0.885,0.052,0.52,1.686,0.915,-0.097,1.072,-1.928,1.124,0.009,-2.67,0.608,1.08,-1.767,1.677,0.161,1.291,-0.721,-2.658,-2.234,0.395,-0.307,-0.265,-2.044,0.229,-1.011,0.075,1.932,-0.864,-0.496,0.084,0.631,-0.877,4.895,0.782,1.43,-1.2,0.466,-1.338,-2.036,-0.08,-1.096,-2.222,0.53,0.741,0.236,0.303,-1.282,1.979,-0.167,-1.343,-1.183,3.045,-0.009,0.069,-2.321,0.401,1.047,-0.666,4.148,0.632,0.876,0.488],[-1.841,-2.524,-0.989,2.678,0.301,0.686,1.592,-0.882,-2.243,-2.126,-2.75,0.603,1.025,-2.552,-0.485,-0.889,2.409,0.789,2.13,0.727,1.532,-0.33,-0.601,1.15,0.868,0.785,0.108,1.072,-2.126,1.949,-0.442,-2.475,0.608,0.932,-1.767,1.677,0.098,1.101,-0.696,-2.314,-2.483,1.066,-0.663,-0.748,-1.953,0.272,-1.011,0.075,1.812,-0.125,-0.496,-0.354,1.308,-0.488,4.871,0.828,1.36,-0.847,-0.539,-0.544,-2.036,-0.08,-1.096,-2.29,0.53,0.993,0.236,0.303,-0.842,1.361,0.182,-1.019,-0.911,3.045,-0.076,0.069,-2.321,0.892,0.687,-0.492,4.148,0.055,0.942,0.524],[-1.841,-2.119,1.032,2.678,0.301,0.482,1.402,-0.825,-2.243,-2.126,-2.849,0.603,1.025,-2.552,-0.485,-1.302,2.409,0.789,2.015,0.727,0.526,-0.885,-0.601,1.325,1.382,0.857,0.043,0.925,-2.126,1.949,-0.442,-2.475,0.608,1.08,-1.767,1.677,0.098,1.101,-1.318,-2.314,-1.848,1.066,-0.307,-0.748,-1.953,0.587,-1.011,0.075,2.645,-0.125,-0.496,0.491,0.68,-0.877,4.871,0.828,1.36,-0.847,-0.803,-0.544,-2.036,-0.08,-1.096,-2.088,0.53,0.705,0.656,0.303,-1.027,1.361,-0.47,-1.019,-1.176,3.045,-0.009,-0.041,-2.321,0.892,0.687,-0.492,3.409,0.102,0.876,0.264],[-1.841,-2.119,1.032,2.678,-0.034,1.002,1.141,-0.784,-2.243,-2.126,-3.091,0.603,0.746,-2.374,-0.849,-1.302,2.463,0.789,1.482,0.727,1.532,-0.885,-0.601,1.15,1.382,0.857,0.108,1.072,-1.578,1.949,-0.442,-2.475,0.734,1.08,-1.767,1.605,0.098,1.465,-1.318,-2.028,-1.848,1.066,-0.307,-0.748,-1.693,0.587,-1.011,0.075,2.276,-0.125,-0.496,0.491,0.184,-0.488,4.871,0.828,1.36,-0.182,1.285,-0.544,-2.036,-0.08,-1.096,-2.222,0.462,0.705,0.236,0.303,-1.027,1.361,-0.47,-0.95,-0.889,2.392,-0.009,-0.513,-1.8,0.892,1.076,-0.492,3.409,0.102,0.334,0.488],[-1.841,-1.669,-0.989,-0.024,0.226,0.686,1.402,-0.196,-2.429,-1.464,-3.091,0.375,1.025,-2.552,-0.485,-0.889,2.409,0.082,1.482,0.727,1.532,-0.307,-0.812,1.393,1.382,0.785,-0.119,1.072,-2.126,2.107,0.239,-2.475,0.608,0.932,-1.767,1.677,0.161,2.11,-1.318,-2.658,-1.848,1.066,-0.663,0.133,-1.607,0.587,-1.011,0.075,2.008,-0.125,-0.068,0.084,1.308,0.021,4.871,0.902,1.36,-0.847,-0.532,-1.348,-2.036,-0.08,-1.096,-2.64,0.462,0.705,0.671,0.303,-1.027,1.361,-0.682,-1.019,-0.825,3.045,-0.076,0.069,-2.321,0.824,0.534,-0.195,4.148,0.416,0.876,0.488],[-1.841,-2.119,0.94,2.678,0.301,0.482,1.141,-0.658,-2.243,-2.126,-3.091,0.603,0.746,-2.552,-0.485,-0.178,2.409,0.94,1.482,0.727,0.471,-0.885,-0.601,1.15,1.382,0.857,0.108,1.072,-2.729,-0.544,-0.442,-2.475,0.523,1.08,-1.113,1.677,0.098,1.465,-1.318,-2.028,-1.848,1.069,-0.307,-0.748,-2.31,0.229,-1.011,0.075,2.276,0.026,-0.775,0.491,0.184,-0.488,4.871,0.828,1.36,-1.421,-0.539,-0.544,-2.036,-0.08,-1.096,-2.18,0.347,0.705,0.236,0.303,-1.027,1.361,-0.47,-1.019,-1.58,3.045,0.062,-0.041,-2.321,0.892,0.687,-0.492,3.409,0.102,0.876,0.488],[-1.841,-2.524,1.1,2.678,0.301,0.482,1.402,-0.658,-2.344,-2.126,-2.849,0.603,1.025,-2.552,-0.485,-1.302,2.409,0.281,1.482,0.727,0.526,-0.33,-0.593,1.15,0.904,0.857,0.043,1.072,-2.126,1.915,-0.442,-2.475,0.608,1.08,-1.767,1.677,0.098,1.101,-1.177,-2.314,-1.848,1.066,-0.307,-0.748,-1.953,0.272,-1.011,0.511,2.276,-0.125,-0.496,0.491,0.184,-1.237,4.871,0.828,1.36,-0.847,-0.539,-0.544,-2.036,-0.08,-0.872,-2.222,0.53,0.705,0.435,0.303,-1.027,1.361,0.474,-1.019,-1.183,3.045,0.467,0.13,-2.321,0.892,0.687,-0.492,3.409,0.055,0.876,0.488],[-1.841,-1.813,-0.989,0.407,0.301,0.686,1.592,-0.658,-2.243,-1.464,-2.75,0.862,1.025,-2.29,-0.485,-0.889,2.409,0.082,2.345,0.727,1.532,-0.307,-0.812,1.373,1.382,0.785,0.108,1.072,-2.126,2.107,0.239,-2.475,0.608,0.932,-1.767,0.284,0.161,1.465,-0.696,-2.658,-2.483,0.376,-1.119,-1.04,-1.607,0.229,-1.011,0.127,1.812,-0.125,0.438,-0.612,1.492,-0.288,4.871,0.828,1.36,-0.847,-1.369,-1.245,-2.036,0.153,-1.096,-2.29,0.719,0.993,-0.119,0.729,-1.027,1.361,-0.682,-1.019,-0.911,3.045,0.384,0.348,-1.917,0.824,1.329,-0.614,4.148,0.033,0.876,0.524],[-1.841,-1.813,1.032,2.411,0.301,0.482,1.402,-0.658,-2.243,-1.437,-2.666,0.105,1.025,-2.586,-0.221,-1.302,2.743,0.789,2.177,0.273,1.532,-0.885,-0.601,1.406,1.382,0.785,0.377,1.071,-2.126,1.949,-0.442,-2.475,-0.096,0.932,-1.767,1.677,0.098,0.422,-1.447,-2.314,-1.848,1.066,-0.663,-0.8,-1.607,0.477,-1.011,0.075,2.276,-0.125,-0.496,0.084,0.844,-0.877,4.29,0.828,1.574,-0.847,-1.095,-0.544,-1.914,0.153,-1.096,-2.308,0.53,0.705,-0.119,-0.051,-1.027,1.361,-0.706,-1.343,-1.183,3.045,-0.009,0.069,-2.321,0.892,0.887,-0.512,4.148,0.102,0.876,0.511],[-1.841,-2.119,-0.989,1.991,-0.129,0.482,1.592,-0.658,-2.243,-2.126,-3.394,0.338,1.025,-2.552,-0.485,-1.302,2.723,1.08,1.482,0.727,1.532,-0.885,-0.812,1.15,1.382,0.785,0.108,1.072,-1.578,1.352,0.239,-2.475,0.608,1.08,-2.185,1.677,-0.05,1.465,-0.696,-2.314,-0.882,1.066,-0.663,-0.748,-1.607,0.587,-1.011,0.075,1.812,0.206,-0.496,0.491,0.184,-0.488,4.871,0.828,1.36,-0.847,-0.864,-1.348,-2.036,0.153,-1.332,-2.29,0.829,0.993,-0.119,0.303,-1.027,1.361,-0.184,-1.019,-0.889,2.392,-0.009,0.069,-1.8,0.892,0.687,-0.492,3.409,0.416,0.556,0.378],[-1.841,-2.119,1.032,1.991,-0.034,0.482,1.211,-0.658,-2.243,-2.126,-3.197,0.603,1.025,-2.552,-1.215,-1.302,2.711,0.789,1.482,0.727,0.526,-0.885,-0.601,1.15,1.382,0.785,-0.155,1.072,-2.126,1.573,-0.675,-2.475,0.609,1.08,-1.767,1.677,0.098,1.465,-1.318,-2.314,-1.848,1.066,-0.663,-0.748,-1.693,0.729,-0.954,0.075,2.276,-0.125,-0.496,0.571,0.184,-0.823,4.871,0.828,1.397,-0.847,0.018,-0.544,-2.036,-0.08,-1.096,-2.216,0.615,0.705,0.236,0.303,-1.027,0.89,-0.184,-1.019,-1.183,3.045,-0.009,-0.513,-2.321,0.892,0.687,-0.779,3.335,0.102,0.876,0.717],[-1.841,-2.701,1.032,2.678,0.301,0.482,1.141,-0.658,-2.243,-2.522,-2.849,0.603,0.746,-2.552,-0.485,-1.302,2.409,0.94,1.482,0.727,0.526,0.422,-0.704,0.52,1.382,0.857,0.043,1.072,-2.126,1.949,-0.462,-2.193,0.608,1.08,-1.767,1.677,0.098,1.465,-1.318,-2.028,-2.351,1.135,-0.307,-0.748,-1.953,0.229,-1.011,0.075,2.276,-0.125,-0.496,0.491,0.184,-0.488,4.871,0.828,1.36,-0.847,-1.175,-0.544,-2.036,-0.08,-1.096,-2.222,0.53,0.705,0.236,0.303,-1.027,1.658,-0.47,-1.019,-1.183,3.045,-0.009,-0.041,-2.321,0.892,0.687,-0.492,3.409,0.836,0.876,0.488],[-1.489,-1.677,-1.669,-0.774,0.301,0.407,1.402,-0.146,-2.243,-2.126,-2.849,0.375,0.338,-2.552,-0.485,-1.302,2.711,1.108,1.482,0.727,0.526,-0.885,-0.812,1.15,1.382,0.785,0.018,1.072,-2.361,1.949,0.031,-2.475,0.608,1.08,-1.482,1.299,0.161,1.101,0.986,-2.658,-1.912,0.395,-0.307,0.133,-1.953,0.587,-1.011,0.073,1.812,-0.125,-0.496,0.137,0.683,-0.877,4.871,0.902,1.36,-0.847,-1.095,-0.544,-2.036,0.153,-1.096,-2.64,0.53,0.705,0.671,0.356,-1.282,1.268,-0.184,-1.019,-1.183,3.045,-1.016,-0.041,-2.321,0.892,0.687,-0.536,4.148,0.102,0.876,0.488]]}]};
+const PDATA = {"showcase":[61002,61017,61001,61024,61034,61008],"levels":[{"gen":0,"secs":25,"endgame":false,"curve":[],"champ":[0.151,0.358,-0.582,0.174,-0.655,-1.362,0.484,-0.949,-0.91,-0.513,0.152,0.554,0.448,1.039,0.879,1.598,-0.064,1.618,0.072,0.521,0.112,0.621,-0.386,-1.469,0.434,-0.601,1.542,0.618,0.726,1.197,-0.57,-0.255,-0.525,0.155,0.368],"cleared":0,"medWipe":null,"med30":1},{"gen":80,"secs":25,"endgame":false,"curve":[0.27,0.92,1.23,1.2,2,1.78,2.05,1.32,1.55,1.9,1.58,1.73,1.58,2.23,1.78,2.32,2.27,2.95,2.03,1.27,1.72,2.1,1.4,1.68,1.68,1.72,1.98,1.92,1.97,2.07,1.45,1.43,1.4,1.9,2,2.43,2.08,2.42,1.68,2.13,2.73,1.93,2.32,1.6,2.13,2.15,1.87,1.67,1.62,1.13,1.65,1.37,2.12,1.65,1.93,2.05,2.27,1.43,1.75,2.25,2.17,2.3,2.28,1.55,1.8,1.68,1.93,1.48,1.67,2.02,1.9,2.03,1.55,1.52,1.87,1.48,2.08,2.02,1.95,1.33],"champ":[-0.367,0.52,-2.315,-0.617,-1.103,-0.362,1.153,-0.781,0.484,-0.028,0.147,0.162,0.391,0.119,0.075,0.875,-0.833,-0.766,-0.123,-0.265,0.213,1.12,0.853,-2.416,0.053,1.893,0.704,-1.077,-0.283,-0.156,-0.753,-2.049,0.372,-0.353,1.195,-1.108,-0.622,1.112,-0.991,-0.038,0.101,0.552,0.378,-0.071,-2.543,1.346],"cleared":0,"medWipe":null,"med30":6},{"gen":100,"secs":25,"endgame":false,"curve":[2.02,3,3.17,3.42,4.98,4.8,6.8,5.58,6.73,7.77,5.97,6.85,6,7.35,7.28,6.82,6.92,6.7,6.8,8.25,7.15,8.72,7.2,7.33,9.27,8.27,10.57,7.08,9.2,9.8,11.57,8.32,8.68,11.18,9.13,9.65,8.93,8.25,6.37,6.6,8.43,8.47,9.15,9.35,9.35,9.32,9.48,10.28,8.8,8.62,9.9,9.32,9.02,9.95,11.27,8.65,10.1,8.87,9.03,9.42,10.63,11.4,11.25,10.8,9.72,10.88,10.55,10.8,7.98,8.88,8.75,9.98,9.38,8.77,10.63,8.95,9.47,11.03,11.18,11.85,11.53,12.48,11.37,11.02,10.97,12.63,10.72,12.72,11.25,10.33,11.1,10.7,12.17,11.07,11.97,11.8,11.05,11.02,12.53,12.18],"champ":[-0.889,0.261,2.203,-0.53,-0.943,-0.066,0.469,0.648,-0.376,0.168,0.674,-0.837,0.976,0.861,0.258,0.014,-0.049,1.179,-0.665,1.562,0.3,-1.089,0.206,-1.101,-0.425,-1.223,1.514,1.127,0.729,-3.844,1.455,-0.811,-0.238,-0.647,-0.359,0.906,2.967,1,-1.728,-3.219,-0.468,1.762,-0.281,0.451,2.086,-0.183,0.189,-3.928,0.326,-0.964,1.183,-1.956,0.347,-0.179,0.526,-0.63,-0.541,-1.976,0.62,-0.299,-3.298,0.019,-0.062,-1.006,-1.013,0.189,-1.965,1.165],"cleared":0.675,"medWipe":44,"med30":17},{"gen":30,"secs":25,"endgame":false,"curve":[11.48,11.9,9.95,10.57,12.58,11.73,13.4,12.08,12.57,11.93,13.03,12.68,11.6,13.85,12.4,12.15,10.58,12.58,13.18,14.02,10.95,13.62,12.33,10.37,13.08,9.38,13.02,12.37,12.52,12.02],"champ":[-0.874,1.166,2.014,-0.61,-1.481,1.082,0.418,0.568,1.374,0.365,0.082,-0.16,1.37,1.118,1.774,-2.795,-0.52,1.701,0.911,1.001,0.56,-1.475,0.046,-1.333,0.362,-0.4,3.12,0.688,0.729,-3.164,1.488,2.862,0.202,0.24,-1.126,1.146,0.562,0.019,0.333,-0.531,-0.192,-0.182,1.675,-0.384,-0.443,-2.207,0.297,-0.792,-0.837,-0.642,0.242,0.544,5.063,1.22,-1.193,-3.388,-0.444,1.21,0.261,1.556,1.888,-0.199,0.076,-3.587,0.23,-1.296,0.543,-1.87,-0.431,-0.564,-0.886,-0.63,-0.407,-2.082,0.894,-0.653,-2.75,-0.71,-0.284,-0.45,-0.071,0.245,-0.803,1.642,0.582,0.243,0.083,-0.24,0.129,-0.035],"cleared":0.775,"medWipe":47,"med30":18},{"gen":80,"secs":60,"endgame":false,"curve":[19.4,17.88,20.33,21.68,19.32,20.13,20.01,22.89,21.21,21.57,20.51,20.29,21.4,19.53,20.1,21.39,22.08,20.36,22.6,20,21.78,21.53,22.47,22.11,19.42,21.43,20.58,17.68,20.21,21.01,22.39,18.24,20.17,21.9,21.04,20.85,23.1,22.35,21.53,22.06,21.21,22.71,23.04,22.35,22.74,20.43,22.67,22.04,21.71,23.36,21.43,20.24,21.81,19.75,21.71,21.65,22.18,21.26,22.81,21.32,21.96,21.65,20.89,20.43,20.69,20.19,20.36,20.78,22,20.08,19.07,19.43,21.68,23.32,22.78,23.6,21.44,22.42,24.47,22.78],"champ":[-0.906,1.328,4.017,-0.616,-1.616,0.938,1.375,-0.781,1.744,1.723,0.968,-0.303,1.43,1.025,2.664,-2.095,-1.417,0.929,-1.422,1.798,0.651,-1.551,-0.562,-0.289,-0.931,-2.168,2.943,-0.933,1.977,-4.26,1.727,2.246,-0.404,-0.75,-1.062,0.787,0.256,-0.395,1.795,-1.836,-0.317,0.297,-0.206,-0.226,-0.258,-1.672,0.159,0.372,0.071,1.107,0.419,0.02,0.265,-1.541,1.352,0.501,1.22,-0.463,0.557,0.035,0.842,0.051,-1.015,-0.532,0.32,-1.484,0.309,1.856,4.701,-0.023,-1.927,-2.763,0.169,-0.315,0.863,1.315,2.133,-0.098,2.641,-4.366,-0.54,-2.204,-0.697,0.63,-1.418,-1.308,-0.886,-0.809,0.675,-1.368,0.587,0.37,-3.016,-0.71,-0.56,-1.755,0.904,-0.651,-1.786,0.562,0.695,-0.133,0.63,-0.72,-1.485,0.435,-0.642,-0.208,0.217,-0.301,-1.632,-0.828],"cleared":0.65,"medWipe":44,"med30":19},{"gen":90,"secs":60,"endgame":true,"curve":[22.74,21.64,22.68,23.68,22.43,22.72,20.89,20.32,20.11,19.88,22.14,21.64,19.71,21.78,21.15,20.88,19.76,20.26,20.13,19.49,19.58,18.42,20.42,21.07,20.92,22.14,22.06,22.04,20.68,21.86,20.9,19.54,21.21,22.35,23.22,21.19,22.24,22.6,23.61,22.96,23.19,23.82,24.46,22.79,20.96,23.46,24.03,23.06,23.67,23.03,22.5,22.44,21.14,22.39,22.99,21.19,19.63,23.74,23.83,22.85,25.6,24.99,24.94,23.76,24.51,24.53,23.38,23.26,23.31,24.25,23.67,23.15,24.33,24.14,24.6,24.15,23.93,25.08,23.04,22.01,23.22,23.43,24.35,24.1,23.74,23.43,23.18,22.86,24.21,23.11],"champ":[-0.547,1.122,2.877,0.442,-1.446,0.336,0.28,-0.363,1.204,2.229,1.327,-0.787,0.509,1.424,1.814,0.465,-1.078,0.853,-3.287,-1.325,0.762,-1.877,-0.867,-2.038,0.6,-0.544,4.053,0.792,1.674,-5.077,0.919,2.262,-0.162,-1.006,0.683,2.113,0.21,-0.343,1.053,-1.317,-1.741,2.961,-0.401,0.056,0.363,-2.246,-0.103,1.255,1.1,-0.615,-0.137,-0.669,0.569,-0.666,1.778,0.064,0.855,-0.511,0.649,0.278,-0.197,-0.745,-1.77,-0.44,0.142,0.738,-0.823,1.621,-0.293,0.189,-0.177,0.829,0.698,-0.585,-0.411,0.078,-0.046,-0.364,-0.378,0.598,-0.877,-1.773,0.459,1.72,5.544,0.269,0.555,-1.169,2.07,0.972,-0.253,0.587,2.702,0.446,0.683,-4.952,-1.113,-2.571,-0.384,0.562,-0.055,2.616,0.448,1.446,0.203,-0.928,0.688,1.197,-3.377,-1.601,-1.015,0.126,2.374,-0.43,-1.631,0.365,-1.739,-0.755,1.92,-1.228,0.626,0.135,-0.689,-0.122,-0.03,0.841,1.359,-1.865,1.189,0.655,0.53,0.096,0.154,-0.024],"cleared":1,"medWipe":40,"med30":20}]};
+</script>
+<script>
+(() => {
+const { W, H, P, LEVELS } = SIM;
+const LV = [
+  { tags: '[bias]' },
+  { tags: '[distance]' },
+  { tags: '[dir x, dir y]' },
+  { tags: '[closing]' },
+  { tags: '[wall]' },
+  { tags: '[aim x, aim y]' },
+];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+
+// ---------- brains ----------
+const SHIPPED = DATA.levels.map(l => l.pop.map(g => Float32Array.from(g)));
+// predator's side: the shark has the evolving brain; the fish are the fixed level-3 (Direction) school
+const PBRAINS = PDATA.levels.map(l => Float32Array.from(l.champ));
+const PREY_LEVEL = 2;
+let side = 'fish';
+const isPred = () => side === 'pred';
+const levelsNow = () => isPred() ? SIM.PRED_LEVELS : LEVELS;
+const tagNow = i => isPred() ? SIM.PRED_LEVELS[i].tag : LV[i].tags;
+let pops = SHIPPED.slice();
+let curves = DATA.levels.map(l => l.curve.slice());
+let gens = DATA.levels.map(l => l.gen);
+let retrained = [false, false, false, false, false, false];
+const cumGen = L => gens.slice(0, L + 1).reduce((a, b) => a + b, 0);
+
+// ---------- state ----------
+let level = 0, world = null, speed = 1, paused = false, roundNo = 0;
+let selected = -1, pinned = false, evIdx = 0, lunges = 0, misses = 0;
+let roundOverAt = 0, fx = [], training = null;
+const recentBy = { fish: [[], [], [], [], [], []], pred: [[], [], [], [], [], []] };
+
+// ---------- level buttons ----------
+const nav = $('levels');
+function buildCards() {
+  nav.innerHTML = '';
+  levelsNow().forEach((l, i) => {
+    const b = document.createElement('button');
+    b.className = 'lvl'; b.type = 'button';
+    b.innerHTML = `<span class="n">${isPred() ? 'Shark level' : 'Level'} ${i + 1}</span><span class="nm">${l.name}</span><span class="tg">${tagNow(i)}</span>`;
+    b.addEventListener('click', () => setLevel(i));
+    nav.appendChild(b);
+  });
+}
+buildCards();
+function setSide(sd) {
+  if (training || sd === side) return;
+  side = sd;
+  document.querySelectorAll('[data-side]').forEach(b => b.setAttribute('aria-pressed', b.dataset.side === sd ? 'true' : 'false'));
+  $('fishLede').textContent = isPred()
+    ? 'Same tank, roles swapped. Now the shark steers with a small neural network and the 24 fish keep fixed brains that only know where the shark is. Each level hands the shark one more sense, and evolution works out how to hunt with it.'
+    : '24 fish, one predator. Every fish steers with a small neural network. Each level hands the networks one more sense, and evolution works out what to do with it.';
+  $('sMissK').textContent = isPred() ? 'lunges missed' : 'lunges dodged';
+  $('fishHint').textContent = isPred() ? 'The brain panel follows the shark · keys 1–6 or ← → to change level' : 'Click a fish to watch its brain · keys 1–6 or ← → to change level';
+  buildCards(); setLevel(level);
+}
+document.querySelectorAll('[data-side]').forEach(b => b.addEventListener('click', () => { b.blur(); setSide(b.dataset.side); }));
+
+function setLevel(L) {
+  if (training) return;
+  level = L; roundNo = 0;
+  [...nav.children].forEach((b, i) => b.setAttribute('aria-pressed', i === L ? 'true' : 'false'));
+  $('hudL').textContent = `${isPred() ? 'Shark level' : 'Level'} ${L + 1} · ${levelsNow()[L].name}`;
+  startRound(isPred() ? PDATA.showcase[L] : DATA.showcase[L]);
+  updateEvo();
+}
+
+function startRound(seed) {
+  const sd = seed ?? ((Math.random() * 1e9) | 0);
+  if (isPred()) { world = SIM.makeWorld(PREY_LEVEL, SHIPPED[PREY_LEVEL], sd); world.predBrain = SIM.makePredBrain(PBRAINS[level], level); }
+  else world = SIM.makeWorld(level, pops[level], sd);
+  world.endless = true; // live rounds run until the last fish is eaten
+  roundNo++; evIdx = 0; lunges = 0; misses = 0; roundOverAt = 0; fx = [];
+  if (!pinned || !world.fish[selected]) { selected = -1; pinned = false; }
+  pickAuto();
+  $('roundNo').textContent = `Round ${roundNo}`;
+  updateStats();
+}
+
+// ---------- selection ----------
+function pickAuto() {
+  if (pinned && world.fish[selected] && world.fish[selected].alive) return;
+  pinned = false;
+  const p = world.pred; let best = -1, bd = 1e9;
+  for (const f of world.fish) if (f.alive) { const d = Math.hypot(f.x - p.x, f.y - p.y); if (d < bd) { bd = d; best = f.id; } }
+  if (best >= 0) selected = best;
+}
+$('sea').addEventListener('click', e => {
+  if (isPred()) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H;
+  let best = -1, bd = 40;
+  for (const f of world.fish) if (f.alive) { const d = Math.hypot(f.x - x, f.y - y); if (d < bd) { bd = d; best = f.id; } }
+  if (best >= 0) { selected = best; pinned = true; } else { pinned = false; pickAuto(); }
+});
+
+// ---------- simulation step ----------
+function stepWorld() {
+  if (world.done) return;
+  SIM.step(world);
+  while (evIdx < world.events.length) {
+    const e = world.events[evIdx++];
+    if (e.type === 'lunge') lunges++;
+    else if (e.type === 'miss') { misses++; fx.push({ kind: 'miss', x: e.x, y: e.y, age: 0, life: 1.1 }); }
+    else if (e.type === 'catch') {
+      for (let k = 0; k < 10; k++) fx.push({ kind: 'bub', x: e.x, y: e.y, vx: (Math.random() - .5) * 60, vy: (Math.random() - .5) * 60, r: 1.5 + Math.random() * 3, age: 0, life: .8 + Math.random() * .6 });
+      fx.push({ kind: 'ring', x: e.x, y: e.y, age: 0, life: .6 });
+      if (e.id === selected) { pinned = false; }
+    }
+  }
+  if (world.tick % 90 === 0 || !world.fish[selected] || !world.fish[selected].alive) pickAuto();
+  if (world.done) {
+    const rc = recentBy[side][level]; rc.push(fmt(world.tick)); if (rc.length > 8) rc.shift();
+    roundOverAt = performance.now();
+  }
+}
+
+// ---------- rendering: tank ----------
+const sea = $('sea'), ctx = sea.getContext('2d');
+let dpr = 1, scale = 1;
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const r = sea.getBoundingClientRect();
+  sea.width = Math.round(r.width * dpr); sea.height = Math.round(r.height * dpr);
+  scale = sea.width / W;
+  const b = $('brain'), br = b.getBoundingClientRect(); b.width = Math.round(br.width * dpr); b.height = Math.round(br.height * dpr);
+  const v = $('evo'), vr = v.getBoundingClientRect(); v.width = Math.round(vr.width * dpr); v.height = Math.round(vr.height * dpr);
+  updateEvo();
+}
+new ResizeObserver(resize).observe($('tank'));
+window.addEventListener('resize', resize);
+
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = { water: css('--water'), hi: css('--water-hi'), fish: css('--fish'), hot: css('--fish-hot'), shark: css('--shark'), ink: css('--ink'), dim: css('--ink-dim'), neg: css('--neg'), caught: css('--caught') };
+
+function drawWater(t) {
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#0e3341'); g.addColorStop(1, '#0a2531');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // caustic light patches
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 7; i++) {
+    const cx = W * (0.15 + 0.7 * ((i * 0.37 + (reduce ? 0 : t * 0.012 * (1 + i % 3))) % 1));
+    const cy = H * (0.2 + 0.6 * ((i * 0.61 + Math.sin(t * 0.07 + i)) * 0.5 % 1 + 0.5) % 1);
+    const rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 160 + 40 * Math.sin(t * .3 + i));
+    rg.addColorStop(0, 'rgba(120,200,210,0.055)'); rg.addColorStop(1, 'rgba(120,200,210,0)');
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  // wall band where the wall sensors reach
+  ctx.strokeStyle = 'rgba(180,214,224,0.05)'; ctx.setLineDash([4, 8]); ctx.lineWidth = 1;
+  ctx.strokeRect(P.wallSense, P.wallSense, W - 2 * P.wallSense, H - 2 * P.wallSense); ctx.setLineDash([]);
+}
+
+function drawFish(f, t, sel) {
+  ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.h);
+  const hot = f.burst > 0.3;
+  if (hot) { ctx.strokeStyle = 'rgba(255,226,173,0.25)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-8 - f.v * 7, 0); ctx.stroke(); }
+  const wig = reduce ? 0 : Math.sin(t * (6 + f.v * 5) + f.id) * (0.35 + f.burst * 0.2);
+  ctx.fillStyle = hot ? C.hot : C.fish;
+  ctx.beginPath(); ctx.ellipse(1, 0, 8, 3.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.translate(-6, 0); ctx.rotate(wig);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-7, -4); ctx.lineTo(-6, 0); ctx.lineTo(-7, 4); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#2a1406'; ctx.beginPath(); ctx.arc(5.5, -1.4, 0.9, 0, 7); ctx.arc(5.5, 1.4, 0.9, 0, 7); ctx.fill();
+  ctx.restore();
+  if (sel) { ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(f.x, f.y, 15, 0, 7); ctx.stroke(); }
+}
+
+function drawShark(p, t) {
+  if (p.mode === 'lunge') {
+    ctx.strokeStyle = 'rgba(200,225,235,0.18)'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(p.x - Math.cos(p.h) * 20, p.y - Math.sin(p.h) * 20); ctx.lineTo(p.x - Math.cos(p.h) * 70, p.y - Math.sin(p.h) * 70); ctx.stroke(); ctx.lineCap = 'butt';
+  }
+  ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.h);
+  const stretch = p.mode === 'lunge' ? 1.12 : 1;
+  ctx.scale(stretch, 1 / Math.sqrt(stretch));
+  const wig = reduce ? 0 : Math.sin(t * (p.mode === 'lunge' ? 16 : 7)) * 0.28;
+  ctx.fillStyle = C.shark;
+  // pectoral fins
+  ctx.beginPath(); ctx.moveTo(4, 5); ctx.lineTo(-8, 17); ctx.lineTo(-4, 5); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(4, -5); ctx.lineTo(-8, -17); ctx.lineTo(-4, -5); ctx.closePath(); ctx.fill();
+  // body
+  ctx.beginPath(); ctx.moveTo(26, 0);
+  ctx.bezierCurveTo(20, -8, 0, -9, -16, -4); ctx.lineTo(-22, 0); ctx.lineTo(-16, 4);
+  ctx.bezierCurveTo(0, 9, 20, 8, 26, 0); ctx.fill();
+  // tail
+  ctx.save(); ctx.translate(-20, 0); ctx.rotate(wig);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-14, -9); ctx.lineTo(-9, 0); ctx.lineTo(-14, 9); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.ellipse(4, 0, 12, 1.6, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#0a1a20'; ctx.beginPath(); ctx.arc(17, -4, 1.4, 0, 7); ctx.arc(17, 4, 1.4, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+function drawSenses(f) {
+  const p = world.pred, L = level;
+  const d = Math.hypot(f.x - p.x, f.y - p.y);
+  if (L >= 1 && d < P.sense) {
+    ctx.strokeStyle = `rgba(244,178,122,${0.15 + 0.5 * (1 - d / P.sense)})`; ctx.lineWidth = 1;
+    ctx.setLineDash(L >= 2 ? [] : [2, 4]);
+    if (L >= 2) { ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.arc(f.x, f.y, d, 0, 7); ctx.stroke(); }
+    ctx.setLineDash([]);
+  }
+  if (L >= 4) {
+    ctx.strokeStyle = 'rgba(219,232,236,0.4)'; ctx.lineWidth = 1;
+    const ws = P.wallSense;
+    const seg = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+    if (f.x < ws) seg(f.x, f.y, 0, f.y); if (W - f.x < ws) seg(f.x, f.y, W, f.y);
+    if (f.y < ws) seg(f.x, f.y, f.x, 0); if (H - f.y < ws) seg(f.x, f.y, f.x, H);
+  }
+  if (L >= 5 && d < P.sense) {
+    ctx.strokeStyle = 'rgba(143,159,255,0.55)'; ctx.setLineDash([6, 5]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(p.h) * 260, p.y + Math.sin(p.h) * 260); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+function drawPredSenses() {
+  const p = world.pred, b = world.predBrain, d = b.dbg || {}, L = level;
+  if (L < 1) return;
+  const f = d.near;
+  if (f) {
+    const dist = Math.hypot(f.x - p.x, f.y - p.y);
+    ctx.strokeStyle = `rgba(163,184,193,${0.25 + 0.5 * (1 - dist / 400)})`; ctx.lineWidth = 1;
+    if (L >= 2) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(f.x, f.y); ctx.stroke(); }
+    else { ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.arc(p.x, p.y, dist, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(f.x, f.y, 13, 0, 7); ctx.stroke();
+    if (L >= 3) {
+      const ax = f.x + f.vx * 18, ay = f.y + f.vy * 18, a = Math.atan2(f.vy, f.vx);
+      ctx.strokeStyle = C.hot; ctx.fillStyle = C.hot; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(ax, ay); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ax + Math.cos(a) * 5, ay + Math.sin(a) * 5); ctx.lineTo(ax + Math.cos(a + 2.5) * 5, ay + Math.sin(a + 2.5) * 5); ctx.lineTo(ax + Math.cos(a - 2.5) * 5, ay + Math.sin(a - 2.5) * 5); ctx.fill();
+    }
+  }
+  if (L >= 4) {
+    ctx.strokeStyle = 'rgba(219,232,236,0.4)'; ctx.lineWidth = 1; const ws = 110;
+    const seg = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+    if (p.x < ws) seg(p.x, p.y, 0, p.y); if (W - p.x < ws) seg(p.x, p.y, W, p.y);
+    if (p.y < ws) seg(p.x, p.y, p.x, 0); if (H - p.y < ws) seg(p.x, p.y, p.x, H);
+  }
+  if (L >= 5 && d.school) {
+    const [ux, uy, s] = d.school, len = 40 + 80 * s, x2 = p.x + ux * len, y2 = p.y + uy * len, a = Math.atan2(uy, ux);
+    ctx.strokeStyle = 'rgba(143,159,255,0.75)'; ctx.fillStyle = 'rgba(143,159,255,0.75)'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x2 + Math.cos(a) * 7, y2 + Math.sin(a) * 7); ctx.lineTo(x2 + Math.cos(a + 2.5) * 7, y2 + Math.sin(a + 2.5) * 7); ctx.lineTo(x2 + Math.cos(a - 2.5) * 7, y2 + Math.sin(a - 2.5) * 7); ctx.fill();
+  }
+}
+
+function drawFx(dt) {
+  for (const e of fx) {
+    e.age += dt; const k = e.age / e.life;
+    if (e.kind === 'bub') { e.x += e.vx * dt; e.y += e.vy * dt; e.vx *= .95; e.vy *= .95; ctx.strokeStyle = `rgba(230,245,250,${0.7 * (1 - k)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, 7); ctx.stroke(); }
+    else if (e.kind === 'ring') { ctx.strokeStyle = `rgba(233,139,124,${0.8 * (1 - k)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, 6 + 26 * k, 0, 7); ctx.stroke(); }
+    else if (e.kind === 'miss') { ctx.fillStyle = `rgba(219,232,236,${1 - k})`; ctx.font = '500 13px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.fillText('missed', e.x, e.y - 22 - 10 * k); }
+  }
+  fx = fx.filter(e => e.age < e.life);
+}
+
+function render(t, dt) {
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  drawWater(t);
+  const f = world.fish[selected];
+  if (isPred()) drawPredSenses();
+  else if (f && f.alive) drawSenses(f);
+  for (const fi of world.fish) if (fi.alive) drawFish(fi, t, !isPred() && fi.id === selected);
+  drawShark(world.pred, t);
+  drawFx(dt);
+  if (world.done) {
+    const msg = `All ${world.fish.length} eaten in ${fmt(world.tick)}`;
+    ctx.font = '700 22px "Bricolage Grotesque", sans-serif'; ctx.textAlign = 'center';
+    const w = ctx.measureText(msg).width + 40;
+    ctx.fillStyle = 'rgba(4,16,22,0.75)'; roundRect(W / 2 - w / 2, H / 2 - 30, w, 52, 10); ctx.fill();
+    ctx.fillStyle = C.ink; ctx.fillText(msg, W / 2, H / 2 + 4);
+  }
+}
+function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+// ---------- rendering: brain ----------
+const bc = $('brain'), bx = bc.getContext('2d');
+function drawBrain() {
+  const f = isPred() ? null : (world.fish[selected] || world.fish.find(q => q.alive) || world.fish[0]);
+  const cw = bc.width / dpr, ch = bc.height / dpr;
+  bx.setTransform(dpr, 0, 0, dpr, 0, 0); bx.clearRect(0, 0, cw, ch);
+  if (!f && !isPred()) return;
+  const pb = world.predBrain;
+  $('brainWho').textContent = isPred() ? 'the shark' : `fish #${f.id + 1}${f.alive ? (pinned ? ' · pinned' : ' · nearest the shark') : ' · eaten'}`;
+  const names = levelsNow()[level].inputs, nIn = names.length;
+  const nH = isPred() ? pb.act.hid.length : P.nHidden, nO = isPred() ? 3 : 2, g = isPred() ? pb.g : f.g, a = isPred() ? pb.act : f.act;
+  const oy = k => nO === 2 ? ys(2, k, ch * .3, ch * .3) : ys(3, k, ch * .2, ch * .2);
+  const ix = 78, hx = cw * 0.56, ox = cw - 58;
+  const ys = (n, i, top = 16, bot = 16) => n === 1 ? ch / 2 : top + (ch - top - bot) * i / (n - 1);
+  const col = (v) => v >= 0 ? [244, 178, 122] : [143, 159, 255];
+  const edge = (x1, y1, x2, y2, w, s) => {
+    const sig = w * s; const c = col(sig);
+    const al = Math.min(1, Math.abs(w) / 2.2) * (0.08 + 0.92 * Math.min(1, Math.abs(s)));
+    if (al < 0.03) return;
+    bx.strokeStyle = `rgba(${c},${al})`; bx.lineWidth = 0.6 + Math.min(2.4, Math.abs(w) * 0.9);
+    bx.beginPath(); bx.moveTo(x1, y1); bx.lineTo(x2, y2); bx.stroke();
+  };
+  const top = 34;
+  // skip connections (input → output), drawn faint behind
+  const o2 = nIn * nH + nH * nO;
+  bx.globalAlpha = 0.45;
+  for (let i = 0; i < nIn; i++) for (let k = 0; k < nO; k++) edge(ix, ys(nIn, i, top, 16), ox, oy(k), g[o2 + i * nO + k], a.inp[i]);
+  bx.globalAlpha = 1;
+  for (let i = 0; i < nIn; i++) for (let h = 0; h < nH; h++) edge(ix, ys(nIn, i, top, 16), hx, ys(nH, h, 44, 30), g[i * nH + h], a.inp[i]);
+  const o = nIn * nH;
+  for (let h = 0; h < nH; h++) for (let k = 0; k < nO; k++) edge(hx, ys(nH, h, 44, 30), ox, oy(k), g[o + h * nO + k], a.hid[h]);
+  const node = (x, y, v, r) => {
+    const c = col(v), m = Math.min(1, Math.abs(v));
+    bx.fillStyle = '#0a222c'; bx.beginPath(); bx.arc(x, y, r, 0, 7); bx.fill();
+    bx.fillStyle = `rgba(${c},${0.15 + 0.85 * m})`; bx.beginPath(); bx.arc(x, y, r, 0, 7); bx.fill();
+    bx.strokeStyle = 'rgba(219,232,236,0.35)'; bx.lineWidth = 1; bx.stroke();
+  };
+  bx.font = '500 11px "IBM Plex Mono", monospace'; bx.textBaseline = 'middle';
+  for (let i = 0; i < nIn; i++) {
+    const y = ys(nIn, i, top, 16); node(ix, y, a.inp[i], 6);
+    bx.fillStyle = C.ink; bx.textAlign = 'right'; bx.fillText(names[i], ix - 12, y - 6);
+    bx.fillStyle = C.dim; bx.fillText((a.inp[i] >= 0 ? ' ' : '') + a.inp[i].toFixed(2), ix - 12, y + 7);
+  }
+  for (let h = 0; h < nH; h++) node(hx, ys(nH, h, 44, 30), a.hid[h], 5);
+  const outN = isPred() ? ['turn', 'thrust', 'lunge'] : ['turn', 'thrust'];
+  const mode = isPred() ? world.pred.mode : '';
+  for (let k = 0; k < nO; k++) {
+    const y = oy(k); node(ox, y, a.out[k], 8);
+    bx.textAlign = 'left'; bx.fillStyle = C.ink; bx.fillText(outN[k], ox + 13, y - 7);
+    const v = a.out[k];
+    const word = k === 0 ? (v > 0.05 ? 'right' : v < -0.05 ? 'left' : 'straight')
+      : k === 1 ? (isPred() ? (v > 0.3 ? 'chase' : v < -0.3 ? 'stalk' : 'cruise') : (v > 0.05 && f.burst > 0 ? 'bolt' : 'cruise'))
+      : (mode === 'lunge' ? 'lunging' : mode === 'cool' ? 'recovering' : mode === 'eat' ? 'eating' : v > 0.5 ? 'strike' : 'hold');
+    bx.fillStyle = C.dim; bx.fillText(word, ox + 13, y + 7);
+  }
+  bx.fillStyle = C.dim; bx.textAlign = 'center'; bx.font = '500 10px "IBM Plex Mono", monospace';
+  bx.fillText('SENSES', ix - 30, 10); bx.fillText('HIDDEN', hx, 10); bx.fillText('MUSCLES', ox + 10, 10);
+}
+
+// ---------- evolution record ----------
+function updateEvo() {
+  const L = level, pd = isPred();
+  const c = pd ? PDATA.levels[L].curve : curves[L], n = c.length, N = P.nFish;
+  const pcum = PDATA.levels.slice(0, L + 1).reduce((s, l) => s + l.gen, 0);
+  $('evoGen').textContent = L === 0 ? 'no training' : `${pd ? pcum : cumGen(L)} generations`;
+  $('retrainBtn').hidden = pd;
+  $('retrainBtn').disabled = L === 0 || !!training;
+  $('resetBtn').hidden = pd || !retrained[L];
+  const v = $('evo'); if (!v.width) return;
+  const x = v.getContext('2d'), cw = v.width / dpr, ch = v.height / dpr;
+  x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, cw, ch);
+  const padL = 22, padB = 14, padT = 6, pw = cw - padL - 4, ph = ch - padB - padT;
+  const Y = s => padT + ph * (1 - s / N);
+  x.strokeStyle = 'rgba(180,214,224,0.12)'; x.lineWidth = 1;
+  x.font = '500 10px "IBM Plex Mono", monospace'; x.fillStyle = C.dim; x.textAlign = 'right'; x.textBaseline = 'middle';
+  for (const s of [0, 12, 24]) { x.beginPath(); x.moveTo(padL, Y(s)); x.lineTo(cw - 4, Y(s)); x.stroke(); x.fillText(s, padL - 5, Y(s)); }
+  if (L === 0 || n === 0) {
+    x.textAlign = 'center'; x.fillText(L === 0 ? 'Level 1 has nothing to learn from' : 'Starting\u2026', padL + pw / 2, padT + ph / 2);
+    if (L !== 0) return;
+    $('evoNote').textContent = pd
+      ? 'An untrained, randomly wired shark brain. With only a bias input it gets the same signal whatever the fish do, so it swims a fixed loop and only eats what blunders into it.'
+      : 'With only a bias input every fish gets the same signal no matter what happens, so there is nothing for evolution to select on.';
+    return;
+  }
+  const ma = c.map((_, i) => { const a = Math.max(0, i - 7); let s = 0; for (let j = a; j <= i; j++) s += c[j]; return s / (i - a + 1); });
+  const X = i => padL + pw * (n === 1 ? 1 : i / (n - 1));
+  x.beginPath(); ma.forEach((s, i) => i ? x.lineTo(X(i), Y(s)) : x.moveTo(X(i), Y(s)));
+  x.lineTo(X(n - 1), Y(0)); x.lineTo(X(0), Y(0)); x.closePath(); x.fillStyle = 'rgba(244,178,122,0.12)'; x.fill();
+  x.beginPath(); ma.forEach((s, i) => i ? x.lineTo(X(i), Y(s)) : x.moveTo(X(i), Y(s))); x.strokeStyle = C.fish; x.lineWidth = 1.6; x.stroke();
+  x.fillStyle = C.fish; x.beginPath(); x.arc(X(n - 1), Y(ma[n - 1]), 3, 0, 7); x.fill();
+  x.fillStyle = C.dim; x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillText('gen 1', padL, ch - 2); x.textAlign = 'right'; x.fillText(`gen ${n}`, cw - 4, ch - 2);
+  if (pd) {
+    $('evoNote').textContent = `Fish caught per ${PDATA.levels[L].secs}-second training round, averaged over every candidate shark, across this level\u2019s ${n} generations.${PDATA.levels[L].endgame ? ' This level also practised endgames: rounds that start with only the three farthest fish left.' : ''} Each level starts from the previous level\u2019s shark brain with the new sense wired in at zero weight; nothing about hunting is programmed. The fish never change: they all use the level 3 brains.`;
+    return;
+  }
+  $('evoNote').textContent = training
+    ? 'Survivors per training round, live in your browser. Starting brains: the previous level’s, with the new sense wired in at zero.'
+    : `Survivors per training round over this level’s ${n} generations${retrained[L] ? ', evolved live just now' : ''}. Each level starts from the previous level’s brains with the new sense wired in at zero weight; nothing about fleeing is programmed.`;
+}
+
+// ---------- live retraining ----------
+function retrain() {
+  if (level === 0 || training) return;
+  const L = level, prevIn = LEVELS[L - 1].inputs.length, nIn = LEVELS[L].inputs.length;
+  let pop = pops[L - 1].map(g => SIM.growGenome(g, prevIn, nIn));
+  const R = SIM.rng((Math.random() * 1e9) | 0), GENS = 100, curve = [];
+  let gen = 0, best = { score: -1, pop, gen: 0 };
+  const evalSeeds = [11, 22, 33, 44].map(s => s + ((Math.random() * 1e6) | 0));
+  const evalPop = pp => evalSeeds.reduce((s, sd) => s + SIM.runRound(L, pp, sd).fish.filter(f => f.alive).length, 0) / evalSeeds.length;
+  training = { L }; curves[L] = curve;
+  $('trainOv').hidden = false; updateEvo();
+  const chunk = () => {
+    const t0 = performance.now();
+    while (gen < GENS && performance.now() - t0 < 40) {
+      gen++;
+      const fit = new Array(pop.length).fill(0); let surv = 0;
+      for (let r = 0; r < 3; r++) { const w = SIM.runRound(L, pop, R() * 1e9 | 0); SIM.fitness(w).forEach((v, i) => fit[i] += v); surv += w.fish.filter(f => f.alive).length; }
+      curve.push(surv / 3);
+      pop = SIM.nextGen(pop, fit, R);
+      if (gen % 10 === 0) { const sc = evalPop(pop); if (sc >= best.score) best = { score: sc, pop, gen }; }
+    }
+    $('trainTxt').textContent = `Generation ${gen} of ${GENS}`;
+    $('trainBar').style.width = (gen / GENS * 100) + '%';
+    updateEvo();
+    if (gen < GENS) setTimeout(chunk, 0);
+    else {
+      pops[L] = best.pop; gens[L] = best.gen; curves[L] = curve.slice(0, best.gen); retrained[L] = true;
+      training = null; $('trainOv').hidden = true; roundNo = 0; startRound(); updateEvo();
+    }
+  };
+  setTimeout(chunk, 30);
+}
+$('retrainBtn').addEventListener('click', retrain);
+$('resetBtn').addEventListener('click', () => {
+  const L = level; pops[L] = SHIPPED[L]; curves[L] = DATA.levels[L].curve.slice(); gens[L] = DATA.levels[L].gen; retrained[L] = false;
+  roundNo = 0; startRound(DATA.showcase[L]); updateEvo();
+});
+
+// ---------- stats ----------
+let lastStatTick = -1;
+const fmt = t => { const s = Math.floor(t / 60); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+function updateStats() {
+  const alive = world.fish.filter(f => f.alive).length;
+  $('sSurv').innerHTML = `${alive}<small>/${world.fish.length}</small>`;
+  $('sLunge').textContent = lunges; $('sMiss').textContent = misses;
+  $('hudSurv').textContent = alive;
+  $('hudClock').textContent = fmt(world.tick);
+  const r = recentBy[side][level];
+  $('recent').textContent = r.length ? `Time to eat every fish on this level: ${r.join(' · ')}` : 'Time to eat every fish on this level: no finished rounds yet';
+}
+
+// ---------- controls ----------
+let pausedAt = 0;
+function setPaused(v) {
+  if (v && !paused) pausedAt = performance.now();
+  paused = v; $('pauseBtn').setAttribute('aria-pressed', v ? 'true' : 'false'); $('pauseBtn').textContent = v ? 'Play' : 'Pause'; }
+$('pauseBtn').addEventListener('click', () => setPaused(!paused));
+document.querySelectorAll('[data-speed]').forEach(b => b.addEventListener('click', () => {
+  speed = +b.dataset.speed; document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', o === b ? 'true' : 'false'));
+}));
+$('roundBtn').addEventListener('click', () => { if (!training) startRound(); });
+window.addEventListener('keydown', e => {
+  if (window.SCREEN !== 'fish') return;
+  if (e.target.closest && e.target.closest('input,textarea')) return;
+  if (e.key >= '1' && e.key <= '6') setLevel(+e.key - 1);
+  else if (['ArrowRight', 'PageDown'].includes(e.key)) { e.preventDefault(); setLevel(Math.min(5, level + 1)); }
+  else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); setLevel(Math.max(0, level - 1)); }
+  else if (e.key === ' ' && e.target === document.body) { e.preventDefault(); setPaused(!paused); }
+});
+
+// ---------- loop ----------
+let last = performance.now(), acc = 0;
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (window.SCREEN !== 'fish') { requestAnimationFrame(frame); return; }
+  if (!paused && !training) {
+    if (world.done) { /* hold the final frame until New round or a level change */ }
+    else {
+      acc += dt * 60 * speed; let n = 0;
+      while (acc >= 1 && n < 24) { stepWorld(); acc -= 1; n++; if (world.done) break; }
+      if (n >= 24) acc = 0;
+    }
+  }
+  render(now / 1000, paused ? 0 : dt);
+  drawBrain();
+  if (world.tick !== lastStatTick) { lastStatTick = world.tick; updateStats(); }
+  requestAnimationFrame(frame);
+}
+
+setLevel(0);
+resize();
+requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+// ---- Game Bot: maze tank battle core (shared by Node training and the page) ----
+const TANK = (() => {
+  const COLS = 11, ROWS = 7, CELL = 80, W = COLS * CELL, H = ROWS * CELL;
+  const T = {
+    wallHalf: 2.5, tankR: 13, speed: 1.6, back: 1.0, turn: 0.06,
+    bulletSpeed: 3.2, bulletR: 3, bulletLife: 540, maxBullets: 5, cooldown: 24, grace: 14,
+    matchTicks: 2400, nHidden: 8, nOut: 3,
+  };
+  const LEVELS = [
+    { name: 'Blind',  tag: '[bias]',               inputs: ['bias'] },
+    { name: 'Eyes',   tag: '[see, distance]',      inputs: ['bias', 'see', 'distance'] },
+    { name: 'Aim',    tag: '[aim x, aim y]',       inputs: ['bias', 'see', 'distance', 'aim x', 'aim y'] },
+    { name: 'Dodge',  tag: '[danger x, danger y]', inputs: ['bias', 'see', 'distance', 'aim x', 'aim y', 'danger x', 'danger y'] },
+    { name: 'Walls',  tag: '[wall l, f, r]',       inputs: ['bias', 'see', 'distance', 'aim x', 'aim y', 'danger x', 'danger y', 'wall l', 'wall f', 'wall r'] },
+    { name: 'Hunter', tag: '[path x, path y]',     inputs: ['bias', 'see', 'distance', 'aim x', 'aim y', 'danger x', 'danger y', 'wall l', 'wall f', 'wall r', 'path x', 'path y'] },
+  ];
+  const OUTS = ['drive', 'turn', 'fire'];
+
+  function rng(seed) {
+    let a = seed >>> 0;
+    const r = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    r.gauss = () => { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); };
+    return r;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+
+  // ---------- maze ----------
+  // v[r][c]: wall on the left edge of cell (r,c), c = 0..COLS.  h[r][c]: wall on the top edge, r = 0..ROWS.
+  function makeMaze(R) {
+    const v = Array.from({ length: ROWS }, () => Array(COLS + 1).fill(true));
+    const h = Array.from({ length: ROWS + 1 }, () => Array(COLS).fill(true));
+    const seen = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+    const stack = [[Math.floor(R() * ROWS), Math.floor(R() * COLS)]];
+    seen[stack[0][0]][stack[0][1]] = true;
+    while (stack.length) {
+      const [r, c] = stack[stack.length - 1];
+      const nb = [[0, 1], [0, -1], [1, 0], [-1, 0]].filter(([dr, dc]) => { const rr = r + dr, cc = c + dc; return rr >= 0 && rr < ROWS && cc >= 0 && cc < COLS && !seen[rr][cc]; });
+      if (!nb.length) { stack.pop(); continue; }
+      const [dr, dc] = nb[Math.floor(R() * nb.length)];
+      if (dc === 1) v[r][c + 1] = false; else if (dc === -1) v[r][c] = false; else if (dr === 1) h[r + 1][c] = false; else h[r][c] = false;
+      seen[r + dr][c + dc] = true; stack.push([r + dr, c + dc]);
+    }
+    // knock out extra walls so there are loops to circle around
+    let extra = 26;
+    while (extra > 0) {
+      if (R() < 0.5) { const r = Math.floor(R() * ROWS), c = 1 + Math.floor(R() * (COLS - 1)); if (v[r][c]) { v[r][c] = false; extra--; } }
+      else { const r = 1 + Math.floor(R() * (ROWS - 1)), c = Math.floor(R() * COLS); if (h[r][c]) { h[r][c] = false; extra--; } }
+    }
+    return { v, h };
+  }
+  const pass = (m, r1, c1, r2, c2) => {
+    if (r2 < 0 || r2 >= ROWS || c2 < 0 || c2 >= COLS) return false;
+    const dr = r2 - r1, dc = c2 - c1;
+    if (dr === 0 && dc === 1) return !m.v[r1][c1 + 1];
+    if (dr === 0 && dc === -1) return !m.v[r1][c1];
+    if (dc === 0 && dr === 1) return !m.h[r1 + 1][c1];
+    if (dc === 0 && dr === -1) return !m.h[r1][c1];
+    if (dr === 0 && dc === 0) return true;
+    return (pass(m, r1, c1, r1, c2) && pass(m, r1, c2, r2, c2)) || (pass(m, r1, c1, r2, c1) && pass(m, r2, c1, r2, c2));
+  };
+  function postAt(m, r, c) { // grid point (row line r, column line c)
+    return (r > 0 && m.v[r - 1][c]) || (r < ROWS && m.v[r][c]) || (c > 0 && m.h[r][c - 1]) || (c < COLS && m.h[r][c]);
+  }
+  const cellOf = (x, y) => [clamp(Math.floor(y / CELL), 0, ROWS - 1), clamp(Math.floor(x / CELL), 0, COLS - 1)];
+
+  function collideCircle(m, o, rad) {
+    const [cy, cx] = cellOf(o.x, o.y), t = T.wallHalf, x0 = cx * CELL, y0 = cy * CELL;
+    if (m.v[cy][cx] && o.x - rad < x0 + t) o.x = x0 + t + rad;
+    if (m.v[cy][cx + 1] && o.x + rad > x0 + CELL - t) o.x = x0 + CELL - t - rad;
+    if (m.h[cy][cx] && o.y - rad < y0 + t) o.y = y0 + t + rad;
+    if (m.h[cy + 1][cx] && o.y + rad > y0 + CELL - t) o.y = y0 + CELL - t - rad;
+    for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
+      if (!postAt(m, cy + j, cx + i)) continue;
+      const px = x0 + i * CELL, py = y0 + j * CELL, dx = o.x - px, dy = o.y - py, d = Math.hypot(dx, dy);
+      if (d < rad + t && d > 1e-6) { o.x = px + dx / d * (rad + t); o.y = py + dy / d * (rad + t); }
+    }
+    o.x = clamp(o.x, rad + t, W - rad - t); o.y = clamp(o.y, rad + t, H - rad - t);
+  }
+
+  function stepBullet(m, b) {
+    const r = T.bulletR + T.wallHalf;
+    const [cy, cx] = cellOf(b.x, b.y), x0 = cx * CELL, y0 = cy * CELL;
+    let nx = b.x + b.vx, ny = b.y + b.vy, bounced = false;
+    if (b.vx > 0 && m.v[cy][cx + 1] && nx > x0 + CELL - r) { nx = 2 * (x0 + CELL - r) - nx; b.vx = -b.vx; bounced = true; }
+    else if (b.vx < 0 && m.v[cy][cx] && nx < x0 + r) { nx = 2 * (x0 + r) - nx; b.vx = -b.vx; bounced = true; }
+    if (b.vy > 0 && m.h[cy + 1][cx] && ny > y0 + CELL - r) { ny = 2 * (y0 + CELL - r) - ny; b.vy = -b.vy; bounced = true; }
+    else if (b.vy < 0 && m.h[cy][cx] && ny < y0 + r) { ny = 2 * (y0 + r) - ny; b.vy = -b.vy; bounced = true; }
+    for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
+      if (!postAt(m, cy + j, cx + i)) continue;
+      const px = x0 + i * CELL, py = y0 + j * CELL, dx = nx - px, dy = ny - py, d = Math.hypot(dx, dy);
+      if (d < r && d > 1e-6) {
+        const nxn = dx / d, nyn = dy / d, dot = b.vx * nxn + b.vy * nyn;
+        if (dot < 0) { b.vx -= 2 * dot * nxn; b.vy -= 2 * dot * nyn; bounced = true; }
+        nx = px + nxn * r; ny = py + nyn * r;
+      }
+    }
+    b.x = clamp(nx, r, W - r); b.y = clamp(ny, r, H - r);
+    return bounced;
+  }
+
+  function los(m, x1, y1, x2, y2) {
+    const d = Math.hypot(x2 - x1, y2 - y1), n = Math.ceil(d / 6);
+    let [pr, pc] = cellOf(x1, y1);
+    for (let i = 1; i <= n; i++) {
+      const [r, c] = cellOf(x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n);
+      if (r !== pr || c !== pc) { if (!pass(m, pr, pc, r, c)) return false; pr = r; pc = c; }
+    }
+    return true;
+  }
+  const RAY = 200;
+  function ray(m, x, y, a) {
+    let [pr, pc] = cellOf(x, y); const dx = Math.cos(a), dy = Math.sin(a);
+    for (let d = 4; d <= RAY; d += 4) {
+      const px = x + dx * d, py = y + dy * d;
+      if (px < 0 || py < 0 || px >= W || py >= H) return d;
+      const [r, c] = cellOf(px, py);
+      if (r !== pr || c !== pc) { if (!pass(m, pr, pc, r, c)) return d; pr = r; pc = c; }
+    }
+    return RAY;
+  }
+  function bfs(m, r0, c0) {
+    const dist = new Int16Array(ROWS * COLS).fill(-1), q = [r0 * COLS + c0]; dist[q[0]] = 0;
+    for (let qi = 0; qi < q.length; qi++) {
+      const k = q[qi], r = Math.floor(k / COLS), c = k % COLS;
+      for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const rr = r + dr, cc = c + dc;
+        if (pass(m, r, c, rr, cc) && dist[rr * COLS + cc] < 0) { dist[rr * COLS + cc] = dist[k] + 1; q.push(rr * COLS + cc); }
+      }
+    }
+    return dist;
+  }
+
+  // ---------- neural network ----------
+  const genomeSize = nIn => nIn * T.nHidden + T.nHidden * T.nOut + nIn * T.nOut;
+  function randomGenome(nIn, R, s) { const g = new Float32Array(genomeSize(nIn)); for (let i = 0; i < g.length; i++) g[i] = R.gauss() * s; return g; }
+  function think(g, inp, act) {
+    const nIn = inp.length, nH = T.nHidden, nO = T.nOut;
+    for (let h = 0; h < nH; h++) { let s = 0; for (let i = 0; i < nIn; i++) s += inp[i] * g[i * nH + h]; act.hid[h] = Math.tanh(s); }
+    const o = nIn * nH, o2 = o + nH * nO;
+    for (let k = 0; k < nO; k++) {
+      let s = 0;
+      for (let h = 0; h < nH; h++) s += act.hid[h] * g[o + h * nO + k];
+      for (let i = 0; i < nIn; i++) s += inp[i] * g[o2 + i * nO + k];
+      act.out[k] = Math.tanh(s);
+    }
+  }
+  function growGenome(g, nInOld, nIn) {
+    if (nInOld === nIn) return g;
+    const nH = T.nHidden, nO = T.nOut, out = new Float32Array(genomeSize(nIn));
+    for (let i = 0; i < nInOld; i++) for (let h = 0; h < nH; h++) out[i * nH + h] = g[i * nH + h];
+    const oO = nInOld * nH, oN = nIn * nH;
+    for (let j = 0; j < nH * nO; j++) out[oN + j] = g[oO + j];
+    for (let j = 0; j < nInOld * nO; j++) out[oN + nH * nO + j] = g[oO + nH * nO + j];
+    return out;
+  }
+  function nextGen(genomes, fit, R) {
+    const n = genomes.length, idx = [...genomes.keys()].sort((a, b) => fit[b] - fit[a]), out = [];
+    for (let i = 0; i < 6; i++) out.push(genomes[idx[i]]);
+    const pick = () => { let b = idx[Math.floor(R() * n * 0.4)]; for (let k = 0; k < 2; k++) { const c = idx[Math.floor(R() * n * 0.4)]; if (fit[c] > fit[b]) b = c; } return genomes[b]; };
+    while (out.length < n) {
+      const a = pick(), b = pick(), c = new Float32Array(a.length), cross = R() < 0.5;
+      for (let i = 0; i < c.length; i++) { c[i] = cross && R() < 0.5 ? b[i] : a[i]; if (R() < 0.12) c[i] += R.gauss() * 0.4; if (R() < 0.01) c[i] = R.gauss(); }
+      out.push(c);
+    }
+    return out;
+  }
+
+  // ---------- match ----------
+  function makeTank(id, x, y, a) { return { id, x, y, a, alive: true, cool: 0, shots: 0, killedBy: -1, drive: 0, turnIn: 0 }; }
+  function makeMatch(seed) {
+    const R = rng(seed), m = makeMaze(R);
+    // spawn far apart in maze distance
+    const r0 = Math.floor(R() * ROWS), c0 = Math.floor(R() * COLS), d = bfs(m, r0, c0);
+    let far = []; let mx = 0; for (let k = 0; k < d.length; k++) mx = Math.max(mx, d[k]);
+    for (let k = 0; k < d.length; k++) if (d[k] >= mx - 2) far.push(k);
+    const k1 = far[Math.floor(R() * far.length)];
+    const ctr = k => [(k % COLS + 0.5) * CELL, (Math.floor(k / COLS) + 0.5) * CELL];
+    const [ax, ay] = ctr(r0 * COLS + c0), [bx, by] = ctr(k1);
+    const tanks = [makeTank(0, ax, ay, R() * 6.28), makeTank(1, bx, by, R() * 6.28)];
+    return { m, R, tanks, bullets: [], tick: 0, done: false, winner: -1, events: [], distTo: [null, null], distCell: [-1, -1] };
+  }
+
+  function fire(w, t) {
+    if (t.cool > 0 || w.bullets.filter(b => b.owner === t.id).length >= T.maxBullets) return false;
+    const bx = t.x + Math.cos(t.a) * (T.tankR + 4), by = t.y + Math.sin(t.a) * (T.tankR + 4);
+    // don't spawn a bullet on the far side of a wall
+    if (!los(w.m, t.x, t.y, bx, by)) return false;
+    w.bullets.push({ x: bx, y: by, vx: Math.cos(t.a) * T.bulletSpeed, vy: Math.sin(t.a) * T.bulletSpeed, owner: t.id, age: 0 });
+    t.cool = T.cooldown; t.shots++; w.events.push({ type: 'fire', id: t.id, x: bx, y: by });
+    return true;
+  }
+
+  function distField(w, target) { // BFS field toward tank `target`, cached by cell
+    const [r, c] = cellOf(w.tanks[target].x, w.tanks[target].y), k = r * COLS + c;
+    if (w.distCell[target] !== k) { w.distCell[target] = k; w.distTo[target] = bfs(w.m, r, c); }
+    return w.distTo[target];
+  }
+
+  // senses for tank `me` against `foe`; fills inp (length by level), also returns debug info
+  function sense(w, me, foe, L, inp, dbg) {
+    const ca = Math.cos(me.a), sa = Math.sin(me.a);
+    const loc = (x, y, k) => { inp[k] = x * ca + y * sa; inp[k + 1] = -x * sa + y * ca; };
+    inp[0] = 1;
+    if (L < 1) return;
+    const dx = foe.x - me.x, dy = foe.y - me.y, d = Math.hypot(dx, dy) || 1;
+    const see = foe.alive && los(w.m, me.x, me.y, foe.x, foe.y);
+    inp[1] = see ? 1 : 0; inp[2] = see ? clamp(1 - d / 700, 0, 1) : 0;
+    if (dbg) dbg.see = see;
+    if (L < 2) return;
+    loc(see ? dx / d : 0, see ? dy / d : 0, 3);
+    if (L < 3) return;
+    let best = 0, bxv = 0, byv = 0, bb = null;
+    for (const b of w.bullets) {
+      if (b.owner === me.id && b.age < T.grace) continue;
+      const rx = me.x - b.x, ry = me.y - b.y, vv = b.vx * b.vx + b.vy * b.vy;
+      const tc = (rx * b.vx + ry * b.vy) / vv;
+      if (tc < 0 || tc > 70) continue;
+      const px = b.x + b.vx * tc, py = b.y + b.vy * tc, mx = me.x - px, my = me.y - py, md = Math.hypot(mx, my);
+      if (md > 40) continue;
+      const threat = (1 - md / 40) * (1 - tc / 70);
+      if (threat > best) {
+        best = threat; bb = b;
+        if (md > 1e-3) { bxv = mx / md; byv = my / md; } else { bxv = -b.vy / Math.sqrt(vv); byv = b.vx / Math.sqrt(vv); }
+      }
+    }
+    loc(bxv * best, byv * best, 5);
+    if (dbg) dbg.bullet = bb;
+    if (L < 4) return;
+    const rl = ray(w.m, me.x, me.y, me.a - 0.75), rf = ray(w.m, me.x, me.y, me.a), rr = ray(w.m, me.x, me.y, me.a + 0.75);
+    inp[7] = 1 - rl / RAY; inp[8] = 1 - rf / RAY; inp[9] = 1 - rr / RAY;
+    if (dbg) dbg.rays = [rl, rf, rr];
+    if (L < 5) return;
+    const df = distField(w, foe.id), [r, c] = cellOf(me.x, me.y), here = df[r * COLS + c];
+    let tx = foe.x, ty = foe.y;
+    if (here > 0) {
+      for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const rr2 = r + dr, cc = c + dc;
+        if (pass(w.m, r, c, rr2, cc) && df[rr2 * COLS + cc] === here - 1) { tx = (cc + 0.5) * CELL; ty = (rr2 + 0.5) * CELL; break; }
+      }
+    }
+    const px = tx - me.x, py = ty - me.y, pd = Math.hypot(px, py) || 1;
+    loc(px / pd, py / pd, 10);
+    if (dbg) dbg.path = [tx, ty];
+  }
+
+  // controls: {drive -1..1, turn -1..1, fire bool}
+  function step(w, ctrl0, ctrl1) {
+    if (w.done) return;
+    const ctrls = [ctrl0, ctrl1];
+    w.tanks.forEach((t, i) => {
+      if (!t.alive) return;
+      const c = ctrls[i];
+      t.drive = c.drive; t.turnIn = c.turn;
+      t.a = wrap(t.a + clamp(c.turn, -1, 1) * T.turn);
+      const sp = c.drive >= 0 ? c.drive * T.speed : c.drive * T.back;
+      t.x += Math.cos(t.a) * sp; t.y += Math.sin(t.a) * sp;
+      collideCircle(w.m, t, T.tankR);
+      if (t.cool > 0) t.cool--;
+      if (c.fire) fire(w, t);
+    });
+    // tank-tank push apart
+    const [A, B] = w.tanks;
+    if (A.alive && B.alive) {
+      const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy);
+      if (d < 2 * T.tankR && d > 1e-6) { const k = (2 * T.tankR - d) / 2 / d; A.x -= dx * k; A.y -= dy * k; B.x += dx * k; B.y += dy * k; collideCircle(w.m, A, T.tankR); collideCircle(w.m, B, T.tankR); }
+    }
+    // bullets
+    for (const b of w.bullets) {
+      if (stepBullet(w.m, b)) w.events.push({ type: 'bounce', x: b.x, y: b.y });
+      b.age++;
+      for (const t of w.tanks) {
+        if (!t.alive || (b.owner === t.id && b.age < T.grace)) continue;
+        if (Math.hypot(b.x - t.x, b.y - t.y) < T.tankR + T.bulletR) {
+          t.alive = false; t.killedBy = b.owner; b.age = 1e9;
+          w.events.push({ type: 'boom', id: t.id, by: b.owner, x: t.x, y: t.y });
+        }
+      }
+    }
+    w.bullets = w.bullets.filter(b => b.age < T.bulletLife);
+    w.tick++;
+    const alive = w.tanks.filter(t => t.alive);
+    if (alive.length < 2) { w.done = true; w.winner = alive.length === 1 ? alive[0].id : -1; }
+  }
+
+  // ---------- controllers ----------
+  function makeBrain(g, L) {
+    const nIn = LEVELS[L].inputs.length;
+    return { g, L, act: { inp: new Float32Array(nIn), hid: new Float32Array(T.nHidden), out: new Float32Array(T.nOut) }, dbg: {} };
+  }
+  function brainControl(w, me, foe, br) {
+    br.dbg = {};
+    sense(w, me, foe, br.L, br.act.inp, br.dbg);
+    think(br.g, br.act.inp, br.act);
+    return { drive: br.act.out[0], turn: br.act.out[1], fire: br.act.out[2] > 0.3 };
+  }
+  // scripted sparring partner used only for training
+  // mode 0 hunts the bot, mode 1 camps where it spawned, mode 2 roams the maze at random
+  function sparring(w, me, foe, st) {
+    const R = w.R;
+    if (!st.init) { st.init = true; st.wander = 0; st.react = 0; st.aimErr = 0; st.mode = st.mode || 0; st.goal = -1; }
+    const dx = foe.x - me.x, dy = foe.y - me.y;
+    const see = foe.alive && los(w.m, me.x, me.y, foe.x, foe.y);
+    if (st.wander > 0) { st.wander--; return { drive: 0.7, turn: st.wturn, fire: false }; }
+    if (st.mode !== 1 && R() < 0.004) { st.wander = 40 + R() * 60; st.wturn = (R() - 0.5) * 1.6; }
+    if (see) {
+      if (st.react <= 0) { st.react = 8 + R() * 14; st.aimErr = (R() - 0.5) * 0.18; }
+      st.react--;
+      const diff = wrap(Math.atan2(dy, dx) + st.aimErr - me.a);
+      const d = Math.hypot(dx, dy);
+      return { drive: d > 180 ? 0.6 : (d < 90 ? -0.4 : 0.1), turn: clamp(diff * 4, -1, 1), fire: Math.abs(diff) < 0.1 && R() < 0.22 };
+    }
+    if (st.mode === 1) return { drive: 0, turn: 0.35, fire: false };
+    const [r, c] = cellOf(me.x, me.y);
+    let df;
+    if (st.mode === 2) {
+      if (st.goal < 0 || st.goal === r * COLS + c) { st.goal = Math.floor(R() * ROWS * COLS); st.gdf = bfs(w.m, Math.floor(st.goal / COLS), st.goal % COLS); }
+      df = st.gdf;
+    } else df = distField(w, foe.id);
+    const here = df[r * COLS + c];
+    let tx = st.mode === 2 ? (st.goal % COLS + 0.5) * CELL : foe.x, ty = st.mode === 2 ? (Math.floor(st.goal / COLS) + 0.5) * CELL : foe.y;
+    for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+      const rr = r + dr, cc = c + dc;
+      if (pass(w.m, r, c, rr, cc) && df[rr * COLS + cc] === here - 1) { tx = (cc + 0.5) * CELL; ty = (rr + 0.5) * CELL; break; }
+    }
+    const diff = wrap(Math.atan2(ty - me.y, tx - me.x) - me.a);
+    return { drive: Math.abs(diff) < 0.7 ? 0.75 : 0.1, turn: clamp(diff * 3, -1, 1), fire: false };
+  }
+
+  // one training match: bot brain (tank 0) vs sparring (tank 1). Returns fitness & outcome.
+  function trainMatch(g, L, seed) {
+    const w = makeMatch(seed), br = makeBrain(g, L), st = { mode: seed % 3 };
+    const visited = new Set(); let aimT = 0, seeT = 0;
+    while (!w.done && w.tick < T.matchTicks) {
+      const me = w.tanks[0], foe = w.tanks[1];
+      const c0 = brainControl(w, me, foe, br), c1 = sparring(w, foe, me, st);
+      step(w, c0, c1);
+      const [r, c] = cellOf(me.x, me.y); visited.add(r * COLS + c);
+      if (br.dbg.see) { seeT++; const diff = Math.abs(wrap(Math.atan2(foe.y - me.y, foe.x - me.x) - me.a)); if (diff < 0.15) aimT++; }
+    }
+    const me = w.tanks[0];
+    let fit = 0, outcome = 'time';
+    if (w.winner === 0) { fit += 1000 + (T.matchTicks - w.tick) * 0.5; outcome = 'win'; }
+    else if (!me.alive) { outcome = me.killedBy === 0 ? 'self' : 'loss'; fit += me.killedBy === 0 ? -700 : 0; }
+    fit += w.tick * 0.12 + aimT * 0.6 + Math.min(visited.size, 40) * 6;
+    return { fit, outcome, ticks: w.tick };
+  }
+
+  return { COLS, ROWS, CELL, W, H, T, LEVELS, OUTS, rng, makeMaze, pass, postAt, cellOf, los, ray, RAY, bfs, genomeSize, randomGenome, think, growGenome, nextGen, makeMatch, step, sense, makeBrain, brainControl, sparring, trainMatch };
+})();
+
+
+const TDATA = {"levels":[{"gen":0,"win":0,"self":0,"curve":[],"champ":[1.213,0.881,0.922,-1.119,0.422,-1.371,-0.91,-0.503,-0.036,1.069,0.27,0.398,-1.549,0.373,0.174,-0.479,1.186,0.679,0.654,0.805,1.338,1.278,1.794,-1.21,0.317,0.319,1.755,1.018,-0.346,0.385,-0.34,0.528,1.273,1.254,-0.177]},{"gen":10,"win":0.27,"self":0,"curve":[0.2,0.12,0.1,0.05,0.17,0.08,0.1,0.15,0.11,0.13],"champ":[1.116,0.881,0.338,-1.119,0.422,-1.371,-0.933,-0.503,0,0,0,-0.059,0.327,0,0,-0.065,0,0,0,0,0,-0.925,0,0,-0.036,0.818,0.27,0.398,-1.549,-0.431,0.174,-0.25,1.186,1.027,0.22,0.805,1.631,1.278,1.794,-1.385,0.317,0.938,1.465,1.491,-0.346,0.385,-0.34,0.528,1.273,1.254,-0.177,0.6,0,0,-0.126,0,0]},{"gen":90,"win":0.6,"self":0.02,"curve":[0.15,0.14,0.12,0.24,0.13,0.14,0.18,0.15,0.18,0.24,0.16,0.16,0.21,0.17,0.15,0.23,0.15,0.2,0.28,0.21,0.18,0.27,0.31,0.16,0.19,0.26,0.15,0.3,0.29,0.19,0.22,0.25,0.17,0.27,0.15,0.19,0.33,0.23,0.28,0.33,0.3,0.25,0.37,0.14,0.29,0.31,0.29,0.2,0.29,0.25,0.22,0.4,0.31,0.28,0.32,0.32,0.3,0.33,0.31,0.28,0.36,0.3,0.17,0.22,0.27,0.22,0.35,0.22,0.27,0.38,0.27,0.14,0.3,0.26,0.33,0.44,0.35,0.26,0.36,0.47,0.33,0.45,0.34,0.42,0.41,0.36,0.39,0.5,0.3,0.19],"champ":[2.505,2.917,-0.33,-0.251,-0.223,0.873,1.132,-0.267,-0.274,-0.884,0.454,-1.311,-1.529,0.921,0.364,0.154,-0.263,0.106,0.425,-0.389,0.6,-0.413,-1.439,-2.324,-0.431,-1.605,-1.346,2.246,-1.191,1.931,-2.718,0.91,-1.338,-1.539,0.505,3.152,1.606,-1.767,1.543,1.752,-1.102,0.271,-1.389,-0.041,-0.692,1.229,-0.146,-0.133,-0.657,-1.792,3.21,2.382,0.882,0.395,0.792,-2.163,-0.813,-1.597,0.775,0.96,-2.916,1.969,-0.554,-0.291,-1.229,0.819,0.506,0.086,-0.079,-1.021,0.573,-0.23,1.573,-1.128,-0.509,1.935,-1.275,0.927,1.399]},{"gen":110,"win":0.63,"self":0.03,"curve":[0.39,0.34,0.28,0.34,0.26,0.35,0.41,0.39,0.35,0.37,0.36,0.34,0.34,0.32,0.3,0.45,0.34,0.33,0.44,0.38,0.28,0.39,0.26,0.29,0.44,0.41,0.38,0.36,0.39,0.42,0.46,0.46,0.37,0.45,0.4,0.34,0.47,0.38,0.35,0.37,0.34,0.35,0.49,0.31,0.39,0.42,0.35,0.4,0.43,0.35,0.46,0.35,0.47,0.38,0.43,0.28,0.32,0.44,0.37,0.35,0.47,0.31,0.28,0.47,0.36,0.38,0.48,0.3,0.39,0.42,0.35,0.29,0.42,0.34,0.28,0.45,0.42,0.42,0.57,0.38,0.36,0.59,0.36,0.38,0.45,0.37,0.4,0.49,0.29,0.38,0.42,0.29,0.36,0.46,0.4,0.36,0.41,0.27,0.33,0.35,0.3,0.35,0.51,0.35,0.35,0.47,0.33,0.4,0.51,0.41],"champ":[2.158,1.979,0.259,-0.237,0.533,-0.787,1.992,-1.679,-0.606,1.372,0.443,-0.633,-1.275,-0.044,-1.012,-1.46,0.884,-0.51,1.525,-0.721,2.117,-0.119,-0.447,-0.281,2.471,0.29,1.591,1.347,-0.363,-0.989,-3.778,1.112,-0.434,-1.237,1.6,2.73,0.385,-1.5,3.991,1.577,-1.452,0.594,-0.979,0.113,0.572,2.075,-0.559,-0.529,0.302,-0.88,-1.193,-2.327,-1.623,0.482,-2.102,2.027,-3.827,0.437,0.52,-1.035,-0.148,-0.603,0.619,-0.27,-1.245,0.64,4.449,3.377,1.892,0.859,0.661,-0.975,-0.718,-1.015,1.393,0.347,-3.672,1.833,-0.088,0.679,-5.194,-0.576,2.001,-0.172,0.916,-0.612,1.504,1.914,-0.971,-0.698,-1.885,1.875,1.231,3.047,-0.305,-0.661,1.147,-0.546,-0.521,-0.964,-0.506]},{"gen":120,"win":0.65,"self":0.12,"curve":[0.37,0.48,0.39,0.29,0.4,0.34,0.3,0.51,0.34,0.3,0.4,0.27,0.37,0.39,0.39,0.35,0.43,0.33,0.32,0.5,0.45,0.2,0.53,0.41,0.34,0.39,0.18,0.28,0.42,0.25,0.3,0.3,0.37,0.43,0.37,0.28,0.39,0.41,0.3,0.32,0.34,0.24,0.24,0.41,0.28,0.23,0.51,0.39,0.37,0.39,0.24,0.26,0.48,0.25,0.28,0.34,0.39,0.23,0.39,0.34,0.37,0.44,0.29,0.35,0.49,0.4,0.39,0.42,0.37,0.25,0.48,0.41,0.4,0.49,0.39,0.25,0.42,0.31,0.4,0.26,0.39,0.33,0.42,0.39,0.25,0.39,0.35,0.34,0.35,0.4,0.36,0.55,0.36,0.31,0.39,0.34,0.33,0.43,0.32,0.37,0.29,0.31,0.24,0.39,0.25,0.29,0.45,0.33,0.32,0.27,0.28,0.24,0.29,0.26,0.26,0.49,0.35,0.4,0.46,0.36],"champ":[0.643,-1.117,-1.898,0.366,-0.94,1.366,1.585,-1.635,-0.055,1.151,-1.022,-1.988,2.086,-0.068,-0.811,-3.087,0.582,0.268,-1.157,-0.454,2.657,1.009,-2.116,0.163,2.033,-0.191,-0.837,2.267,0.058,0.837,-2.309,3.086,-0.318,-1.526,0.978,3.421,-2.806,-3.603,1.663,0.47,-0.336,-1.37,-1.396,-4.25,-2.285,0.458,1.184,2.74,1.696,-0.822,0.351,-1.217,0.647,2.57,-1.079,0.378,-0.201,0.44,-0.504,-0.153,-2.014,1.868,2.728,0.343,-1.522,0.521,2.096,-0.838,1.243,0.379,0.948,-1.274,-0.47,0.904,0.042,-0.832,2.976,1.633,-0.891,-0.352,-2.989,0.058,0.383,-1.986,-1.163,0.039,-1.1,-1.624,-0.24,-2.423,4.586,0.552,0.744,0.434,0.466,1.491,-3.129,-0.649,0.445,1.403,-7.137,1.136,-0.268,0.036,0.273,1.577,-2.647,0.626,0.337,2.066,-0.613,0.315,-0.453,-0.179,0.084,-0.377,1.327,3.545,1.807,-1.353,-0.061,-1.272,-3.279,0.725,2.405,-0.579,-0.909,-0.09,-2.594,0.63,-0.612,-0.468,-0.234,3.272]},{"gen":120,"win":0.72,"self":0,"curve":[0.38,0.44,0.41,0.37,0.39,0.52,0.42,0.42,0.45,0.32,0.4,0.43,0.35,0.39,0.42,0.39,0.34,0.39,0.37,0.42,0.46,0.47,0.38,0.46,0.46,0.49,0.58,0.48,0.4,0.5,0.49,0.34,0.51,0.46,0.43,0.49,0.42,0.38,0.56,0.55,0.51,0.46,0.37,0.45,0.53,0.51,0.58,0.57,0.46,0.51,0.55,0.61,0.49,0.56,0.45,0.53,0.37,0.39,0.42,0.44,0.43,0.56,0.52,0.46,0.4,0.52,0.5,0.44,0.48,0.44,0.46,0.47,0.51,0.38,0.47,0.63,0.6,0.68,0.56,0.57,0.51,0.66,0.59,0.67,0.64,0.49,0.51,0.57,0.5,0.49,0.67,0.48,0.46,0.58,0.55,0.59,0.51,0.52,0.62,0.51,0.57,0.57,0.54,0.52,0.45,0.52,0.45,0.46,0.46,0.39,0.53,0.53,0.56,0.5,0.56,0.45,0.54,0.43,0.52,0.65],"champ":[0.428,1.019,-2.032,-0.748,-0.331,-0.054,2.741,-4.291,0.71,-0.087,0.195,-0.422,3.166,-0.044,-0.5,-5.109,0.732,-0.732,-1.238,1.62,0.025,1.368,-2.262,0.41,1.693,-0.214,-1.252,1.703,0.231,-0.145,-2.506,2.072,-0.052,0.874,0.154,6.757,-0.651,-0.904,4,0.15,-0.099,-3.139,-2.45,-7.143,-2.324,1.938,3.1,0.075,0.009,-2.683,2.098,0.291,2.18,1.1,-0.296,-0.007,-1.545,0.74,1.291,1.188,-2.785,1.09,1.141,-3.172,-0.636,0.871,-1.513,-1.878,-0.452,0.845,3.231,1.79,-1.695,0.295,0.933,-0.406,0.811,-0.406,-0.092,-1.092,0.076,0.148,-1.055,-0.843,-1.93,-0.457,0.28,1.305,-1.948,-0.779,-1.039,3.625,1.105,-1.996,0.04,0.211,-3.586,-0.607,1.368,0.299,-2.718,-0.025,-1.253,1.215,-1.579,-4.818,3.809,2.37,-0.346,-1.522,-1.818,1.377,-3.205,0.317,0.068,1.177,-4.506,-0.157,-0.354,2.164,0.992,0.995,-2.174,0.768,0.689,0.372,-2.643,2.638,-0.461,-0.016,-1.065,-0.162,-0.503,4.1,2.989,-1.554,2.404,2.886,-2.888,0.735,2.352,0.99,-1.051,-0.864,0.675,0.454,-1.571,-2.487,1.695,-0.383,0.554,-0.865,-1.783,0.408,-0.311,-0.587]}]};
+</script>
+<script>
+(() => {
+const K = TANK, { W, H, CELL, COLS, ROWS, T, LEVELS } = K;
+const $ = id => document.getElementById(id);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const KNOWS = [
+  'Level 1 bot has one constant input and no training. It cannot see you; it drives and fires on whatever pattern it was born with, and usually shoots itself.',
+  'Level 2 bot knows whether it can see you and how far away you are, but not which way. Evolution found that firing without knowing where is suicide, so it holds fire.',
+  'Level 3 bot knows which way you are whenever it can see you, so it turns toward you and fires.',
+  'Level 4 bot feels bullets on course to hit it and sidesteps them, its own ricochets included.',
+  'Level 5 bot has three whiskers that measure the walls to its left, ahead and right, so it stops grinding into walls and moves through the maze.',
+  'Level 6 bot knows which way leads to you through the maze, so it comes hunting.',
+];
+const BRAINS = TDATA.levels.map(l => Float32Array.from(l.champ));
+
+let level = 0, w = null, bot = null, state = 'ready', roundNo = 0, showSenses = true;
+const score = [0, 0]; // [you, bot]
+let fx = [], evIdx = 0, msg = '';
+const keys = new Set(); let fireQueued = false;
+
+// ---------- level cards ----------
+const nav = $('glevels');
+LEVELS.forEach((l, i) => {
+  const b = document.createElement('button');
+  b.className = 'lvl'; b.type = 'button';
+  b.innerHTML = `<span class="n">Bot level ${i + 1}</span><span class="nm">${l.name}</span><span class="tg">${l.tag}</span>`;
+  b.addEventListener('click', () => { b.blur(); setLevel(i); });
+  nav.appendChild(b);
+});
+function setLevel(L) {
+  level = L; score[0] = score[1] = 0; roundNo = 0;
+  [...nav.children].forEach((b, i) => b.setAttribute('aria-pressed', i === L ? 'true' : 'false'));
+  $('gHudL').textContent = `Bot level ${L + 1} · ${LEVELS[L].name}`;
+  $('gKnows').textContent = KNOWS[L];
+  newRound(); showOverlay('Ready', 'You are the orange tank. Arrows drive, Space fires.', 'Start · Space');
+  updateEvo();
+}
+function newRound() {
+  w = K.makeMatch((Math.random() * 1e9) | 0);
+  bot = K.makeBrain(BRAINS[level], level);
+  bot.act.inp.fill(0); bot.act.inp[0] = 1;
+  K.think(bot.g, bot.act.inp, bot.act);
+  fx = []; evIdx = 0; roundNo++; keys.clear(); fireQueued = false;
+  $('gRound').textContent = `Round ${roundNo}`;
+  updateScore();
+}
+function showOverlay(t, s, btn) { $('gOvT').textContent = t; $('gOvS').textContent = s; $('gStart').textContent = btn; $('gOv').hidden = false; state = 'ready'; }
+function go() { if (w.done) newRound(); $('gOv').hidden = true; state = 'play'; keys.clear(); fireQueued = false; }
+$('gStart').addEventListener('click', e => { e.currentTarget.blur(); go(); });
+
+// ---------- input ----------
+const GAME_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '];
+window.addEventListener('keydown', e => {
+  if (window.SCREEN !== 'game') return;
+  if (e.key >= '1' && e.key <= '6') { setLevel(+e.key - 1); return; }
+  if (!GAME_KEYS.includes(e.key)) return;
+  e.preventDefault();
+  if (e.key === ' ') {
+    if (state !== 'play') { if (state === 'ready' && !e.repeat) go(); return; }
+    if (!e.repeat) fireQueued = true;
+    return;
+  }
+  keys.add(e.key);
+});
+window.addEventListener('keyup', e => {
+  if (window.SCREEN !== 'game') return;
+  if (GAME_KEYS.includes(e.key)) { e.preventDefault(); keys.delete(e.key); }
+});
+window.addEventListener('blur', () => keys.clear());
+document.querySelectorAll('#touchpad [data-k]').forEach(b => {
+  const k = b.dataset.k;
+  b.addEventListener('pointerdown', e => { e.preventDefault(); if (k === ' ') { if (state === 'ready') go(); else if (state === 'play') fireQueued = true; } else keys.add(k); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => keys.delete(k)));
+});
+$('gSenses').addEventListener('click', e => {
+  showSenses = !showSenses; const b = e.currentTarget; b.blur();
+  b.setAttribute('aria-pressed', showSenses ? 'true' : 'false'); b.textContent = showSenses ? 'Bot senses shown' : 'Bot senses hidden';
+});
+$('gNew').addEventListener('click', e => { e.currentTarget.blur(); newRound(); showOverlay('New maze', 'Score carries on. Press Space when you are ready.', 'Start · Space'); });
+
+function playerCtrl() {
+  const drive = (keys.has('ArrowUp') ? 1 : 0) - (keys.has('ArrowDown') ? 1 : 0);
+  const turn = (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0);
+  const f = fireQueued; fireQueued = false;
+  return { drive, turn, fire: f };
+}
+
+// ---------- step ----------
+function stepGame() {
+  const me = w.tanks[0], you = w.tanks[1];
+  const c0 = me.alive ? K.brainControl(w, me, you, bot) : { drive: 0, turn: 0, fire: false };
+  K.step(w, c0, playerCtrl());
+  while (evIdx < w.events.length) {
+    const e = w.events[evIdx++];
+    if (e.type === 'fire') fx.push({ k: 'flash', x: e.x, y: e.y, id: e.id, age: 0, life: 0.12 });
+    else if (e.type === 'boom') {
+      for (let i = 0; i < 26; i++) { const a = Math.random() * 6.28, s = 30 + Math.random() * 120; fx.push({ k: 'spark', x: e.x, y: e.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, id: e.id, age: 0, life: 0.5 + Math.random() * 0.6 }); }
+      fx.push({ k: 'ring', x: e.x, y: e.y, age: 0, life: 0.5 });
+    }
+  }
+  if (w.done) {
+    const bt = w.tanks[0], yt = w.tanks[1];
+    let t, s;
+    if (w.winner === 1) { score[0]++; t = 'You win'; s = bt.killedBy === 0 ? 'The bot shot itself with its own ricochet.' : 'Your shot found the bot.'; }
+    else if (w.winner === 0) { score[1]++; t = 'Bot wins'; s = yt.killedBy === 1 ? 'Your own bullet bounced back at you.' : 'The bot got you.'; }
+    else { t = 'Draw'; s = 'Both tanks went up together.'; }
+    updateScore();
+    setTimeout(() => showOverlay(t, s, 'Next round · Space'), 900);
+    state = 'over';
+  }
+}
+function updateScore() { $('gYou').textContent = score[0]; $('gBot').textContent = score[1]; }
+
+// ---------- draw: arena ----------
+const cv = $('gcv'), ctx = cv.getContext('2d');
+let dpr = 1, sc = 1;
+function resize() {
+  if (window.SCREEN !== 'game') return;
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const r = cv.getBoundingClientRect(); if (!r.width) return;
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); sc = cv.width / W;
+  for (const id of ['gbrain', 'gevo']) { const c = $(id), cr = c.getBoundingClientRect(); c.width = Math.round(cr.width * dpr); c.height = Math.round(cr.height * dpr); }
+  updateEvo();
+}
+new ResizeObserver(resize).observe($('arena'));
+window.addEventListener('resize', resize);
+window.gameShown = () => { resize(); };
+
+const COL = { you: '#f4b27a', youDk: '#b9733c', bot: '#8f9fff', botDk: '#5b68c4', wall: '#cfe0e6', floor: '#0f2f3a', grid: 'rgba(180,214,224,0.05)', ink: '#dbe8ec', dim: '#8aa7b1' };
+
+function drawMaze() {
+  ctx.fillStyle = COL.floor; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  for (let c = 1; c < COLS; c++) { ctx.beginPath(); ctx.moveTo(c * CELL, 0); ctx.lineTo(c * CELL, H); ctx.stroke(); }
+  for (let r = 1; r < ROWS; r++) { ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(W, r * CELL); ctx.stroke(); }
+  ctx.strokeStyle = COL.wall; ctx.lineWidth = T.wallHalf * 2; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c <= COLS; c++) if (w.m.v[r][c]) { ctx.moveTo(c * CELL, r * CELL); ctx.lineTo(c * CELL, (r + 1) * CELL); }
+  for (let r = 0; r <= ROWS; r++) for (let c = 0; c < COLS; c++) if (w.m.h[r][c]) { ctx.moveTo(c * CELL, r * CELL); ctx.lineTo((c + 1) * CELL, r * CELL); }
+  ctx.stroke(); ctx.lineCap = 'butt';
+}
+function drawTank(t, light, dark, label) {
+  if (!t.alive) return;
+  ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.a);
+  ctx.fillStyle = dark; ctx.fillRect(-13, -12, 26, 6); ctx.fillRect(-13, 6, 26, 6);
+  ctx.fillStyle = light; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-11, -8, 22, 16, 3) : ctx.rect(-11, -8, 22, 16); ctx.fill();
+  ctx.fillStyle = dark; ctx.fillRect(2, -2, 15, 4);
+  ctx.beginPath(); ctx.arc(0, 0, 5.5, 0, 7); ctx.fill();
+  ctx.restore();
+  ctx.font = '500 10px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = light; ctx.fillText(label, t.x, t.y - 20);
+}
+function drawSenses() {
+  const b = w.tanks[0], y = w.tanks[1], d = bot.dbg || {};
+  if (!b.alive || level < 1) return;
+  if (d.see) {
+    ctx.strokeStyle = 'rgba(143,159,255,0.6)'; ctx.setLineDash(level >= 2 ? [] : [3, 5]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(y.x, y.y); ctx.stroke(); ctx.setLineDash([]);
+  }
+  if (level >= 3 && d.bullet) {
+    ctx.strokeStyle = 'rgba(233,139,124,0.9)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(d.bullet.x, d.bullet.y, 8, 0, 7); ctx.stroke();
+  }
+  if (level >= 4 && d.rays) {
+    ctx.strokeStyle = 'rgba(219,232,236,0.45)'; ctx.lineWidth = 1;
+    [-0.75, 0, 0.75].forEach((o, i) => { const a = b.a + o, L = d.rays[i]; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + Math.cos(a) * L, b.y + Math.sin(a) * L); ctx.stroke(); ctx.fillStyle = 'rgba(219,232,236,0.7)'; ctx.beginPath(); ctx.arc(b.x + Math.cos(a) * L, b.y + Math.sin(a) * L, 2, 0, 7); ctx.fill(); });
+  }
+  if (level >= 5 && d.path) {
+    const [tx, ty] = d.path, a = Math.atan2(ty - b.y, tx - b.x), x2 = b.x + Math.cos(a) * 34, y2 = b.y + Math.sin(a) * 34;
+    ctx.strokeStyle = COL.bot; ctx.fillStyle = COL.bot; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(b.x + Math.cos(a) * 18, b.y + Math.sin(a) * 18); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2 + Math.cos(a) * 6, y2 + Math.sin(a) * 6); ctx.lineTo(x2 + Math.cos(a + 2.4) * 6, y2 + Math.sin(a + 2.4) * 6); ctx.lineTo(x2 + Math.cos(a - 2.4) * 6, y2 + Math.sin(a - 2.4) * 6); ctx.fill();
+  }
+}
+function drawFx(dt) {
+  for (const e of fx) {
+    e.age += dt; const k = e.age / e.life;
+    if (e.k === 'spark') { e.x += e.vx * dt; e.y += e.vy * dt; e.vx *= 0.93; e.vy *= 0.93; ctx.fillStyle = e.id === 0 ? `rgba(143,159,255,${1 - k})` : `rgba(244,178,122,${1 - k})`; ctx.fillRect(e.x - 1.5, e.y - 1.5, 3, 3); }
+    else if (e.k === 'ring') { ctx.strokeStyle = `rgba(255,236,200,${0.9 * (1 - k)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, 8 + 34 * k, 0, 7); ctx.stroke(); }
+    else if (e.k === 'flash') { ctx.fillStyle = `rgba(255,240,210,${1 - k})`; ctx.beginPath(); ctx.arc(e.x, e.y, 5 * (1 - k) + 2, 0, 7); ctx.fill(); }
+  }
+  fx = fx.filter(e => e.age < e.life);
+}
+function render(dt) {
+  ctx.setTransform(sc, 0, 0, sc, 0, 0);
+  drawMaze();
+  if (showSenses) drawSenses();
+  for (const b of w.bullets) {
+    ctx.fillStyle = b.owner === 0 ? COL.bot : COL.you;
+    ctx.beginPath(); ctx.arc(b.x, b.y, T.bulletR + 0.5, 0, 7); ctx.fill();
+  }
+  drawTank(w.tanks[1], COL.you, COL.youDk, 'YOU');
+  drawTank(w.tanks[0], COL.bot, COL.botDk, 'BOT');
+  drawFx(dt);
+}
+
+// ---------- draw: brain ----------
+const bc = $('gbrain'), bx = bc.getContext('2d');
+function drawBrain() {
+  const cw = bc.width / dpr, ch = bc.height / dpr; if (!cw) return;
+  bx.setTransform(dpr, 0, 0, dpr, 0, 0); bx.clearRect(0, 0, cw, ch);
+  const names = LEVELS[level].inputs, nIn = names.length, nH = T.nHidden, nO = T.nOut, g = bot.g, a = bot.act;
+  const tight = nIn > 9, ix = tight ? 112 : 80, hx = ix + (cw - 70 - ix) * 0.5, ox = cw - 70, top = 34;
+  const ys = (n, i, t, b) => n === 1 ? ch / 2 : t + (ch - t - b) * i / (n - 1);
+  const yi = i => ys(nIn, i, top, 14), yh = h => ys(nH, h, 44, 26), yo = k => ys(nO, k, ch * 0.22, ch * 0.22);
+  const col = v => v >= 0 ? '244,178,122' : '143,159,255';
+  const edge = (x1, y1, x2, y2, wt, s) => {
+    const al = Math.min(1, Math.abs(wt) / 2.2) * (0.08 + 0.92 * Math.min(1, Math.abs(s)));
+    if (al < 0.03) return;
+    bx.strokeStyle = `rgba(${col(wt * s)},${al})`; bx.lineWidth = 0.6 + Math.min(2.4, Math.abs(wt) * 0.9);
+    bx.beginPath(); bx.moveTo(x1, y1); bx.lineTo(x2, y2); bx.stroke();
+  };
+  const o = nIn * nH, o2 = o + nH * nO;
+  bx.globalAlpha = 0.45;
+  for (let i = 0; i < nIn; i++) for (let k = 0; k < nO; k++) edge(ix, yi(i), ox, yo(k), g[o2 + i * nO + k], a.inp[i]);
+  bx.globalAlpha = 1;
+  for (let i = 0; i < nIn; i++) for (let h = 0; h < nH; h++) edge(ix, yi(i), hx, yh(h), g[i * nH + h], a.inp[i]);
+  for (let h = 0; h < nH; h++) for (let k = 0; k < nO; k++) edge(hx, yh(h), ox, yo(k), g[o + h * nO + k], a.hid[h]);
+  const node = (x, y, v, r) => {
+    const m = Math.min(1, Math.abs(v));
+    bx.fillStyle = '#0a222c'; bx.beginPath(); bx.arc(x, y, r, 0, 7); bx.fill();
+    bx.fillStyle = `rgba(${col(v)},${0.15 + 0.85 * m})`; bx.beginPath(); bx.arc(x, y, r, 0, 7); bx.fill();
+    bx.strokeStyle = 'rgba(219,232,236,0.35)'; bx.lineWidth = 1; bx.stroke();
+  };
+  bx.font = '500 11px "IBM Plex Mono", monospace'; bx.textBaseline = 'middle';
+  for (let i = 0; i < nIn; i++) {
+    const y = yi(i); node(ix, y, a.inp[i], 5.5);
+    bx.textAlign = 'right'; bx.fillStyle = COL.ink;
+    if (tight) { bx.fillText(names[i], ix - 48, y); bx.fillStyle = COL.dim; bx.fillText(a.inp[i].toFixed(2), ix - 10, y); }
+    else { bx.fillText(names[i], ix - 11, y - 6); bx.fillStyle = COL.dim; bx.fillText(a.inp[i].toFixed(2), ix - 11, y + 7); }
+  }
+  for (let h = 0; h < nH; h++) node(hx, yh(h), a.hid[h], 5);
+  const words = [v => v > 0.1 ? 'forward' : v < -0.1 ? 'reverse' : 'idle', v => v > 0.1 ? 'right' : v < -0.1 ? 'left' : 'straight', v => v > 0.3 ? 'fire' : 'hold'];
+  for (let k = 0; k < nO; k++) {
+    const y = yo(k); node(ox, y, a.out[k], 8);
+    bx.textAlign = 'left'; bx.fillStyle = COL.ink; bx.fillText(K.OUTS[k], ox + 13, y - 7);
+    bx.fillStyle = COL.dim; bx.fillText(words[k](a.out[k]), ox + 13, y + 7);
+  }
+  bx.fillStyle = COL.dim; bx.textAlign = 'center'; bx.font = '500 10px "IBM Plex Mono", monospace';
+  bx.fillText('SENSES', ix - 40, 10); bx.fillText('HIDDEN', hx, 10); bx.fillText('MUSCLES', ox + 10, 10);
+}
+
+// ---------- evolution record ----------
+function updateEvo() {
+  const L = level, d = TDATA.levels[L], c = d.curve;
+  const cum = TDATA.levels.slice(0, L + 1).reduce((s, l) => s + l.gen, 0);
+  $('gEvoGen').textContent = L === 0 ? 'no training' : `${cum} generations`;
+  $('gEvoNote').textContent = L === 0
+    ? 'An untrained, randomly wired brain. It has nothing to learn from with a single constant input.'
+    : `Share of training matches won against a scripted sparring tank (one that hunts, one that camps, one that roams), over this level’s ${c.length} generations. It started from the level ${L} brain with the new senses wired in at zero. In a final test of 60 matches it won ${Math.round(d.win * 100)}%.`;
+  const v = $('gevo'), cw = v.width / dpr, ch = v.height / dpr; if (!cw) return;
+  const x = v.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, cw, ch);
+  const padL = 30, padB = 14, padT = 6, pw = cw - padL - 4, ph = ch - padB - padT, Y = s => padT + ph * (1 - s);
+  x.strokeStyle = 'rgba(180,214,224,0.12)'; x.lineWidth = 1; x.font = '500 10px "IBM Plex Mono", monospace'; x.fillStyle = COL.dim; x.textAlign = 'right'; x.textBaseline = 'middle';
+  for (const s of [0, 0.5, 1]) { x.beginPath(); x.moveTo(padL, Y(s)); x.lineTo(cw - 4, Y(s)); x.stroke(); x.fillText(Math.round(s * 100) + '%', padL - 5, Y(s)); }
+  if (!c.length || L === 0) { x.textAlign = 'center'; x.fillText('Level 1 is untrained', padL + pw / 2, padT + ph / 2); return; }
+  const n = c.length, ma = c.map((_, i) => { const a = Math.max(0, i - 7); let s = 0; for (let j = a; j <= i; j++) s += c[j]; return s / (i - a + 1); });
+  const X = i => padL + pw * (n === 1 ? 1 : i / (n - 1));
+  x.beginPath(); ma.forEach((s, i) => i ? x.lineTo(X(i), Y(s)) : x.moveTo(X(i), Y(s))); x.lineTo(X(n - 1), Y(0)); x.lineTo(X(0), Y(0)); x.closePath(); x.fillStyle = 'rgba(143,159,255,0.14)'; x.fill();
+  x.beginPath(); ma.forEach((s, i) => i ? x.lineTo(X(i), Y(s)) : x.moveTo(X(i), Y(s))); x.strokeStyle = COL.bot; x.lineWidth = 1.6; x.stroke();
+  x.fillStyle = COL.bot; x.beginPath(); x.arc(X(n - 1), Y(ma[n - 1]), 3, 0, 7); x.fill();
+  x.fillStyle = COL.dim; x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.fillText('gen 1', padL, ch - 2); x.textAlign = 'right'; x.fillText(`gen ${n}`, cw - 4, ch - 2);
+}
+
+// ---------- loop ----------
+let last = performance.now(), acc = 0, lastTick = -1;
+const fmt = t => { const s = Math.floor(t / 60); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (window.SCREEN === 'game') {
+    if (state === 'play' && !w.done) {
+      acc += dt * 60; let n = 0;
+      while (acc >= 1 && n < 6) { stepGame(); acc -= 1; n++; if (w.done) break; }
+      if (n >= 6) acc = 0;
+    } else acc = 0;
+    render(dt);
+    drawBrain();
+    if (w.tick !== lastTick) {
+      lastTick = w.tick;
+      $('gTime').textContent = fmt(w.tick); $('gYouShots').textContent = w.tanks[1].shots; $('gBotShots').textContent = w.tanks[0].shots;
+    }
+  }
+  requestAnimationFrame(frame);
+}
+setLevel(0);
+requestAnimationFrame(frame);
+})();
+
+</script>
+<script>
+(() => {
+  const show = name => {
+    window.SCREEN = name;
+    document.getElementById('screenFish').hidden = name !== 'fish';
+    document.getElementById('screenGame').hidden = name !== 'game';
+    try { history.replaceState(null, '', name === 'game' ? '#game' : '#fish'); } catch (e) {}
+    window.scrollTo(0, 0);
+    if (name === 'game' && window.gameShown) window.gameShown();
+    window.dispatchEvent(new Event('resize'));
+  };
+  document.getElementById('toGame').addEventListener('click', e => { e.currentTarget.blur(); show('game'); });
+  document.getElementById('toFish').addEventListener('click', e => { e.currentTarget.blur(); show('fish'); });
+  if (location.hash === '#game') show('game');
+})();
+</script>
+
+</body></html>
