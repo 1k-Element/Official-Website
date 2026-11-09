@@ -140,7 +140,14 @@ h1 .grad{background:linear-gradient(90deg,var(--radar),var(--cyan));-webkit-back
 .live-tag{font-family:var(--mono);font-size:.6rem;font-weight:700;color:var(--radar);border:1px solid rgba(57,255,20,.35);background:var(--radar-soft);padding:2px 8px;border-radius:999px;margin-left:8px;letter-spacing:1px}
 .live-tag.demo-tag{color:var(--cyan);border-color:rgba(76,195,232,.35);background:rgba(76,195,232,.1)}
 
-#energy.hidden{display:none}
+.emodal{position:fixed;inset:0;z-index:400;display:none;align-items:flex-start;justify-content:center;padding:4vh 3vw;background:rgba(2,5,4,.82);backdrop-filter:blur(6px);overflow-y:auto;overscroll-behavior:contain}
+.emodal.open{display:flex;animation:emIn .22s ease-out}
+@keyframes emIn{from{opacity:0}to{opacity:1}}
+.emodal-box{position:relative;width:100%;max-width:1100px;margin:auto 0;background:var(--bg);border:1px solid var(--line2);border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.emodal #energy{padding:46px 40px 36px;max-width:none;margin:0}
+.emodal-x{position:absolute;top:14px;right:14px;z-index:5;width:42px;height:42px;border-radius:50%;background:var(--panel2);border:1px solid var(--line2);color:var(--text);font-size:1.05rem;line-height:1;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
+.emodal-x:hover,.emodal-x:focus-visible{border-color:var(--radar);color:var(--radar);box-shadow:0 0 18px rgba(57,255,20,.25);outline:none}
+@media(max-width:560px){.emodal{padding:0}.emodal-box{border-radius:0;border:none;min-height:100%}.emodal #energy{padding:64px 16px 28px}}
 .energy-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
 .live-pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.72rem;font-weight:700;letter-spacing:2px;border-radius:999px;padding:7px 16px;border:1px solid rgba(57,255,20,.35);background:var(--radar-soft);color:var(--radar)}
 .live-pill i{width:8px;height:8px;border-radius:50%;background:var(--radar);animation:pulse 1.6s infinite}
@@ -513,6 +520,13 @@ footer b{color:var(--neon-text)}
 /* Personal projects: media only (no description card) */
 .pv-slide{grid-template-columns:1fr}
 .pv-slide .pv-frame{width:100%;max-width:980px;margin:0 auto}
+
+/* Phone: slightly smaller hero intro text and buttons (desktop unchanged) */
+@media(max-width:560px){
+  .hero p.sub{font-size:.93rem;line-height:1.65}
+  .hero .cta-row{gap:10px}
+  .hero .cta-row .btn{font-size:.8rem;padding:12px 18px}
+}
 </style>
 </head>
 <body>
@@ -644,10 +658,10 @@ footer b{color:var(--neon-text)}
   </div>
 </section>
 
-<!-- TOP & FAVORITE PROJECTS -->
+<!-- HIGH IMPACT PROJECTS -->
 <section id="domains">
-  <div class="kicker reveal">top_projects</div>
-  <h2 class="reveal">Top &amp; Favorite Projects</h2>
+  <div class="kicker reveal">high_impact_projects</div>
+  <h2 class="reveal">High Impact Projects</h2>
   <p class="sec-intro reveal">A look at the top projects ModPi Tech currently has deployed with the Armed Forces of the Philippines (AFP).
     Presented as generalized capability areas — operational specifics remain confidential under NDA.</p>
   <div class="dom-grid">
@@ -721,7 +735,7 @@ footer b{color:var(--neon-text)}
       <div class="id">PRG-001 · IoT / ENERGY <span class="live-tag">● LIVE</span></div>
       <h3>LIVE Energy Monitoring System</h3>
       <p>A real IoT energy monitor at our house, streaming voltage, current, power factor and daily consumption to this site in real time.</p>
-      <a class="demo-btn" href="#energy">View Live Data ↓</a>
+      <a class="demo-btn" href="#energy">View Live Data ↗</a>
     </div></div>
     <div class="proj hud demo reveal"><div class="ph"><img src="programs/prg-002.jpg" alt="JustiCore — AI Philippine Lawyer" loading="lazy"></div><div class="body">
       <div class="id">PRG-002 · AI / LEGAL <span class="live-tag demo-tag">▶ INTERACTIVE</span></div>
@@ -786,19 +800,22 @@ footer b{color:var(--neon-text)}
   </div>
 </section>
 
-<!-- ENERGY MONITOR (LIVE) — hidden until "View Live Data" is clicked -->
-<section id="energy" class="hidden">
-  <div class="kicker reveal">live_telemetry</div>
-  <h2 class="reveal">LIVE Energy Monitoring System</h2>
-  <p class="sec-intro reveal">A real, deployed IoT system — live readings streamed from the energy monitor
+<!-- ENERGY MONITOR (LIVE) — opens as a popup when "View Live Data" is clicked -->
+<div id="energyModal" class="emodal" role="dialog" aria-modal="true" aria-labelledby="energyTitle" aria-hidden="true">
+<div class="emodal-box">
+  <button class="emodal-x" id="energyClose" aria-label="Close live data">&#10005;</button>
+<section id="energy">
+  <div class="kicker">live_telemetry</div>
+  <h2 id="energyTitle">LIVE Energy Monitoring System</h2>
+  <p class="sec-intro">A real, deployed IoT system — live readings streamed from the energy monitor
     installed at our house.</p>
 
-  <div class="energy-head reveal">
+  <div class="energy-head">
     <span class="live-pill off" id="energyStatus"><i></i><span id="energyStatusTxt">CONNECTING…</span></span>
     <span class="energy-updated" id="energyUpdated"></span>
   </div>
 
-  <div class="energy-grid reveal">
+  <div class="energy-grid">
     <div class="metric hero-metric hud">
       <div class="m-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg> Active Power</div>
       <div class="m-val"><span id="mPower">—</span><small>W</small></div>
@@ -829,12 +846,14 @@ footer b{color:var(--neon-text)}
     </div>
   </div>
 
-  <div class="energy-chart-wrap hud reveal">
+  <div class="energy-chart-wrap hud">
     <h4>Active Power — Live Trend (This Session)</h4>
     <canvas id="powerChart"></canvas>
     <div class="energy-note">AUTO-REFRESH: 2s · PRG-001 · IoT / ENERGY</div>
   </div>
 </section>
+</div>
+</div>
 
 <!-- CONTACT -->
 <section id="contact">
@@ -1095,7 +1114,7 @@ function setEnergyStatus(ok, msg){
 
 let energyBusy = false;
 async function pollEnergy(){
-  if(document.hidden || energyBusy) return;
+  if(document.hidden || energyBusy || !energyOpen) return;
   energyBusy = true;
   try{
     const res = await fetch(BLYNK_URL, {cache:'no-store'});
@@ -1156,16 +1175,32 @@ function drawPowerChart(){
 }
 
 let energyStarted = false;
+let energyOpen = false;
+const energyModal = document.getElementById('energyModal');
 function showEnergy(){
-  const sec = document.getElementById('energy');
-  sec.classList.remove('hidden');
-  if(!energyStarted){ energyStarted = true; pollEnergy(); setInterval(pollEnergy, POLL_MS); }
-  sec.scrollIntoView({behavior:'smooth'});
+  energyOpen = true;
+  energyModal.classList.add('open');
+  energyModal.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+  if(!energyStarted){ energyStarted = true; setInterval(pollEnergy, POLL_MS); }
+  pollEnergy();
+  requestAnimationFrame(() => { try{ drawPowerChart(); }catch(e){} });
+  document.getElementById('energyClose').focus();
 }
+function hideEnergy(){
+  if(!energyOpen) return;
+  energyOpen = false;
+  energyModal.classList.remove('open');
+  energyModal.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+}
+document.getElementById('energyClose').addEventListener('click', hideEnergy);
+energyModal.addEventListener('click', e => { if(e.target === energyModal) hideEnergy(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape') hideEnergy(); });
 document.querySelectorAll('a[href="#energy"]').forEach(a =>
   a.addEventListener('click', e => { e.preventDefault(); showEnergy(); }));
-document.addEventListener('visibilitychange', () => { if(!document.hidden && energyStarted) pollEnergy(); });
-addEventListener('resize', () => { if(energyStarted) drawPowerChart(); });
+document.addEventListener('visibilitychange', () => { if(!document.hidden && energyOpen) pollEnergy(); });
+addEventListener('resize', () => { if(energyOpen) drawPowerChart(); });
 
 /* ================ CHATBOT ================ */
 const panel = document.getElementById('chatPanel'),
